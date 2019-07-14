@@ -76,6 +76,9 @@ set_property(TARGET htslib
 # Define library as dependent on the downloaded project
 add_dependencies(htslib project_htslib)
 
+# Define main library as dependent on the downloaded project (transitively)
+add_dependencies(runlength_analysis htslib)
+
 # Ensure that main library has access to primary dependencies' and secondary dependencies' headers
 include_directories(
         ${INSTALL_DIR}/src/project_htslib/
