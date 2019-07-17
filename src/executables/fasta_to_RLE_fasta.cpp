@@ -31,7 +31,6 @@ void fasta_to_RLE_fasta(path input_file_path, path output_dir) {
     sequence_element element;
     runlength_sequence_element runlength_element;
 
-    size_t sequence_index = 0;
     while (!fasta_reader.end_of_file) {
         // Initialize empty containers
         element = {};

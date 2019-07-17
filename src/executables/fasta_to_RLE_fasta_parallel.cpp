@@ -135,7 +135,7 @@ int main(int argc, char* argv[]){
     path output_dir;
     uint64_t max_threads;
 
-    options_description options("Required options");
+    options_description options("Arguments");
 
     options.add_options()
         ("fasta",

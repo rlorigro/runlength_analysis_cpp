@@ -55,7 +55,7 @@ void read_bam_file(char* bam_path) {
     int64_t pos;            // Left most position of alignment
     char* chr;              // Contig name (chromosome)
     int64_t len;            // Length of the read.
-    uint8_t* seq;           // DNA sequence
+//    uint8_t* seq;           // DNA sequence
     char* read_name;
     uint32_t* cigar;
     uint32_t n_cigar;
@@ -66,7 +66,7 @@ void read_bam_file(char* bam_path) {
         pos = alignment->core.pos + 1;
         chr = bam_header->target_name[alignment->core.tid];
         len = alignment->core.l_qseq;
-        seq = bam_get_seq(alignment);
+//        seq = bam_get_seq(alignment);
         read_name = bam_get_qname(alignment);
         cigar = bam_get_cigar(alignment);
         n_cigar = alignment->core.n_cigar;

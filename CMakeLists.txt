@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.0)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_definitions(-ggdb3 -O0)
+add_definitions(-ggdb3 -O0 -Wall)
 
 # Definitions needed to eliminate runtime dependency
 # on the boost system library.
@@ -33,7 +33,9 @@ include_directories(
 set(SOURCES
         src/FastaReader.cpp
         src/FastaWriter.cpp
-        src/Runlength.cpp)
+        src/Runlength.cpp
+        src/Miscellaneous.cpp
+        src/Align.cpp)
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})
@@ -101,7 +103,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # stupid "experimental" filesystem library for gcc <8.0
-#link_libraries(stdc++fs)
+link_libraries(stdc++fs)
 
 find_package( Boost 1.60 COMPONENTS program_options REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
@@ -143,6 +145,7 @@ add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
+
 # -------- SCRIPTS --------
 
 set(FILENAME_PREFIX fasta_to_RLE_fasta)
@@ -151,6 +154,11 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX fasta_to_RLE_fasta_parallel)
+add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX align)
 add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

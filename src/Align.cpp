@@ -1,0 +1,146 @@
+#include <string>
+#include <vector>
+#include <cstdio>
+#include <algorithm>
+#include <iostream>
+#include <stdexcept>
+#include <experimental/filesystem>
+#include "Miscellaneous.hpp"
+
+using std::string;
+using std::to_string;
+using std::vector;
+using std::remove;
+using std::replace;
+using std::cout;
+using std::cerr;
+using std::runtime_error;
+using std::experimental::filesystem::path;
+using std::experimental::filesystem::absolute;
+using std::experimental::filesystem::create_directories;
+
+
+path minimap_align(path ref_sequence_path,
+                   path read_sequence_path,
+                   path output_dir,
+                   uint16_t k,
+                   string minimap_preset,
+                   uint16_t max_threads){
+
+    // Find filename prefixes to be combined to generate predictable output filename
+    string ref_filename_prefix;
+    string read_filename_prefix;
+
+    // This works because etc_prefix is a string object, which means the value is copied
+    ref_filename_prefix = ref_sequence_path.filename().replace_extension("").string();
+    replace(ref_filename_prefix.begin(), ref_filename_prefix.end(), '.', '_');
+
+    // This works because etc_prefix is a string object, which means the value is copied
+    read_filename_prefix = read_sequence_path.filename().replace_extension("").string();
+    replace(read_filename_prefix.begin(), read_filename_prefix.end(), '.', '_');
+
+    path output_filename = ref_filename_prefix + "_VS_" + read_filename_prefix + ".sam";
+    path output_path = output_dir / output_filename;
+
+    cout << output_filename.string() << "\n";
+
+    // Set up arguments in a readable, modular format
+    vector <string> arguments = {"minimap2",
+                                 "-a",
+                                 "-t", to_string(max_threads),
+                                 "-x", minimap_preset,
+                                 "-k", to_string(k),
+                                 ref_sequence_path.string(),
+                                 read_sequence_path.string(),
+                                 ">", output_path.string()};
+
+    // Convert arguments to single string
+    string argument_string = join(arguments, ' ');
+    cout << "\nRUNNING: " << argument_string << "\n";
+
+    system(argument_string.c_str());
+
+    return output_path.string();
+}
+
+
+path samtools_sort(path input_path, uint16_t max_threads){
+    path output_path = input_path;
+    output_path.replace_extension(".sorted.bam");
+
+    // Set up arguments in a readable, modular format
+    vector <string> arguments = {"samtools sort",
+                                 "-O", "BAM",
+                                 "-@", to_string(max_threads),
+                                 "-o", output_path.string(),
+                                 input_path.string()};
+
+
+    // Convert arguments to single string
+    string argument_string = join(arguments, ' ');
+    cout << "\nRUNNING: " << argument_string << "\n";
+
+    system(argument_string.c_str());
+
+    return output_path.string();
+}
+
+
+path samtools_index(path input_path, uint16_t max_threads){
+    path output_path = input_path.string() + ".bai";
+
+    // Set up arguments in a readable, modular format
+    vector <string> arguments = {"samtools index",
+                                 "-@", to_string(max_threads),
+                                 input_path};
+
+    // Convert arguments to single string
+    string argument_string = join(arguments, ' ');
+    cout << "\nRUNNING: " << argument_string << "\n";
+
+    system(argument_string.c_str());
+
+    return output_path.string();
+}
+
+
+path align(path ref_sequence_path,
+           path read_sequence_path,
+           path output_dir,
+           bool sort,
+           bool index,
+           bool delete_intermediates,
+           uint16_t k,
+           string minimap_preset,
+           uint16_t max_threads){
+
+    // Convert output dir to absolute dir
+    output_dir = absolute(output_dir);
+
+    // Ensure output dir exists
+    create_directories(output_dir);
+
+    // Create placeholders for all possible file intermediates
+    path sam_output_path;
+    path sorted_bam_output_path;
+    path bai_output_path;
+    path output_path;
+
+    sam_output_path = minimap_align(ref_sequence_path, read_sequence_path, output_dir, k, minimap_preset, max_threads);
+    output_path = sam_output_path;
+
+    if (sort) {
+        sorted_bam_output_path = samtools_sort(sam_output_path, max_threads);
+        output_path = sorted_bam_output_path;
+
+        if (index) {
+            bai_output_path = samtools_index(sorted_bam_output_path, max_threads);
+        }
+        if (delete_intermediates) {
+            remove(sam_output_path);
+        }
+    }
+
+    // return the path to whichever sam/bam file was created last
+    return output_path.string();
+}
