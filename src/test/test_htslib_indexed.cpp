@@ -154,13 +154,11 @@ void read_bam_file(char* bam_path) {
 
 int main() {
     // Find absolute path to test file within repo
-//    path script_path = __FILE__;
-//    path project_directory = script_path.parent_path().parent_path().parent_path();
-//    path relative_input_path = "/data/test/";
-//    path filename = "NA12878.np.chr3.100kb.0.bam";
-//    path absolute_input_path = project_directory / relative_input_path / filename;
-
-    path absolute_input_path = "/home/ryan/code/runlength_analysis_cpp/build/output/test_alignable_sequences_non_RLE_VS_test_alignable_reference_non_RLE.sorted.bam";
+    path script_path = __FILE__;
+    path project_directory = script_path.parent_path().parent_path().parent_path();
+    path relative_input_path = "/data/test/";
+    path filename = "test_alignable_sequences_non_RLE_VS_test_alignable_reference_non_RLE.sorted.bam";
+    path absolute_input_path = project_directory / relative_input_path / filename;
 
     char* bam_path_chars = const_cast<char*>(absolute_input_path.c_str());
 
