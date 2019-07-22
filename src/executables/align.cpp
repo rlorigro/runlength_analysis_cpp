@@ -12,6 +12,7 @@ int main(int argc, char* argv[]){
     path read_sequence_path;
     path output_dir;
     string minimap_preset;
+    bool explicit_mismatch;
     uint16_t max_threads;
     uint16_t k;
     bool sort;
@@ -38,6 +39,11 @@ int main(int argc, char* argv[]){
         value<string>(&minimap_preset)->
         default_value("map-ont"),
         "Minimap preset configuration name. Affects multiple alignment/mapping parameters")
+
+        ("explicit_mismatch",
+        value<bool>(&explicit_mismatch)->
+        default_value(true),
+        "Whether to use the '='/'X' convention to explicitly label match/mismatch in the SAM cigar string")
 
         ("k",
         value<uint16_t>(&k)->
@@ -67,5 +73,5 @@ int main(int argc, char* argv[]){
     variables_map vm = parse_arguments(argc, argv, options);
     notify(vm);
 
-    align(ref_sequence_path, read_sequence_path, output_dir, sort, index, !keep, k, minimap_preset, max_threads);
+    align(ref_sequence_path, read_sequence_path, output_dir, sort, index, !keep, k, minimap_preset, explicit_mismatch, max_threads);
 }

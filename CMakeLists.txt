@@ -29,13 +29,15 @@ include_directories(
         "inc"
 )
 
-# Define our shared library sources. NOT test executables!
+# Define our shared library sources. NOT test executables.
 set(SOURCES
         src/FastaReader.cpp
         src/FastaWriter.cpp
         src/Runlength.cpp
         src/Miscellaneous.cpp
-        src/Align.cpp)
+        src/Align.cpp
+        src/AlignedSegment.cpp
+        src/CigarParser.cpp)
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})
@@ -115,6 +117,11 @@ add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
+set(FILENAME_PREFIX test_htslib_indexed)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
 set(FILENAME_PREFIX test_threading_simple)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
@@ -141,6 +148,11 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_fai_fetch_custom)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_CigarParser)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

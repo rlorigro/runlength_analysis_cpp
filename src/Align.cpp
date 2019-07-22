@@ -25,6 +25,7 @@ path minimap_align(path ref_sequence_path,
                    path output_dir,
                    uint16_t k,
                    string minimap_preset,
+                   bool explicit_mismatch,
                    uint16_t max_threads){
 
     // Find filename prefixes to be combined to generate predictable output filename
@@ -39,7 +40,7 @@ path minimap_align(path ref_sequence_path,
     read_filename_prefix = read_sequence_path.filename().replace_extension("").string();
     replace(read_filename_prefix.begin(), read_filename_prefix.end(), '.', '_');
 
-    path output_filename = ref_filename_prefix + "_VS_" + read_filename_prefix + ".sam";
+    path output_filename = read_filename_prefix + "_VS_" + ref_filename_prefix + ".sam";
     path output_path = output_dir / output_filename;
 
     cout << output_filename.string() << "\n";
@@ -53,6 +54,10 @@ path minimap_align(path ref_sequence_path,
                                  ref_sequence_path.string(),
                                  read_sequence_path.string(),
                                  ">", output_path.string()};
+
+    if (explicit_mismatch){
+        arguments.insert(arguments.begin() + 1, "--eqx");
+    }
 
     // Convert arguments to single string
     string argument_string = join(arguments, ' ');
@@ -112,6 +117,7 @@ path align(path ref_sequence_path,
            bool delete_intermediates,
            uint16_t k,
            string minimap_preset,
+           bool explicit_mismatch,
            uint16_t max_threads){
 
     // Convert output dir to absolute dir
@@ -126,17 +132,21 @@ path align(path ref_sequence_path,
     path bai_output_path;
     path output_path;
 
-    sam_output_path = minimap_align(ref_sequence_path, read_sequence_path, output_dir, k, minimap_preset, max_threads);
+    // Perform the initial call to aligner
+    sam_output_path = minimap_align(ref_sequence_path, read_sequence_path, output_dir, k, minimap_preset, explicit_mismatch, max_threads);
     output_path = sam_output_path;
 
     if (sort) {
+        // Do samtools sort
         sorted_bam_output_path = samtools_sort(sam_output_path, max_threads);
         output_path = sorted_bam_output_path;
 
         if (index) {
+            // Do samtools index
             bai_output_path = samtools_index(sorted_bam_output_path, max_threads);
         }
         if (delete_intermediates) {
+            // Delete uncompressed SAM
             remove(sam_output_path);
         }
     }

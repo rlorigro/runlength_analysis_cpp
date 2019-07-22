@@ -12,6 +12,7 @@
 #include <experimental/filesystem>
 
 using std::string;
+using std::to_string;
 using std::cout;
 using std::vector;
 using std::array;
@@ -42,21 +43,41 @@ using std::experimental::filesystem::path;
  **/
 
 
-//TODO: Make a new class for handling alignments
-//TODO: Practice threading, and see if bam data can be cast as atomic
-
 void read_bam_file(char* bam_path) {
-    samFile *in = hts_open(bam_path, "r");
+    string ref_name = "synthetic_ref_0";
 
-    if (in == NULL) {
+    samFile *in = NULL;
+
+    // bam file
+    if ((in = hts_open(bam_path, "r")) == 0) {
         throw runtime_error("ERROR: Cannot open bam file" + string(bam_path));
     }
 
     bam_hdr_t* bam_header = sam_hdr_read(in);
     bam1_t* alignment = bam_init1();
 
+
+    hts_idx_t *idx = NULL;
+    hts_itr_t *iter = NULL;
+
+    // bam index
+    if ((idx = sam_index_load(in, bam_path)) == 0) {
+        throw runtime_error("ERROR: Cannot open index for bam file " + string(bam_path) + "\n");
+    }
+
+    //    sam_hdr_name2tid(sam_hdr_t *h, const char *ref);
+    int32_t tid = bam_name2id(bam_header, ref_name.c_str());
+
+    // sam_itr_queryi(const hts_idx_t *idx, int tid, int beg, int end);
+    uint64_t start = 0;
+    uint64_t end = 500;
+    iter = sam_itr_queryi(idx, tid, start, end);
+    if (iter == 0) {
+        throw runtime_error("ERROR: Cannot open iterator for region " + to_string(tid) + ":" + to_string(start) + ":" + to_string(end) + " for bam file " + string(bam_path) + "\n");
+    }
+
     int64_t ref_start_index;     // Left most position of alignment
-    char* ref_name;              // Reference contig name (usually chromosome)
+//    char* ref_name;              // Reference contig name (usually chromosome)
     int64_t read_length;         // Length of the read.
     uint8_t* read_sequence;      // DNA sequence
     char* read_name;
@@ -79,9 +100,11 @@ void read_bam_file(char* bam_path) {
     int64_t cigar_start;
     int8_t increment;
 
-    while (sam_read1(in, bam_header, alignment) > 0) {
+    // Fetch alignments
+    int64_t result;
+    while ((result = sam_itr_next(in, iter, alignment)) >= 0) {
         ref_start_index = alignment->core.pos + 1;
-        ref_name = bam_header->target_name[alignment->core.tid];
+//        ref_name = bam_header->target_name[alignment->core.tid];
         read_length = alignment->core.l_qseq;
         read_sequence = bam_get_seq(alignment);
         read_name = bam_get_qname(alignment);
