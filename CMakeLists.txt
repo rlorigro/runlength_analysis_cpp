@@ -153,8 +153,8 @@ set(SOURCES
         src/Runlength.cpp
         src/Miscellaneous.cpp
         src/Align.cpp
-        src/AlignedSegment.cpp)
-#        src/CigarParser.cpp)   # !!!!!!!!!!!!!!!!! UNCOMMENT THIS TO SEE HOW HTSLIB IS BROKEN !!!!!!!!!!!!!!!
+        src/AlignedSegment.cpp
+        src/CigarParser.cpp)   # !!!!!!!!!!!!!!!!! UNCOMMENT THIS TO SEE HOW HTSLIB IS BROKEN !!!!!!!!!!!!!!!
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})

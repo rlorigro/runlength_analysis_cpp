@@ -96,7 +96,7 @@ void CigarParser::print_region(string ref_name, uint64_t start, uint64_t stop){
 
     // Iterate/fetch alignments
     int64_t result;
-    while ((result = sam_itr_next(this->bam_index, this->bam_iterator, alignment)) >= 0) {
+    while ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
         this->aligned_segment = {};
         this->aligned_segment.ref_start_index = alignment->core.pos + 1;
         this->aligned_segment.read_length = alignment->core.l_qseq;
