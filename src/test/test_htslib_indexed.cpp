@@ -104,7 +104,7 @@ void read_bam_file(char* bam_path) {
     int64_t result;
     while ((result = sam_itr_next(in, iter, alignment)) >= 0) {
         ref_start_index = alignment->core.pos + 1;
-//        ref_name = bam_header->target_name[alignment->core.tid];
+        ref_name = bam_header->target_name[alignment->core.tid];
         read_length = alignment->core.l_qseq;
         read_sequence = bam_get_seq(alignment);
         read_name = bam_get_qname(alignment);

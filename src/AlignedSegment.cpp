@@ -7,6 +7,12 @@
 
 using std::string;
 
+const array <string,10> Cigar::cigar_key = {"M","I","D","N","S","H","P","=","X"};
+
+string Cigar::to_string() {
+    return "(" + Cigar::cigar_key[this->code] + "," + std::to_string(this->length) + ")";
+}
+
 string AlignedSegment::to_string(){
     string reversal_string = reversal ? "R" : "F";
 

@@ -28,76 +28,76 @@ add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 ##############################################
 
 set(HTSLIB_HEADERS
-        externalTools/htslib
-        externalTools/htslib/htslib
-        externalTools/htslib/cram
-        externalTools/htslib/os
+        external/htslib
+        external/htslib/htslib
+        external/htslib/cram
+        external/htslib/os
         )
 
 
 set(HTSLIB_SOURCES
-        externalTools/htslib/cram/cram_codecs.c
-        externalTools/htslib/cram/cram_decode.c
-        externalTools/htslib/cram/cram_encode.c
-        externalTools/htslib/cram/cram_external.c
-        externalTools/htslib/cram/cram_index.c
-        externalTools/htslib/cram/cram_io.c
-        externalTools/htslib/cram/cram_samtools.c
-        externalTools/htslib/cram/cram_stats.c
-        externalTools/htslib/cram/files.c
-        externalTools/htslib/cram/mFILE.c
-        externalTools/htslib/cram/open_trace_file.c
-        externalTools/htslib/cram/pooled_alloc.c
-        externalTools/htslib/cram/rANS_static.c
-        externalTools/htslib/cram/sam_header.c
-        externalTools/htslib/cram/string_alloc.c
-        externalTools/htslib/os/rand.c
-        externalTools/htslib/test/fieldarith.c
-        externalTools/htslib/test/hfile.c
-        externalTools/htslib/test/hts_endian.c
-        externalTools/htslib/test/sam.c
-        externalTools/htslib/test/test-bcf-sr.c
-        externalTools/htslib/test/test-regidx.c
-        externalTools/htslib/test/test-vcf-api.c
-        externalTools/htslib/test/test-vcf-sweep.c
-        externalTools/htslib/test/test_bgzf.c
-        externalTools/htslib/test/test_view.c
-        externalTools/htslib/test/thrash_threads1.c
-        externalTools/htslib/test/thrash_threads2.c
-        externalTools/htslib/test/thrash_threads3.c
-        externalTools/htslib/test/thrash_threads4.c
-        externalTools/htslib/test/thrash_threads5.c
-        externalTools/htslib/test/thrash_threads6.c
-        externalTools/htslib/bcf_sr_sort.c
-        externalTools/htslib/bgzf.c
-        externalTools/htslib/bgzip.c
-        externalTools/htslib/errmod.c
-        externalTools/htslib/faidx.c
-        externalTools/htslib/hfile.c
-        externalTools/htslib/hfile_gcs.c
-        externalTools/htslib/hfile_libcurl.c
-        externalTools/htslib/hfile_net.c
-        #externalTools/htslib/hfile_s3.c
-        externalTools/htslib/hts.c
-        externalTools/htslib/htsfile.c
-        externalTools/htslib/kfunc.c
-        externalTools/htslib/knetfile.c
-        externalTools/htslib/kstring.c
-        externalTools/htslib/md5.c
-        externalTools/htslib/multipart.c
-        #externalTools/htslib/plugin.c
-        externalTools/htslib/probaln.c
-        externalTools/htslib/realn.c
-        externalTools/htslib/regidx.c
-        externalTools/htslib/sam.c
-        externalTools/htslib/synced_bcf_reader.c
-        externalTools/htslib/tabix.c
-        externalTools/htslib/tbx.c
-        externalTools/htslib/textutils.c
-        externalTools/htslib/thread_pool.c
-        externalTools/htslib/vcf.c
-        externalTools/htslib/vcf_sweep.c
-        externalTools/htslib/vcfutils.c
+        external/htslib/cram/cram_codecs.c
+        external/htslib/cram/cram_decode.c
+        external/htslib/cram/cram_encode.c
+        external/htslib/cram/cram_external.c
+        external/htslib/cram/cram_index.c
+        external/htslib/cram/cram_io.c
+        external/htslib/cram/cram_samtools.c
+        external/htslib/cram/cram_stats.c
+        external/htslib/cram/files.c
+        external/htslib/cram/mFILE.c
+        external/htslib/cram/open_trace_file.c
+        external/htslib/cram/pooled_alloc.c
+        external/htslib/cram/rANS_static.c
+        external/htslib/cram/sam_header.c
+        external/htslib/cram/string_alloc.c
+        external/htslib/os/rand.c
+        external/htslib/test/fieldarith.c
+        external/htslib/test/hfile.c
+        external/htslib/test/hts_endian.c
+        external/htslib/test/sam.c
+        external/htslib/test/test-bcf-sr.c
+        external/htslib/test/test-regidx.c
+        external/htslib/test/test-vcf-api.c
+        external/htslib/test/test-vcf-sweep.c
+        external/htslib/test/test_bgzf.c
+        external/htslib/test/test_view.c
+        external/htslib/test/thrash_threads1.c
+        external/htslib/test/thrash_threads2.c
+        external/htslib/test/thrash_threads3.c
+        external/htslib/test/thrash_threads4.c
+        external/htslib/test/thrash_threads5.c
+        external/htslib/test/thrash_threads6.c
+        external/htslib/bcf_sr_sort.c
+        external/htslib/bgzf.c
+        external/htslib/bgzip.c
+        external/htslib/errmod.c
+        external/htslib/faidx.c
+        external/htslib/hfile.c
+        external/htslib/hfile_gcs.c
+        external/htslib/hfile_libcurl.c
+        external/htslib/hfile_net.c
+        #external/htslib/hfile_s3.c
+        external/htslib/hts.c
+        external/htslib/htsfile.c
+        external/htslib/kfunc.c
+        external/htslib/knetfile.c
+        external/htslib/kstring.c
+        external/htslib/md5.c
+        external/htslib/multipart.c
+        #external/htslib/plugin.c
+        external/htslib/probaln.c
+        external/htslib/realn.c
+        external/htslib/regidx.c
+        external/htslib/sam.c
+        external/htslib/synced_bcf_reader.c
+        external/htslib/tabix.c
+        external/htslib/tbx.c
+        external/htslib/textutils.c
+        external/htslib/thread_pool.c
+        external/htslib/vcf.c
+        external/htslib/vcf_sweep.c
+        external/htslib/vcfutils.c
         )
 
 # Dependencies
@@ -121,14 +121,14 @@ include_directories(${HTSLIB_HEADERS})
 
 # HTSLIB configure
 add_custom_command(
-        OUTPUT "${PROJECT_SOURCE_DIR}/externalTools/htslib/config.h"
+        OUTPUT "${PROJECT_SOURCE_DIR}/external/htslib/config.h"
         COMMAND autoconf
         COMMAND autoheader
         COMMAND ./configure --disable-lzma --disable-s3 --disable-plugins --disable-bz2
         COMMAND make
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/externalTools/htslib/
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/external/htslib/
 )
-add_custom_target(HTSLIB_CONFIGURED DEPENDS "${PROJECT_SOURCE_DIR}/externalTools/htslib/config.h")
+add_custom_target(HTSLIB_CONFIGURED DEPENDS "${PROJECT_SOURCE_DIR}/external/htslib/config.h")
 add_library(htslib ${HTSLIB_SOURCES})
 add_dependencies(htslib HTSLIB_CONFIGURED)
 target_link_libraries(htslib pthread bz2 z curl)
@@ -154,7 +154,7 @@ set(SOURCES
         src/Miscellaneous.cpp
         src/Align.cpp
         src/AlignedSegment.cpp
-        src/CigarParser.cpp)   # !!!!!!!!!!!!!!!!! UNCOMMENT THIS TO SEE HOW HTSLIB IS BROKEN !!!!!!!!!!!!!!!
+        src/BamReader.cpp)
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})
@@ -269,8 +269,7 @@ add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
-# !!!!!!!!!!!!!  UNCOMMENT THIS TO SEE HOW HTSLIB IS BROKEN !!!!!!!!!!!!!!!!!!!!!!!
-set(FILENAME_PREFIX test_CigarParser)
+set(FILENAME_PREFIX test_BamReader)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

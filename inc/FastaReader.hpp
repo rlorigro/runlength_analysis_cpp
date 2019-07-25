@@ -24,15 +24,16 @@ struct sequence_element{
 
 class FastaReader{
 public:
-    // Attributes
+    /// Attributes ///
     path file_path;
     path index_path;
     char header_symbol;
     uint64_t line_index;
     bool end_of_file;
     map <string,uint64_t> read_indexes;
+    map <string,uint32_t> read_lengths;
 
-    // Methods
+    /// Methods ///
     FastaReader(path file_path);
 
     // Fetch header + sequence assuming read position precedes a header
@@ -52,8 +53,10 @@ public:
     void fetch_sequence(sequence_element& element, string& sequence_name, uint64_t fasta_byte_index);
 
 private:
+    /// Attributes ///
     ifstream fasta_file;
 
+    /// Methods ///
     // Assuming the read position of the ifstream is at a header, parse the header line
     void read_next_header(sequence_element& element);
 

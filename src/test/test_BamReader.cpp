@@ -1,4 +1,4 @@
-#include "FastaReader.hpp"
+#include "BamReader.hpp"
 #include <iostream>
 #include <experimental/filesystem>
 #include <assert.h>
@@ -15,4 +15,9 @@ int main() {
 
     cout << "TESTING " << absolute_data_path << "\n";
     cout << "FASTA ITERATION TEST: \n";
+
+    BamReader parser = BamReader(absolute_data_path);
+
+//    parser.initialize_region("synthetic_ref_0", 0, 1337);
+    parser.print_region("synthetic_ref_0", 0, 1337);
 }
