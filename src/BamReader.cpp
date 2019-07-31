@@ -68,74 +68,6 @@ void BamReader::initialize_region(string& ref_name, uint64_t start, uint64_t sto
 }
 
 
-//string BamReader::get_read_base(AlignedSegment& aligned_segment, int64_t read_start_index, int64_t i){
-//    ///
-//    /// Convert the compressed representation of an aligned sequence into a string
-//    ///
-//
-//    uint8_t byte;
-//    uint8_t base_code;
-//    string base;
-//
-//    // Fetch 4 bit base code from the correct 8 bit integer and convert to a char
-//    if (llabs(read_start_index - i) < aligned_segment.read_length){
-//        uint64_t sequence_index = i/2;
-//        byte = aligned_segment.read_sequence[sequence_index];
-//
-//        if (i%2 == 0){
-//            // Perform bit shift and decode using the standard or complemented base map
-//            base_code = byte >> BamReader::bam_sequence_shift;
-//            base = BamReader::bases[aligned_segment.reversal][base_code];
-//        }
-//        else {
-//            // Perform bit mask and decode using the standard or complemented base map
-//            base_code = byte & BamReader::bam_sequence_mask;
-//            base = BamReader::bases[aligned_segment.reversal][base_code];
-//        }
-//    }
-//    else{
-//        throw runtime_error("ERROR: read index out of bounds: " + aligned_segment.read_name + " " + to_string(i));
-//    }
-//    return base;
-//}
-
-
-//void BamReader::get_cigar(Cigar& cigar, AlignedSegment& aligned_segment, int64_t i){
-//    ///
-//    /// Decompress byte from BAM into the 2 components of a cigar operation: (code, length)
-//    ///
-//
-//    cigar.code = aligned_segment.cigar[i] & BamReader::bam_cigar_mask;
-//    cigar.length = aligned_segment.cigar[i] >> BamReader::bam_cigar_shift;
-//}
-
-
-//uint64_t BamReader::get_read_index_increment(Cigar& cigar){
-//    ///
-//    /// Determine whether a cigar operation should result in a step along the READ sequence
-//    ///
-//
-//    uint64_t increment = 0;
-//    if (BamReader::cigar_read_move[cigar.code]){
-//        increment = cigar.length;
-//    }
-//    return increment;
-//}
-//
-//
-//uint64_t BamReader::get_ref_index_increment(Cigar& cigar){
-//    ///
-//    /// Determine whether a cigar operation should result in a step along the REF sequence
-//    ///
-//
-//    uint64_t increment = 0;
-//    if (BamReader::cigar_ref_move[cigar.code]){
-//        increment = cigar.length;
-//    }
-//    return increment;
-//}
-
-
 void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header){
     ///
     /// Load data from shitty samtools structs into a cpp object
@@ -150,23 +82,6 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
     aligned_segment.n_cigar = alignment->core.n_cigar;
     aligned_segment.reversal = bam_is_rev(alignment);
 }
-
-
-//int64_t BamReader::infer_reference_stop_position_from_alignment(AlignedSegment& aligned_segment){
-//    ///
-//    /// Iterate the cigar of an alignment and find the reference stop position
-//    ///
-//
-//    Cigar cigar;
-//    int64_t ref_stop_position = aligned_segment.ref_start_index;
-//    for (int64_t i=0; i<aligned_segment.n_cigar; i++) {
-//        cigar = {};
-//        get_cigar(cigar, aligned_segment, i);
-//        ref_stop_position += get_ref_index_increment(cigar);
-//    }
-//
-//    return ref_stop_position - 1;
-//}
 
 
 bool BamReader::next_alignment(AlignedSegment& aligned_segment){

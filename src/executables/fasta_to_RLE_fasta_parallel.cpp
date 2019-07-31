@@ -1,9 +1,7 @@
 #include <iostream>
 #include <experimental/filesystem>
-#include <assert.h>
 #include <mutex>
 #include <thread>
-#include <utility>
 #include <atomic>
 #include <exception>
 #include "FastaReader.hpp"
