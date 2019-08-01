@@ -11,7 +11,8 @@ project(run_length_analysis VERSION 0.0.0)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_definitions(-ggdb3 -O0 -Wall)
+#add_definitions(-ggdb3 -O0 -Wall)      # No optimization + debugging
+add_definitions(-O3 -Wall)              # Optimization to the max!!
 
 # Definitions needed to eliminate runtime dependency
 # on the boost system library.

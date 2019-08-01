@@ -6,6 +6,7 @@
 #include <vector>
 #include <stdexcept>
 #include "boost/program_options.hpp"
+#include <boost/tokenizer.hpp>
 
 using std::cout;
 using std::string;
@@ -14,6 +15,19 @@ using std::runtime_error;
 using boost::program_options::options_description;
 using boost::program_options::value;
 using boost::program_options::variables_map;
+using Separator = boost::char_separator<char>;
+using Tokenizer = boost::tokenizer<Separator>;
+
+
+// Helper function
+void split_as_string(vector<string>& tokens, string& s, string& separators){
+    Separator separator(separators.c_str());
+    Tokenizer tok{s, separator};
+
+    for (string token: tok) {
+        tokens.push_back(token);
+    }
+}
 
 
 string join(vector <string> s, char delimiter){

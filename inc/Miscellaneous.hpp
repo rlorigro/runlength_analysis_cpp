@@ -11,6 +11,9 @@ using boost::program_options::options_description;
 using boost::program_options::value;
 using boost::program_options::variables_map;
 
+
+void split_as_string(vector<string>& tokens, string& s, string& separators);
+
 string join(vector <string> s, char delimiter);
 
 variables_map parse_arguments(int argc, char* argv[], options_description options);
