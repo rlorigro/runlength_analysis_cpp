@@ -16,7 +16,7 @@ public:
     /// Attributes ///
     int64_t ref_index;
     int64_t read_index;
-    int64_t raw_read_index;
+    int64_t read_true_index;
 };
 
 
@@ -55,7 +55,7 @@ public:
     static const array <string, 2> bases;
     static const array <bool, 10> cigar_ref_move;
     static const array <bool, 10> cigar_read_move;
-    static const array <bool, 10> cigar_raw_read_move;
+    static const array <bool, 10> cigar_true_read_move;
 
     // Each nt in the sequence is stored within a uint8 with 8 bits, XXXXYYYY, where XXXX is nt1 and YYYY is nt2
     static const uint8_t bam_sequence_shift = 4;
@@ -82,12 +82,14 @@ private:
     // Volatile. For tracking positions during read/ref iteration
     int64_t ref_iterator_start_index;
     int64_t read_iterator_start_index;
+    int64_t read_true_iterator_start_index;
     int64_t cigar_iterator_start;
     int8_t increment;
     int64_t ref_increment;
     int64_t read_increment;
     int64_t ref_index;
     int64_t read_index;
+    int64_t read_true_index;
     int64_t cigar_index;
     int64_t i_subcigar;
     Cigar current_cigar = Cigar(3);

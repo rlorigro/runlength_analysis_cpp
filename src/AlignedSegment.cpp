@@ -41,7 +41,7 @@ const array <bool, 10> AlignedSegment::cigar_read_move = {true,     //BAM_CMATCH
                                                            true,     //BAM_CDIFF       8
                                                            false};   //BAM_CBACK       9
 
-const array <bool, 10> AlignedSegment::cigar_raw_read_move = {true,     //BAM_CMATCH      0
+const array <bool, 10> AlignedSegment::cigar_true_read_move = {true,     //BAM_CMATCH      0
                                                               true,     //BAM_CINS        1
                                                               false,    //BAM_CDEL        2
                                                               false,    //BAM_CREF_SKIP   3
@@ -199,23 +199,28 @@ int64_t AlignedSegment::infer_reference_stop_position_from_alignment(){
 
 
 void AlignedSegment::initialize_cigar_iterator(){
-    this->read_iterator_start_index = 0;
     this->ref_iterator_start_index = this->ref_start_index - 1;     // SAMs are 1-based
+    this->read_iterator_start_index = 0;
+    this->read_true_iterator_start_index = 0;
     this->cigar_iterator_start = 0;
     this->increment = 1;
 
     // Index the sequence in its F direction (not alignment direction)
     if (this->reversal){
-        this->read_iterator_start_index = this->read_length - 1;
         this->ref_iterator_start_index = this->infer_reference_stop_position_from_alignment() - 1;
+        this->read_iterator_start_index = this->read_length - 1;
+        this->read_true_iterator_start_index = 0;
         this->cigar_iterator_start = this->n_cigar - 1;
         this->increment = -1;
     }
 
-    this->valid_iterator = true;
-    this->read_index = this->read_iterator_start_index;
+    // Initialize all the indexes
     this->ref_index = this->ref_iterator_start_index;
+    this->read_index = this->read_iterator_start_index;
+    this->read_true_index = this->read_true_iterator_start_index;
     this->cigar_index = this->cigar_iterator_start;
+
+    this->valid_iterator = true;
 }
 
 
@@ -240,11 +245,13 @@ bool AlignedSegment::next_cigar(){
 
 void AlignedSegment::increment_coordinate(Coordinate& coordinate, Cigar& cigar){
     coordinate.read_index = this->read_index;
+    coordinate.read_true_index = this->read_true_index;
     coordinate.ref_index = this->ref_index;
     cigar.length = this->current_cigar.length;
     cigar.code = this->current_cigar.code;
 
     this->read_index += AlignedSegment::cigar_read_move[current_cigar.code]*this->increment;
+    this->read_true_index += AlignedSegment::cigar_true_read_move[current_cigar.code];
     this->ref_index += AlignedSegment::cigar_ref_move[current_cigar.code]*this->increment;
     this->i_subcigar++;
 }

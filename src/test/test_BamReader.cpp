@@ -59,7 +59,6 @@ int main() {
 
         aligned_segment.initialize_cigar_iterator();
         while (aligned_segment.next_coordinate(coordinate, cigar)){
-//            cout << cigar.to_string() << " " << coordinate.ref_index << " " << coordinate.read_index << "\n";
             cigars += cigar.get_cigar_code_as_string();
 
             if (cigar.is_ref_move()){
@@ -71,7 +70,7 @@ int main() {
 
             if (cigar.is_read_move()){
                 read_alignment += aligned_segment.get_read_base(coordinate.read_index);
-                read_alignment_inferred += fasta_sequence.sequence[coordinate.read_index];
+                read_alignment_inferred += fasta_sequence.sequence[coordinate.read_true_index];
             }
             else{
                 read_alignment += "*";
