@@ -29,7 +29,7 @@ using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
 
 
-void runlength_encode(runlength_sequence_element& runlength_sequence, sequence_element& sequence){
+void runlength_encode(runlength_sequence_element& runlength_sequence, SequenceElement& sequence){
     // First just copy the name
     runlength_sequence.name = sequence.name;
 
@@ -54,7 +54,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
     n_jobs_running++;
 
     // Initialize containers
-    sequence_element sequence;
+    SequenceElement sequence;
     runlength_sequence_element runlength_sequence;
 
     // Fetch Fasta sequence
@@ -112,7 +112,6 @@ path fasta_to_RLE_fasta(path input_file_path, path output_dir, uint64_t max_thre
     uint64_t job_index = 0;
 
     vector<thread> threads;
-//    map<string,runlength_sequence_element&> runlength_sequences;
     mutex file_write_mutex;
 
     string read_name;

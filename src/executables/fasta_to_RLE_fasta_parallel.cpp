@@ -30,7 +30,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
     n_jobs_running++;
 
     // Initialize containers
-    sequence_element sequence;
+    SequenceElement sequence;
     runlength_sequence_element runlength_sequence;
 
     // Fetch Fasta sequence

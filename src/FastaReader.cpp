@@ -49,6 +49,7 @@ FastaReader::FastaReader(path file_path){
     }
 }
 
+
 map<string,uint64_t> FastaReader::get_index(){
     if (this->read_indexes.empty()){
         this->index();
@@ -57,12 +58,13 @@ map<string,uint64_t> FastaReader::get_index(){
     return this->read_indexes;
 }
 
+
 void FastaReader::set_index(map <string,uint64_t>& index){
     this->read_indexes = index;
 }
 
 
-void FastaReader::fetch_sequence(sequence_element& element, string& sequence_name){
+void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name){
     if (this->read_indexes.empty()){
         this->index();
     }
@@ -83,7 +85,7 @@ void FastaReader::fetch_sequence(sequence_element& element, string& sequence_nam
 }
 
 
-void FastaReader::fetch_sequence(sequence_element& element, string& sequence_name, uint64_t fasta_byte_index){
+void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index){
     // Fill in the "name" field of the sequence element
     element.name = sequence_name;
 
@@ -98,7 +100,6 @@ void FastaReader::fetch_sequence(sequence_element& element, string& sequence_nam
     // Fill in the "sequence" field of the sequence element
     this->read_next_sequence(element);
 }
-
 
 
 void FastaReader::index(){
@@ -144,7 +145,7 @@ void FastaReader::read_fasta_index(){
 
 
 // Fetch header which starts at current ifstream position
-void FastaReader::read_next_header(sequence_element& element){
+void FastaReader::read_next_header(SequenceElement& element){
     // Try fetching header line
     getline(this->fasta_file, element.name);
     this->line_index++;
@@ -166,10 +167,10 @@ void FastaReader::read_next_header(sequence_element& element){
 
 
 // Fetch sequence which starts at current ifstream position
-void FastaReader::read_next_sequence(sequence_element& element){
+void FastaReader::read_next_sequence(SequenceElement& element){
     // Make sure the element is empty before starting
     if (element.sequence.size() != 0){
-        throw runtime_error("Non-empty sequence element container provided to fasta reader");
+        element = {};
     }
 
     // Try fetching sequence line (of which there may be multiple)
@@ -197,8 +198,8 @@ void FastaReader::read_next_sequence(sequence_element& element){
 }
 
 
-// Read the next lines of the file and update the sequence_element object. If no lines exists, toggle this->file_end
-void FastaReader::next_element(sequence_element& element){
+// Read the next lines of the file and update the SequenceElement object. If no lines exists, toggle this->file_end
+void FastaReader::next_element(SequenceElement& element){
     this->read_next_header(element);
     this->read_next_sequence(element);
 }

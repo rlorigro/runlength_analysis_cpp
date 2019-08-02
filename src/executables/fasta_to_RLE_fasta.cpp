@@ -28,7 +28,7 @@ void fasta_to_RLE_fasta(path input_file_path, path output_dir) {
     FastaWriter fasta_writer(output_file_path);
 
     string line;
-    sequence_element element;
+    SequenceElement element;
     runlength_sequence_element runlength_element;
 
     while (!fasta_reader.end_of_file) {

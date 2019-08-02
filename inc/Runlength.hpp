@@ -13,7 +13,7 @@ struct runlength_sequence_element{
     vector<uint16_t> lengths;
 };
 
-void runlength_encode(runlength_sequence_element& runlength_sequence, sequence_element& sequence);
+void runlength_encode(runlength_sequence_element& runlength_sequence, SequenceElement& sequence);
 
 
 #endif //RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP

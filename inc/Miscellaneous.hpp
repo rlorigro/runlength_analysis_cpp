@@ -11,6 +11,7 @@ using boost::program_options::options_description;
 using boost::program_options::value;
 using boost::program_options::variables_map;
 
+void run_command(string& argument_string);
 
 void split_as_string(vector<string>& tokens, string& s, string& separators);
 

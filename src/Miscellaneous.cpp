@@ -19,6 +19,15 @@ using Separator = boost::char_separator<char>;
 using Tokenizer = boost::tokenizer<Separator>;
 
 
+void run_command(string& argument_string){
+    int exit_code = system(argument_string.c_str());
+
+    if (exit_code != 0){
+        throw runtime_error("ERROR: command failed to run: " + argument_string);
+    }
+}
+
+
 // Helper function
 void split_as_string(vector<string>& tokens, string& s, string& separators){
     Separator separator(separators.c_str());

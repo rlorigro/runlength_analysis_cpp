@@ -46,7 +46,7 @@ int main() {
     }
 
     string line;
-    sequence_element element;
+    SequenceElement element;
     runlength_sequence_element runlength_element;
 
     while (!fasta_reader.end_of_file) {

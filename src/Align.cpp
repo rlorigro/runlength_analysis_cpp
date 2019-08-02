@@ -1,9 +1,7 @@
 #include <string>
 #include <vector>
-#include <cstdio>
 #include <algorithm>
 #include <iostream>
-#include <stdexcept>
 #include <experimental/filesystem>
 #include "Miscellaneous.hpp"
 
@@ -63,7 +61,7 @@ path minimap_align(path ref_sequence_path,
     string argument_string = join(arguments, ' ');
     cout << "\nRUNNING: " << argument_string << "\n";
 
-    system(argument_string.c_str());
+    run_command(argument_string);
 
     return output_path.string();
 }
@@ -85,7 +83,7 @@ path samtools_sort(path input_path, uint16_t max_threads){
     string argument_string = join(arguments, ' ');
     cout << "\nRUNNING: " << argument_string << "\n";
 
-    system(argument_string.c_str());
+    run_command(argument_string);
 
     return output_path.string();
 }
@@ -103,7 +101,7 @@ path samtools_index(path input_path, uint16_t max_threads){
     string argument_string = join(arguments, ' ');
     cout << "\nRUNNING: " << argument_string << "\n";
 
-    system(argument_string.c_str());
+    run_command(argument_string);
 
     return output_path.string();
 }

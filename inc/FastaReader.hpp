@@ -16,7 +16,8 @@ using std::ifstream;
 using std::experimental::filesystem::path;
 
 
-struct sequence_element{
+class SequenceElement{
+public:
     string name;
     string sequence;
 };
@@ -37,7 +38,7 @@ public:
     FastaReader(path file_path);
 
     // Fetch header + sequence assuming read position precedes a header
-    void next_element(sequence_element& element);
+    void next_element(SequenceElement& element);
 
     // Generate index if needed, otherwise load index
     void index();
@@ -49,8 +50,8 @@ public:
     void set_index(map <string,uint64_t>& read_indexes);
 
     // Fetch a sequence from file, and generate index first if necessary
-    void fetch_sequence(sequence_element& element, string& sequence_name);
-    void fetch_sequence(sequence_element& element, string& sequence_name, uint64_t fasta_byte_index);
+    void fetch_sequence(SequenceElement& element, string& sequence_name);
+    void fetch_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index);
 
 private:
     /// Attributes ///
@@ -58,11 +59,11 @@ private:
 
     /// Methods ///
     // Assuming the read position of the ifstream is at a header, parse the header line
-    void read_next_header(sequence_element& element);
+    void read_next_header(SequenceElement& element);
 
     // Assuming the read position of the ifstream is at a sequence, parse the sequence line(s),
     // which precede the next header
-    void read_next_sequence(sequence_element& element);
+    void read_next_sequence(SequenceElement& element);
 
     // Use htslib to make an .fai
     void build_fasta_index();

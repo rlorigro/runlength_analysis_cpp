@@ -17,7 +17,7 @@ int main(){
     cout << "WRITING: " << absolute_output_path << "\n";
 
     FastaWriter fasta_writer(absolute_output_path);
-    sequence_element element;
+    SequenceElement element;
 
     element = {.name="test1", .sequence="ACCAAACCCC"};
     fasta_writer.write(element);

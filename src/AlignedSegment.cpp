@@ -1,12 +1,8 @@
-
 #include "AlignedSegment.hpp"
 #include "htslib/hts.h"
-#include <iostream>
 #include <string>
 #include <stdexcept>
 
-
-using std::cout;
 using std::string;
 using std::runtime_error;
 
@@ -24,26 +20,37 @@ const array <string,10> Cigar::cigar_key = {"M",    // 0 BAM_CMATCH
 const array <string, 2> AlignedSegment::bases = {"=ACMGRSVTWYHKDBN", "=TGKCYSBAWRDKHVN"};
 
 const array <bool, 10> AlignedSegment::cigar_ref_move = {true,      //BAM_CMATCH      0
-                                                      false,     //BAM_CINS        1
-                                                      true,      //BAM_CDEL        2
-                                                      true,      //BAM_CREF_SKIP   3
-                                                      false,     //BAM_CSOFT_CLIP  4
-                                                      false,     //BAM_CHARD_CLIP  5
-                                                      false,     //BAM_CPAD        6
-                                                      true,      //BAM_CEQUAL      7
-                                                      true,      //BAM_CDIFF       8
-                                                      false};    //BAM_CBACK       9
+                                                          false,     //BAM_CINS        1
+                                                          true,      //BAM_CDEL        2
+                                                          true,      //BAM_CREF_SKIP   3
+                                                          false,     //BAM_CSOFT_CLIP  4
+                                                          false,     //BAM_CHARD_CLIP  5
+                                                          false,     //BAM_CPAD        6
+                                                          true,      //BAM_CEQUAL      7
+                                                          true,      //BAM_CDIFF       8
+                                                          false};    //BAM_CBACK       9
 
 const array <bool, 10> AlignedSegment::cigar_read_move = {true,     //BAM_CMATCH      0
-                                                       true,     //BAM_CINS        1
-                                                       false,    //BAM_CDEL        2
-                                                       false,    //BAM_CREF_SKIP   3
-                                                       true,     //BAM_CSOFT_CLIP  4
-                                                       false,    //BAM_CHARD_CLIP  5
-                                                       false,    //BAM_CPAD        6
-                                                       true,     //BAM_CEQUAL      7
-                                                       true,     //BAM_CDIFF       8
-                                                       false};   //BAM_CBACK       9
+                                                           true,     //BAM_CINS        1
+                                                           false,    //BAM_CDEL        2
+                                                           false,    //BAM_CREF_SKIP   3
+                                                           true,     //BAM_CSOFT_CLIP  4
+                                                           false,    //BAM_CHARD_CLIP  5
+                                                           false,    //BAM_CPAD        6
+                                                           true,     //BAM_CEQUAL      7
+                                                           true,     //BAM_CDIFF       8
+                                                           false};   //BAM_CBACK       9
+
+const array <bool, 10> AlignedSegment::cigar_raw_read_move = {true,     //BAM_CMATCH      0
+                                                              true,     //BAM_CINS        1
+                                                              false,    //BAM_CDEL        2
+                                                              false,    //BAM_CREF_SKIP   3
+                                                              true,     //BAM_CSOFT_CLIP  4
+                                                              true,     //BAM_CHARD_CLIP  5 - in the raw sequence no bases are lost in alignment
+                                                              false,    //BAM_CPAD        6
+                                                              true,     //BAM_CEQUAL      7
+                                                              true,     //BAM_CDIFF       8
+                                                              false};   //BAM_CBACK       9
 
 
 Cigar::Cigar(uint32_t bytes){
@@ -231,7 +238,7 @@ bool AlignedSegment::next_cigar(){
 }
 
 
-void AlignedSegment::increment_coordinate_pair(Coordinate& coordinate, Cigar& cigar){
+void AlignedSegment::increment_coordinate(Coordinate& coordinate, Cigar& cigar){
     coordinate.read_index = this->read_index;
     coordinate.ref_index = this->ref_index;
     cigar.length = this->current_cigar.length;
@@ -242,7 +249,8 @@ void AlignedSegment::increment_coordinate_pair(Coordinate& coordinate, Cigar& ci
     this->i_subcigar++;
 }
 
-bool AlignedSegment::next_coordinate_pair(Coordinate& coordinate, Cigar& cigar){
+
+bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar){
     ///
     /// Iterate the entire alignment step wise for each each l in L where L = sum(cigar.length) for all cigars
     ///
@@ -261,7 +269,7 @@ bool AlignedSegment::next_coordinate_pair(Coordinate& coordinate, Cigar& cigar){
         // If there is another cigar, load it and increment iterators
         if (this->next_cigar()){
             this->i_subcigar = 0;
-            this->increment_coordinate_pair(coordinate, cigar);
+            this->increment_coordinate(coordinate, cigar);
         }
         // If no next cigar, return false
         else {
@@ -271,7 +279,7 @@ bool AlignedSegment::next_coordinate_pair(Coordinate& coordinate, Cigar& cigar){
 
     // In the middle of a cigar operation
     else if (this->i_subcigar < (int64_t)this->current_cigar.length){
-        this->increment_coordinate_pair(coordinate, cigar);
+        this->increment_coordinate(coordinate, cigar);
     }
 
     return this->valid_iterator;

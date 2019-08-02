@@ -20,7 +20,7 @@ int main(){
     FastaReader fasta_reader(absolute_data_path);
 
     string line;
-    sequence_element element;
+    SequenceElement element;
 
     size_t sequence_index = 0;
     while (!fasta_reader.end_of_file) {
