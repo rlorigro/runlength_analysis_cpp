@@ -7,13 +7,14 @@
 using std::vector;
 
 
-struct runlength_sequence_element{
+class RunlengthSequenceElement{
+public:
     string name;
     string sequence;
     vector<uint16_t> lengths;
 };
 
-void runlength_encode(runlength_sequence_element& runlength_sequence, SequenceElement& sequence);
+void runlength_encode(RunlengthSequenceElement& runlength_sequence, SequenceElement& sequence);
 
 
 #endif //RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP

@@ -1,6 +1,6 @@
 #ifndef RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
 #define RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
-#include <map>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <string>
@@ -8,7 +8,7 @@
 #include <fstream>
 #include <experimental/filesystem>
 
-using std::map;
+using std::unordered_map;
 using std::pair;
 using std::vector;
 using std::string;
@@ -31,8 +31,8 @@ public:
     char header_symbol;
     uint64_t line_index;
     bool end_of_file;
-    map <string,uint64_t> read_indexes;
-    map <string,uint32_t> read_lengths;
+    unordered_map <string,uint64_t> read_indexes;
+    unordered_map <string,uint32_t> read_lengths;
 
     /// Methods ///
     FastaReader(path file_path);
@@ -44,10 +44,10 @@ public:
     void index();
 
     // Return a copy of the read indexes
-    map <string,uint64_t> get_index();
+    unordered_map <string,uint64_t> get_index();
 
     // Set the read_indexes attribute manually
-    void set_index(map <string,uint64_t>& read_indexes);
+    void set_index(unordered_map <string,uint64_t>& read_indexes);
 
     // Fetch a sequence from file, and generate index first if necessary
     void fetch_sequence(SequenceElement& element, string& sequence_name);

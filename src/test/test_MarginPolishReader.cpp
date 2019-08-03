@@ -20,7 +20,7 @@ int main(){
     MarginPolishSegment segment;
 
     reader.index();
-    map<string,path> read_paths = reader.get_index();
+    unordered_map<string,path> read_paths = reader.get_index();
     string name;
 
     vector<MarginPolishSegment> segments;

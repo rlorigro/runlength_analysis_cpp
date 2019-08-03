@@ -31,7 +31,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
 
     // Initialize containers
     SequenceElement sequence;
-    runlength_sequence_element runlength_sequence;
+    RunlengthSequenceElement runlength_sequence;
 
     // Fetch Fasta sequence
     FastaReader fasta_reader = FastaReader(fasta_path);
@@ -52,7 +52,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
 }
 
 
-void get_key_vector_from_map(vector<string>& keys, map <string, uint64_t>& map_object){
+void get_key_vector_from_map(vector<string>& keys, unordered_map<string, uint64_t>& map_object){
     for (auto& element: map_object){
         keys.push_back(element.first);
     }

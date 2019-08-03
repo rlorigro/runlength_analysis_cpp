@@ -47,7 +47,7 @@ int main() {
 
     string line;
     SequenceElement element;
-    runlength_sequence_element runlength_element;
+    RunlengthSequenceElement runlength_element;
 
     while (!fasta_reader.end_of_file) {
         // Initialize empty containers

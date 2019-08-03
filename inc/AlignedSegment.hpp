@@ -6,17 +6,21 @@
 #include "htslib/bgzf.h"
 #include <string>
 #include <array>
+#include <set>
+#include <unordered_map>
 
 using std::string;
 using std::array;
+using std::set;
+using std::unordered_map;
 
 
 class Coordinate {
 public:
     /// Attributes ///
-    int64_t ref_index;
-    int64_t read_index;
-    int64_t read_true_index;
+    int64_t ref_index;          // Index of full reference sequence
+    int64_t read_index;         // Index of aligned (possibly clipped) SAM sequence
+    int64_t read_true_index;    // Index of true unaligned fasta sequence
 };
 
 
@@ -25,7 +29,8 @@ public:
     /// Attributes ///
     uint64_t length;
     uint8_t code;
-    static const array <string,10> cigar_key;
+    static const array <string,10> cigar_name_key;
+    static const unordered_map<string,uint8_t> cigar_code_key;
 
     /// Methods ///
     Cigar(uint32_t bytes = 0b00000011);
@@ -66,14 +71,16 @@ public:
     /// Methods ///
     string to_string();
     void initialize_cigar_iterator();
-    void get_cigar(Cigar& cigar, int64_t i);
     string get_read_base(int64_t i);
     uint64_t get_ref_index_increment(Cigar& cigar);
     uint64_t get_read_index_increment(Cigar& cigar);
     int64_t infer_reference_stop_position_from_alignment();
     bool next_cigar();
     bool next_coordinate(Coordinate& coordinate, Cigar& cigar);
-    void increment_coordinate(Coordinate& coordinate, Cigar& cigar);
+    bool next_coordinate(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes);
+    void update_containers(Coordinate& coordinate, Cigar& cigar);
+    void increment_coordinate(Coordinate& coordinate, Cigar& cigar, uint64_t length=1);
+    void find_next_valid_cigar(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes);
 
 
 private:

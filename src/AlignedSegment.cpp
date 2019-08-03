@@ -2,12 +2,18 @@
 #include "htslib/hts.h"
 #include <string>
 #include <stdexcept>
+#include <unordered_map>
+#include <set>
+#include <iostream>
 
+using std::cout;
 using std::string;
 using std::runtime_error;
+using std::unordered_map;
+using std::set;
 
 
-const array <string,10> Cigar::cigar_key = {"M",    // 0 BAM_CMATCH
+const array <string,10> Cigar::cigar_name_key = {"M",    // 0 BAM_CMATCH
                                             "I",    // 1 BAM_CINS
                                             "D",    // 2 BAM_CDEL
                                             "N",    // 3 BAM_CREF_SKIP
@@ -15,7 +21,17 @@ const array <string,10> Cigar::cigar_key = {"M",    // 0 BAM_CMATCH
                                             "H",    // 5 BAM_CHARD_CLIP
                                             "P",    // 6 BAM_CPAD
                                             "=",    // 7 BAM_CEQUAL
-                                            "X"};   // 8 BAM_CDIFF
+                                            "X"};   // 8 BAM_CDIF
+
+const unordered_map<string,uint8_t> Cigar::cigar_code_key = {{"M", 0},
+                                                             {"I", 1},
+                                                             {"D", 2},
+                                                             {"N", 3},
+                                                             {"S", 4},
+                                                             {"H", 5},
+                                                             {"P", 6},
+                                                             {"=", 7},
+                                                             {"X", 8}};
 
 const array <string, 2> AlignedSegment::bases = {"=ACMGRSVTWYHKDBN", "=TGKCYSBAWRDKHVN"};
 
@@ -69,7 +85,7 @@ Cigar::Cigar(uint8_t cigar_code, uint64_t cigar_length){
 
 
 string Cigar::get_cigar_code_as_string(){
-    return Cigar::cigar_key[this->code];
+    return Cigar::cigar_name_key.at(this->code);
 }
 
 
@@ -95,7 +111,7 @@ bool Cigar::is_read_move(){
 
 
 string Cigar::to_string() {
-    return "(" + Cigar::cigar_key[this->code] + "," + std::to_string(this->length) + ")";
+    return "(" + Cigar::cigar_name_key.at(this->code) + "," + std::to_string(this->length) + ")";
 }
 
 
@@ -171,16 +187,6 @@ string AlignedSegment::get_read_base(int64_t i){
 }
 
 
-//void AlignedSegment::get_cigar(Cigar& cigar, int64_t i){
-//    ///
-//    /// Decompress byte from BAM into the 2 components of a cigar operation: (code, length)
-//    ///
-//
-//    cigar.code = this->cigars[i] & BamReader::bam_cigar_mask;
-//    cigar.length = this->cigars[i] >> BamReader::bam_cigar_shift;
-//}
-
-
 int64_t AlignedSegment::infer_reference_stop_position_from_alignment(){
     ///
     /// Iterate the cigar of an alignment and find the reference stop position
@@ -221,6 +227,7 @@ void AlignedSegment::initialize_cigar_iterator(){
     this->cigar_index = this->cigar_iterator_start;
 
     this->valid_iterator = true;
+    this->i_subcigar = 0;
 }
 
 
@@ -239,21 +246,35 @@ bool AlignedSegment::next_cigar(){
         valid = true;
     }
 
+    this->i_subcigar = 0;
     return valid;
 }
 
 
-void AlignedSegment::increment_coordinate(Coordinate& coordinate, Cigar& cigar){
+void AlignedSegment::update_containers(Coordinate& coordinate, Cigar& cigar){
     coordinate.read_index = this->read_index;
     coordinate.read_true_index = this->read_true_index;
     coordinate.ref_index = this->ref_index;
     cigar.length = this->current_cigar.length;
     cigar.code = this->current_cigar.code;
+}
 
-    this->read_index += AlignedSegment::cigar_read_move[current_cigar.code]*this->increment;
-    this->read_true_index += AlignedSegment::cigar_true_read_move[current_cigar.code];
-    this->ref_index += AlignedSegment::cigar_ref_move[current_cigar.code]*this->increment;
-    this->i_subcigar++;
+
+void AlignedSegment::increment_coordinate(Coordinate& coordinate, Cigar& cigar, uint64_t length){
+    ///
+    /// Walk along the alignment in the direction of the read, tracking ref/read indexes
+    ///
+    // SAM sequence may be reversed
+    this->read_index += AlignedSegment::cigar_read_move[current_cigar.code]*this->increment*length;
+
+    // True sequence always walks forward
+    this->read_true_index += AlignedSegment::cigar_true_read_move[current_cigar.code]*length;
+
+    // Ref sequence may be reversed to match read direction
+    this->ref_index += AlignedSegment::cigar_ref_move[current_cigar.code]*this->increment*length;
+
+    // Increment the intra-cigar iterator
+    this->i_subcigar += length;
 }
 
 
@@ -269,13 +290,11 @@ bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar){
                             "\tAlignedSegment must be initialized with `initialize_cigar_iterator()` before iterating");
     }
 
-//    cout << cigar.to_string() << " " << this->n_cigar << " " << this->cigar_index <<  " " << this->i_subcigar << "\n";
-
     // Finished a cigar operation on last iteration
     if (this->i_subcigar == (int64_t)this->current_cigar.length) {
         // If there is another cigar, load it and increment iterators
         if (this->next_cigar()){
-            this->i_subcigar = 0;
+            this->update_containers(coordinate, cigar);
             this->increment_coordinate(coordinate, cigar);
         }
         // If no next cigar, return false
@@ -286,6 +305,70 @@ bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar){
 
     // In the middle of a cigar operation
     else if (this->i_subcigar < (int64_t)this->current_cigar.length){
+        this->update_containers(coordinate, cigar);
+        this->increment_coordinate(coordinate, cigar);
+    }
+
+    return this->valid_iterator;
+}
+
+
+void AlignedSegment::find_next_valid_cigar(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes){
+    ///
+    /// Jump forward through alignment until a valid cigar operation is found
+    ///
+//    cout << !(target_cigar_codes.find(cigar.code) == target_cigar_codes.end()) << " " << this->valid_iterator << " " << cigar.to_string() << "\n" << std::flush;
+
+    // Walk through cigars until a valid one is found
+    while ((target_cigar_codes.find(cigar.code) == target_cigar_codes.end()) and this->valid_iterator){
+        // Increment by the length of the cigar
+        this->increment_coordinate(coordinate, cigar, cigar.length);
+
+        cout << "CURRENT CIGAR INVALID: " << this->current_cigar.to_string();
+
+        // Load next cigar if it exists
+        if (this->next_cigar()) {
+            cigar = this->current_cigar;
+            cout << " LOADING NEXT: " << this->current_cigar.to_string() << "\n" << std::flush;
+        }
+        else{
+            this->valid_iterator = false;
+        }
+    }
+}
+
+
+bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes){
+    ///
+    /// Iterate the entire alignment step wise for each each l in L where L = sum(cigar.length) for all cigars
+    ///
+    coordinate = {};
+    cigar = {};
+
+    if (not this->valid_iterator){
+        throw runtime_error("ERROR: AlignedSegment uninitialized or out of bounds.\n"
+                            "\tAlignedSegment must be initialized with `initialize_cigar_iterator()` before iterating");
+    }
+
+    this->find_next_valid_cigar(coordinate, this->current_cigar, target_cigar_codes);
+
+    cout << this->i_subcigar << " " << this->current_cigar.length << " " << this->ref_index << " " << this->read_index << "\n" << std::flush;
+
+    // Finished a cigar operation on last iteration
+    if (this->i_subcigar == (int64_t)this->current_cigar.length) {
+        if (this->next_cigar()){
+            this->update_containers(coordinate, cigar);
+            this->increment_coordinate(coordinate, cigar);
+        }
+        // If no next cigar, return false
+        else {
+            this->valid_iterator = false;
+        }
+    }
+
+    // In the middle of a cigar operation
+    else if (this->i_subcigar < (int64_t) this->current_cigar.length) {
+        this->update_containers(coordinate, cigar);
         this->increment_coordinate(coordinate, cigar);
     }
 

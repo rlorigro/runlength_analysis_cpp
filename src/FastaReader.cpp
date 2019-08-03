@@ -1,16 +1,19 @@
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <exception>
 #include <experimental/filesystem>
 #include "htslib/hts.h"
 #include "htslib/faidx.h"
 #include "boost/algorithm/string.hpp"
 #include "FastaReader.hpp"
 
-using std::map;
+using std::unordered_map;
+using std::runtime_error;
+using std::out_of_range;
 using std::string;
 using std::vector;
 using std::to_string;
@@ -50,7 +53,7 @@ FastaReader::FastaReader(path file_path){
 }
 
 
-map<string,uint64_t> FastaReader::get_index(){
+unordered_map<string,uint64_t> FastaReader::get_index(){
     if (this->read_indexes.empty()){
         this->index();
     }
@@ -59,7 +62,7 @@ map<string,uint64_t> FastaReader::get_index(){
 }
 
 
-void FastaReader::set_index(map <string,uint64_t>& index){
+void FastaReader::set_index(unordered_map <string,uint64_t>& index){
     this->read_indexes = index;
 }
 
@@ -77,8 +80,13 @@ void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name
         this->fasta_file.clear();
     }
 
-    // Set ifstream cursor to the start of this read's sequence
-    this->fasta_file.seekg(this->read_indexes[sequence_name]);
+    try {
+        // Set ifstream cursor to the start of this read's sequence
+        this->fasta_file.seekg(this->read_indexes.at(sequence_name));
+    }
+    catch(std::out_of_range& e){
+        throw out_of_range("ERROR: sequence not found in fasta index: " + sequence_name);
+    }
 
     // Fill in the "sequence" field of the sequence element
     this->read_next_sequence(element);

@@ -17,6 +17,9 @@ using std::experimental::filesystem::path;
 
 
 CoverageElement::CoverageElement(string base, uint16_t length, bool reversal, double weight){
+    ///
+    /// The lowest level object which represents one read's worth of observed alignment data at one position
+    ///
     this->base = base;
     this->length = length;
     this->reversal = reversal;
@@ -49,7 +52,11 @@ void MarginPolishSegment::print(){
     }
 }
 
+
 void MarginPolishReader::index(){
+    ///
+    /// Load all the filenames of the tsv
+    ///
     path filename_prefix;
     string read_name;
 
@@ -64,12 +71,15 @@ void MarginPolishReader::index(){
 }
 
 
-map<string,path> MarginPolishReader::get_index(){
+unordered_map<string,path> MarginPolishReader::get_index(){
     return this->file_paths;
 }
 
 
 bool MarginPolishReader::parse_reversal_string(string reversal_string){
+    ///
+    /// Interpret string encoding of read alignment direction as a bool
+    ///
     bool reversal;
     if (reversal_string == "+"){
         reversal = true;
@@ -85,6 +95,9 @@ bool MarginPolishReader::parse_reversal_string(string reversal_string){
 
 
 void MarginPolishReader::parse_coverage_string(MarginPolishSegment& mp_segment, string& line){
+    ///
+    /// Read a line of the MarginPolish runlength TSV and converts it to a vector of CoverageElements
+    ///
     // Append consensus base to MarginPolish segment
     mp_segment.sequence += line[2];
 
@@ -147,6 +160,9 @@ void MarginPolishReader::parse_coverage_string(MarginPolishSegment& mp_segment, 
 
 
 void MarginPolishReader::read_file(MarginPolishSegment& mp_segment, path& file_path){
+    ///
+    /// Iterate all the lines in a marginpolish runlength output file (TSV)
+    ///
     // Clear the container
     mp_segment = {};
 
@@ -172,10 +188,13 @@ void MarginPolishReader::read_file(MarginPolishSegment& mp_segment, path& file_p
 
 
 void MarginPolishReader::fetch_read(MarginPolishSegment& mp_segment, string& read_name){
+    ///
+    /// Fetch a read by its read name, which is derived from its filename
+    ///
     if (this->file_paths.empty()){
         this->index();
     }
 
-    path file_path = this->file_paths[read_name];
+    path file_path = this->file_paths.at(read_name);
     this->read_file(mp_segment, file_path);
 }

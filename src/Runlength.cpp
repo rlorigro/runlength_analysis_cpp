@@ -1,16 +1,15 @@
-#include <thread>
-#include <vector>
-#include <string>
-#include <iostream>
-#include "Runlength.hpp"
-#include <experimental/filesystem>
-#include <mutex>
-#include <thread>
-#include <atomic>
-#include <exception>
+#include "MarginPolishReader.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
 #include "Runlength.hpp"
+#include <vector>
+#include <thread>
+#include <string>
+#include <iostream>
+#include <mutex>
+#include <exception>
+#include <atomic>
+#include <experimental/filesystem>
 
 using std::vector;
 using std::string;
@@ -29,7 +28,7 @@ using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
 
 
-void runlength_encode(runlength_sequence_element& runlength_sequence, SequenceElement& sequence){
+void runlength_encode(RunlengthSequenceElement& runlength_sequence, SequenceElement& sequence){
     // First just copy the name
     runlength_sequence.name = sequence.name;
 
@@ -55,7 +54,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
 
     // Initialize containers
     SequenceElement sequence;
-    runlength_sequence_element runlength_sequence;
+    RunlengthSequenceElement runlength_sequence;
 
     // Fetch Fasta sequence
     FastaReader fasta_reader = FastaReader(fasta_path);
@@ -76,7 +75,7 @@ void runlength_encode_sequence_to_file(path& fasta_path, uint64_t read_index, st
 }
 
 
-void get_key_vector_from_map(vector<string>& keys, map <string, uint64_t>& map_object){
+void get_key_vector_from_map(vector<string>& keys, unordered_map<string, uint64_t>& map_object){
     for (auto& element: map_object){
         keys.push_back(element.first);
     }
@@ -122,7 +121,7 @@ path fasta_to_RLE_fasta(path input_file_path, path output_dir, uint64_t max_thre
         if (n_jobs_running < max_threads) {
             // Get data to send to threads (must not be sent by reference, or will lead to concurrency issues)
             read_name = read_names[job_index];
-            read_index = read_indexes[read_name];
+            read_index = read_indexes.at(read_name);
             job_index++;
 
             try {
@@ -149,4 +148,15 @@ path fasta_to_RLE_fasta(path input_file_path, path output_dir, uint64_t max_thre
     cerr << "\n" << flush;
 
     return output_file_path;
+}
+
+
+void measure_runlength_distribution_from_marginpolish(path marginpolish_directory, path reference_fasta_path){
+    MarginPolishReader mp_reader = MarginPolishReader(marginpolish_directory);
+    FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
+
+    SequenceElement ref_sequence;
+    RunlengthSequenceElement ref_sequence_rle;   // "RLE" = Run-length encoded
+
+
 }

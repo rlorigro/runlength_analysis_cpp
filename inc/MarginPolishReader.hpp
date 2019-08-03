@@ -1,14 +1,14 @@
 #ifndef RUNLENGTH_ANALYSIS_MARGINPOLISHREADER_HPP
 #define RUNLENGTH_ANALYSIS_MARGINPOLISHREADER_HPP
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <experimental/filesystem>
 
-using std::map;
+using std::unordered_map;
 using std::vector;
 using std::string;
 using std::ifstream;
@@ -47,7 +47,7 @@ class MarginPolishReader{
 public:
     /// Attributes ///
     path directory_path;
-    map<string,path> file_paths;
+    unordered_map<string,path> file_paths;
 
     /// Methods ///
     MarginPolishReader(path directory_path);
@@ -56,7 +56,7 @@ public:
     void index();
 
     // Return a copy of the read indexes
-    map<string,path> get_index();
+    unordered_map<string,path> get_index();
 
     void read_file(MarginPolishSegment& mp_segment, path& file_path);
     void fetch_read(MarginPolishSegment& mp_segment, string& read_name);
