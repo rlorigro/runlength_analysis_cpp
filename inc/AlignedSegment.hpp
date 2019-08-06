@@ -6,12 +6,12 @@
 #include "htslib/bgzf.h"
 #include <string>
 #include <array>
-#include <set>
+#include <unordered_set>
 #include <unordered_map>
 
 using std::string;
 using std::array;
-using std::set;
+using std::unordered_set;
 using std::unordered_map;
 
 
@@ -75,12 +75,14 @@ public:
     uint64_t get_ref_index_increment(Cigar& cigar);
     uint64_t get_read_index_increment(Cigar& cigar);
     int64_t infer_reference_stop_position_from_alignment();
+    bool next_cigar_in_bounds();
+    bool current_cigar_in_bounds();
     bool next_cigar();
+    bool next_valid_cigar(Coordinate& coordinate, Cigar& cigar, unordered_set<uint8_t>& target_cigar_codes);
     bool next_coordinate(Coordinate& coordinate, Cigar& cigar);
-    bool next_coordinate(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes);
+    bool next_coordinate(Coordinate& coordinate, Cigar& cigar, unordered_set<uint8_t>& target_cigar_codes);
     void update_containers(Coordinate& coordinate, Cigar& cigar);
     void increment_coordinate(Coordinate& coordinate, Cigar& cigar, uint64_t length=1);
-    void find_next_valid_cigar(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes);
 
 
 private:
@@ -98,9 +100,9 @@ private:
     int64_t read_index;
     int64_t read_true_index;
     int64_t cigar_index;
-    int64_t i_subcigar;
+    int64_t subcigar_index;
     Cigar current_cigar = Cigar(3);
-    bool valid_iterator;
+//    bool valid_iterator;
 
     /// Methods ///
 

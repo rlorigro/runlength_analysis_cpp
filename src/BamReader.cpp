@@ -2,18 +2,11 @@
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 #include <string>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
-#include <array>
-#include <iostream>
 #include <stdexcept>
 #include <experimental/filesystem>
 
 using std::string;
 using std::to_string;
-using std::cout;
 using std::vector;
 using std::array;
 using std::runtime_error;
@@ -81,6 +74,8 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
     aligned_segment.cigars = bam_get_cigar(alignment);
     aligned_segment.n_cigar = alignment->core.n_cigar;
     aligned_segment.reversal = bam_is_rev(alignment);
+
+    aligned_segment.initialize_cigar_iterator();
 }
 
 
@@ -106,83 +101,3 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment){
     return this->valid_region;
 }
 
-
-//void BamReader::print_region(string ref_name, uint64_t ref_start, uint64_t ref_stop){
-//    ///
-//    /// Iterate all the alignments within a region and print their aligned cigar subsegments
-//    ///
-//
-//    // Initialize indexes/pointers
-//    this->initialize_region(ref_name, ref_start, ref_stop);
-//
-//    // For tracking the position of the read/ref
-//    int64_t ref_start_index;
-//    int64_t read_start_index;
-//    int64_t cigar_start;
-//    int8_t increment;
-//    int64_t ref_increment;
-//    int64_t read_increment;
-//    int64_t ref_index;
-//    int64_t read_index;
-//
-//    string ref_sequence = "ACCTTGCGATGCTAGCATAGCATGGCTCATGAATGCGATCCGATTGCAGTCCGAATGCATTGCTACGCAGTGCATAGGCTAGCTCAGACTGCTAGCTAGGCTACTAGCATGCCTAGTCAGTGACTAGCCTAGCGTTAGTCGATCATATCAGCGTACTCATCGATGCAGCACATGCATGCTATGTCTAGTACTACGGTACGATTATTCGATTCGCCGATGATCTAGCATGCGTACTGCTAGATGCTATGCATGCGTATGATATCTGATGCATGTCAGTTATGCATATTCGATATGTACTAGTTGCAGTCATGTGCATTATGCAGCTATTATTACGCTGAGTGCATAGCATGTCTGTCGCTAGCTAGATCGTAGCATGATCAGCATCATTCATGCATTCGTAGCATGCTAATGTCATTATAGCTATCGGCATTATCAGTAGCATCTAGCATAGATCTCAGTACGTAGTATCTATCAGTCAGTAGCTAGTCGATACGTATCGTTGCATATGCTACGATGATGCTATGCATGGCAATGCATTGCACTAGCTACGTATACTATGCATGTCAGTAGATGCTATACTGATCGAATCTTGATCTAGTAGCCTAGTAGCACTGACTGCATGTCAGTACGTAGCTACGTTCGTATACGATCATCTAGATCATGCTAGCATGCATGCATATATGTGACTGATGCTGATGCCGGATTATCGCGTATCGATCGATCATCATGATCATGATGATGCTGCATCAGAATACGCTGACTGACATCGACGACTGCATCGCGACTGCATCGGCAGCTAGCATGCGCGATGCATGCATCGTACTGCATGCAGTCGATCGATGCACGATGCATGCATGCATCGAGTATAGCCGGATTAGCTACTGAGCGATTTATCTCTGAGGAGATCTCGATCGTAGCATGCTGCGCATCTGCTAATGTCGGATGCTAGCGCTAGCTGCTTAGCTCATATTACGTATCTGATCTGATTCGATGCATGCATTATCGATTCGTATTAGCATCGTACGTAGCTATGCATTCGTAGCTAGCATCGTAGCTGAGCGATGCTATGCGCTAGCTTAGCGATGCTGCCGATCGTAGCGTATCAGAGTCGATCGTAGCTAGCTACGCGTACTAGCTAGCTACGTTAGCGCTAGATGATCTAGGCGCTATTATCGAGAGTCTCTAGGCTACTGATATCTGAGCAGGAAGAGTCGATCGTATGCTGCTGCTAGTCGTACGTATCGTATCGATGCATGTCATGCATAGTATGCGATCGCATGCTACTGTGCTGATGCTAGCTAGCTAGTCGATGTCGTAGCGGCATGTAGCGTACGCGG";
-//    string ref_subsegment;
-//    string read_subsegment;
-//
-//    // Iterate/fetch alignments
-//    int64_t result;
-//    while ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
-//        cout << "\nRESULT: " << result << "\n";
-//        this->aligned_segment = {};
-//        load_alignment(aligned_segment, this->alignment, this->bam_header);
-//
-//        Cigar cigar;
-//        read_start_index = 0;
-//        ref_start_index = aligned_segment.ref_start_index;
-//        cigar_start = 0;
-//        increment = 1;
-//
-//        cout << this->aligned_segment.to_string();
-//
-//        // Index the sequence in its F direction (not alignment direction)
-//        if (aligned_segment.reversal){
-//            read_start_index = aligned_segment.read_length - 1;
-//            ref_start_index = infer_reference_stop_position_from_alignment();
-//            cigar_start = aligned_segment.n_cigar - 1;
-//            increment = -1;
-//        }
-//
-//        // Iterate cigar
-//        for (int64_t i=cigar_start; llabs(cigar_start-i)<aligned_segment.n_cigar; i+=increment) {
-//            cigar = {};
-//            get_cigar(cigar, aligned_segment, i);
-//            cout << cigar.to_string();
-//        }
-//        cout << "\n";
-//
-//        // Iterate cigar and print aligned ref/read subsegments
-//        ref_index = ref_start_index - 1;
-//        read_index = read_start_index;
-//
-//        for (int64_t i=cigar_start; llabs(cigar_start-i)<aligned_segment.n_cigar; i+=increment) {
-//            cigar = {};
-//            ref_subsegment = {};
-//            read_subsegment = {};
-//
-//            get_cigar(cigar, aligned_segment, i);
-//            read_increment = get_read_index_increment(cigar)*increment;      // Reverse if necessary
-//
-//            cout << read_index << " " << read_index + read_increment << "\n";
-//            for (int64_t i_subcigar=read_index; llabs(read_index - i_subcigar) < llabs(read_increment); i_subcigar+=increment) {
-//                ref_subsegment += ref_sequence[ref_index];
-//                ref_index += BamReader::cigar_ref_move[cigar.code]*increment;   // Reverse if necessary
-//                read_subsegment += get_read_base(aligned_segment, read_index, i_subcigar);
-//            }
-//            cout << ref_subsegment << "\n";
-//            cout << read_subsegment << "\n";
-//
-//            read_index += read_increment;
-//        }
-//        cout << "\n";
-//    }
-//}

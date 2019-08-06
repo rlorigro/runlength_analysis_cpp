@@ -9,6 +9,8 @@ using std::vector;
 
 class RunlengthSequenceElement{
 public:
+//    RunlengthSequenceElement(string name, string sequence, vector<uint16_t> lengths);
+
     string name;
     string sequence;
     vector<uint16_t> lengths;

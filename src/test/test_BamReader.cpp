@@ -4,9 +4,98 @@
 #include <iostream>
 #include <experimental/filesystem>
 #include <cassert>
+#include <Runlength.hpp>
 
 using std::cout;
 using std::experimental::filesystem::path;
+
+
+// Set of hand-curated cigar operations that should be observed in the test SAM
+unordered_map <string, vector <pair <string, int64_t> > >  truth_set =
+        {{"synthetic_read", {{"=",1337}}},
+         {"synthetic_read_reverse", {{"=",1337}}},
+         {"synthetic_read_delete_G_at_20", {{"=",19}, {"D",1}, {"=",1317}}},
+         {"synthetic_read_delete_G_at_20_reverse", {{"=",19}, {"D",1}, {"=",1317}}},
+         {"synthetic_read_insert_C_at_30", {{"=",29}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_insert_C_at_30_reverse", {{"=",29}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_sub_T_at_40", {{"=",40}, {"X",1}, {"=",1296}}},
+         {"synthetic_read_sub_T_at_40_reverse", {{"=",40}, {"X",1}, {"=",1296}}},
+         {"synthetic_read_N40", {{"S",41}, {"=",1296}}},
+         {"synthetic_read_N40_reverse", {{"S",41}, {"=",1296}}},
+         {"synthetic_read_500_clipped", {{"=",837}}},
+         {"synthetic_read_500_clipped_reverse", {{"=",837}}},
+         {"synthetic_read_300N_at_500", {{"=",499}, {"X",300}, {"=",538}}},
+         {"synthetic_read_1500N_at_500", {{"S",1999}, {"=",538},{"=",499}, {"H",2038}}},            // Supplemental alignments combined
+//         {"synthetic_read_1500N_at_500", {{"=",499}, {"H",2038}}},
+         {"synthetic_read_1500N_at_500_reverse", {{"S",1999}, {"=",538},{"=",499}, {"H",2038}}},    // Supplemental alignments combined
+//         {"synthetic_read_1500N_at_500_reverse", {{"=",499}, {"H",2038}}}
+};
+
+
+// Set of hand-curated cigar operations that should be observed in the test SAM
+unordered_map <string, vector <pair <string, int64_t> > >  truth_set_sum =
+        {{"synthetic_read", {{"=",1337}}},
+         {"synthetic_read_reverse", {{"=",1337}}},
+         {"synthetic_read_delete_G_at_20", {{"=",19+1317}, {"D",1}}},
+         {"synthetic_read_delete_G_at_20_reverse", {{"=",19+1317}, {"D",1}}},
+         {"synthetic_read_insert_C_at_30", {{"=",29+1308}, {"I",1}}},
+         {"synthetic_read_insert_C_at_30_reverse", {{"=",29+1308}, {"I",1}}},
+         {"synthetic_read_sub_T_at_40", {{"=",40+1296}, {"X",1}}},
+         {"synthetic_read_sub_T_at_40_reverse", {{"=",40+1296}, {"X",1}}},
+         {"synthetic_read_N40", {{"S",41}, {"=",1296}}},
+         {"synthetic_read_N40_reverse", {{"S",41}, {"=",1296}}},
+         {"synthetic_read_500_clipped", {{"=",837}}},
+         {"synthetic_read_500_clipped_reverse", {{"=",837}}},
+         {"synthetic_read_300N_at_500", {{"=",499+538}, {"X",300}}},
+         {"synthetic_read_1500N_at_500", {{"=",538},{"=",499}}},            // Supplemental alignments combined
+         {"synthetic_read_1500N_at_500_reverse", {{"=",538},{"=",499}}},            // Supplemental alignments combined
+};
+
+
+bool cigar_tuple_is_in_truth_set(unordered_map <string, vector <pair <string, int64_t> > >& truth, string read_name, string cigar_name, int64_t cigar_length){
+    bool found = false;
+
+    vector <pair <string, int64_t> > true_read_cigars = truth.at(read_name);
+
+    for (const auto& element: true_read_cigars){
+//        cout << element.first << element.second << "\n";
+        if ((cigar_name == element.first) and (cigar_length == element.second)){
+            found = true;
+        }
+    }
+
+    return found;
+}
+
+
+bool test_cigars(unordered_map <string, vector <pair <string, int64_t> > >& truth, AlignedSegment& aligned_segment, string& cigars){
+    SequenceElement cigar_sequence;
+    cigar_sequence.name = aligned_segment.read_name;
+    cigar_sequence.sequence = cigars;
+
+    RunlengthSequenceElement cigar_sequence_RLE;
+    runlength_encode(cigar_sequence_RLE, cigar_sequence);
+
+//    cout << cigar_sequence_RLE.sequence << "\n";
+//    for (auto& element: cigar_sequence_RLE.lengths){
+//        cout << element << ",";
+//    }
+//    cout << "\n";
+
+    for (size_t cigar_index = 0; cigar_index < cigar_sequence_RLE.sequence.size(); cigar_index++) {
+        string cigar_name = string(1, cigar_sequence_RLE.sequence[cigar_index]);
+        uint16_t cigar_length = cigar_sequence_RLE.lengths[cigar_index];
+        bool cigar_found = cigar_tuple_is_in_truth_set(truth, cigar_sequence.name, cigar_name, cigar_length);
+
+//        cout << cigar_index << "\t" << cigar_name << "\t" << cigar_length << "\t"
+//             << cigar_found << "\n" << std::flush;
+
+        assert(cigar_found);
+    }
+
+    cout << "PASS\n\n";
+    return true;
+}
 
 
 int main() {
@@ -52,7 +141,7 @@ int main() {
     string read_alignment;
     string read_alignment_inferred;
 
-    while (bam_reader.next_alignment(aligned_segment)){
+    while (bam_reader.next_alignment(aligned_segment)) {
         reads_fasta_reader.fetch_sequence(read_sequence, aligned_segment.read_name);
 
         cigars = "";
@@ -64,21 +153,18 @@ int main() {
 
         cout << aligned_segment.to_string();
 
-        aligned_segment.initialize_cigar_iterator();
-        while (aligned_segment.next_coordinate(coordinate, cigar)){
+        while (aligned_segment.next_coordinate(coordinate, cigar)) {
             cigars += cigar.get_cigar_code_as_string();
 
-            if (cigar.is_ref_move()){
+            if (cigar.is_ref_move()) {
                 ref_alignment += ref_sequence.sequence[coordinate.ref_index];
-            }
-            else{
+            } else {
                 ref_alignment += "-";
             }
-            if (cigar.is_read_move()){
+            if (cigar.is_read_move()) {
                 read_alignment += aligned_segment.get_read_base(coordinate.read_index);
                 read_alignment_inferred += read_sequence.sequence[coordinate.read_true_index];
-            }
-            else{
+            } else {
                 read_alignment += "*";
                 read_alignment_inferred += "*";
             }
@@ -91,23 +177,26 @@ int main() {
         cout << read_alignment << "\n";
         cout << read_alignment_inferred << "\n";
         cout << "\n";
+
+        test_cigars(truth_set, aligned_segment, cigars);
     }
 
     cout << "\n\nCIGAR SUBSET TEST:\n";
 
-    set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("M"),
+    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("M"),
 //                                      Cigar::cigar_code_key.at("I"),
-                                      Cigar::cigar_code_key.at("D"),
+//                                      Cigar::cigar_code_key.at("D"),
 //                                      Cigar::cigar_code_key.at("N"),
-//                                      Cigar::cigar_code_key.at("S"),
+//                                      Cigar::cigar_code_key.at("S")
 //                                      Cigar::cigar_code_key.at("H"),
 //                                      Cigar::cigar_code_key.at("P"),
-                                      Cigar::cigar_code_key.at("=")};
-//                                      Cigar::cigar_code_key.at("X")};
+                                                Cigar::cigar_code_key.at("="),
+//                                                Cigar::cigar_code_key.at("X")
+    };
 
     bam_reader.initialize_region(ref_name, 0, 1337);
 
-    while (bam_reader.next_alignment(aligned_segment)){
+    while (bam_reader.next_alignment(aligned_segment)) {
         reads_fasta_reader.fetch_sequence(read_sequence, aligned_segment.read_name);
 
         cigars = "";
@@ -119,22 +208,19 @@ int main() {
 
         cout << aligned_segment.to_string();
 
-        aligned_segment.initialize_cigar_iterator();
-        while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)){
+        while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
             if (i > 3000) break;
             cigars += cigar.get_cigar_code_as_string();
 
-            if (cigar.is_ref_move()){
+            if (cigar.is_ref_move()) {
                 ref_alignment += ref_sequence.sequence[coordinate.ref_index];
-            }
-            else{
+            } else {
                 ref_alignment += "-";
             }
-            if (cigar.is_read_move()){
+            if (cigar.is_read_move()) {
                 read_alignment += aligned_segment.get_read_base(coordinate.read_index);
                 read_alignment_inferred += read_sequence.sequence[coordinate.read_true_index];
-            }
-            else{
+            } else {
                 read_alignment += "*";
                 read_alignment_inferred += "*";
             }
@@ -147,6 +233,7 @@ int main() {
         cout << read_alignment << "\n";
         cout << read_alignment_inferred << "\n";
         cout << "\n";
-    }
 
+        test_cigars(truth_set_sum, aligned_segment, cigars);
+    }
 }

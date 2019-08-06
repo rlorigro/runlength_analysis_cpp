@@ -3,14 +3,14 @@
 #include <string>
 #include <stdexcept>
 #include <unordered_map>
-#include <set>
+#include <unordered_set>
 #include <iostream>
 
 using std::cout;
 using std::string;
 using std::runtime_error;
 using std::unordered_map;
-using std::set;
+using std::unordered_set;
 
 
 const array <string,10> Cigar::cigar_name_key = {"M",    // 0 BAM_CMATCH
@@ -226,9 +226,28 @@ void AlignedSegment::initialize_cigar_iterator(){
     this->read_true_index = this->read_true_iterator_start_index;
     this->cigar_index = this->cigar_iterator_start;
 
-    this->valid_iterator = true;
-    this->i_subcigar = 0;
+    this->subcigar_index = 0;
 }
+
+
+bool AlignedSegment::next_cigar_in_bounds(){
+    return (llabs(this->cigar_iterator_start - cigar_index) < this->n_cigar);
+}
+
+
+bool AlignedSegment::current_cigar_in_bounds(){
+    return (llabs(this->cigar_iterator_start - (cigar_index))-1 < this->n_cigar);
+}
+
+
+//bool AlignedSegment::no_more_cigars(){
+//    return (llabs(this->cigar_iterator_start - cigar_index) >= this->n_cigar);
+//}
+
+
+//bool AlignedSegment::is_valid_cigar(set<uint8_t> target_cigar_codes){
+//    return (target_cigar_codes.find(this->current_cigar.code) != target_cigar_codes.end());
+//}
 
 
 bool AlignedSegment::next_cigar(){
@@ -238,7 +257,7 @@ bool AlignedSegment::next_cigar(){
 
     bool valid = false;
 
-    if (llabs(this->cigar_iterator_start - cigar_index) < this->n_cigar){
+    if (this->next_cigar_in_bounds()){
         this->current_cigar = Cigar(this->cigars[cigar_index]);
 
         // Increment may be negative if read is reverse
@@ -246,7 +265,7 @@ bool AlignedSegment::next_cigar(){
         valid = true;
     }
 
-    this->i_subcigar = 0;
+    this->subcigar_index = 0;
     return valid;
 }
 
@@ -273,8 +292,8 @@ void AlignedSegment::increment_coordinate(Coordinate& coordinate, Cigar& cigar, 
     // Ref sequence may be reversed to match read direction
     this->ref_index += AlignedSegment::cigar_ref_move[current_cigar.code]*this->increment*length;
 
-    // Increment the intra-cigar iterator
-    this->i_subcigar += length;
+    // Increment sub-cigar index
+    this->subcigar_index += length;
 }
 
 
@@ -285,92 +304,95 @@ bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar){
     coordinate = {};
     cigar = {};
 
-    if (not this->valid_iterator){
+
+    if (not this->current_cigar_in_bounds()){
         throw runtime_error("ERROR: AlignedSegment uninitialized or out of bounds.\n"
                             "\tAlignedSegment must be initialized with `initialize_cigar_iterator()` before iterating");
     }
 
     // Finished a cigar operation on last iteration
-    if (this->i_subcigar == (int64_t)this->current_cigar.length) {
+    if (this->subcigar_index == (int64_t)this->current_cigar.length) {
         // If there is another cigar, load it and increment iterators
         if (this->next_cigar()){
             this->update_containers(coordinate, cigar);
             this->increment_coordinate(coordinate, cigar);
+
+            return this->current_cigar_in_bounds();
         }
-        // If no next cigar, return false
-        else {
-            this->valid_iterator = false;
+        else{
+            return false;
         }
     }
 
     // In the middle of a cigar operation
-    else if (this->i_subcigar < (int64_t)this->current_cigar.length){
+    else{
         this->update_containers(coordinate, cigar);
         this->increment_coordinate(coordinate, cigar);
-    }
 
-    return this->valid_iterator;
+        return this->current_cigar_in_bounds();
+    }
 }
 
 
-void AlignedSegment::find_next_valid_cigar(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes){
+bool AlignedSegment::next_valid_cigar(Coordinate& coordinate, Cigar& cigar, unordered_set<uint8_t>& target_cigar_codes){
     ///
     /// Jump forward through alignment until a valid cigar operation is found
     ///
-//    cout << !(target_cigar_codes.find(cigar.code) == target_cigar_codes.end()) << " " << this->valid_iterator << " " << cigar.to_string() << "\n" << std::flush;
 
-    // Walk through cigars until a valid one is found
-    while ((target_cigar_codes.find(cigar.code) == target_cigar_codes.end()) and this->valid_iterator){
-        // Increment by the length of the cigar
-        this->increment_coordinate(coordinate, cigar, cigar.length);
+    if (this->next_cigar()) {
+        // If there is an invalid cigar, continue incrementing ref/read indexes and calling next_cigar
+        while ((target_cigar_codes.count(this->current_cigar.code) == 0) and (this->cigar_index <= this->n_cigar)) {
+            // Increment by the length of the cigar
+            this->increment_coordinate(coordinate, cigar, cigar.length);
 
-        cout << "CURRENT CIGAR INVALID: " << this->current_cigar.to_string();
-
-        // Load next cigar if it exists
-        if (this->next_cigar()) {
-            cigar = this->current_cigar;
-            cout << " LOADING NEXT: " << this->current_cigar.to_string() << "\n" << std::flush;
+            // Load next cigar if it exists
+            if (this->next_cigar()) {
+                cigar = this->current_cigar;
+            } else {
+                // No more cigars to load
+                return false;
+            }
         }
-        else{
-            this->valid_iterator = false;
-        }
+        return this->current_cigar_in_bounds();
+    }
+    else{
+        // No more cigars to load
+        return false;
     }
 }
 
 
-bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar, set<uint8_t>& target_cigar_codes){
+bool AlignedSegment::next_coordinate(Coordinate& coordinate, Cigar& cigar, unordered_set<uint8_t>& target_cigar_codes){
     ///
     /// Iterate the entire alignment step wise for each each l in L where L = sum(cigar.length) for all cigars
     ///
     coordinate = {};
     cigar = {};
 
-    if (not this->valid_iterator){
+    if (not this->current_cigar_in_bounds()){
         throw runtime_error("ERROR: AlignedSegment uninitialized or out of bounds.\n"
                             "\tAlignedSegment must be initialized with `initialize_cigar_iterator()` before iterating");
     }
 
-    this->find_next_valid_cigar(coordinate, this->current_cigar, target_cigar_codes);
-
-    cout << this->i_subcigar << " " << this->current_cigar.length << " " << this->ref_index << " " << this->read_index << "\n" << std::flush;
-
     // Finished a cigar operation on last iteration
-    if (this->i_subcigar == (int64_t)this->current_cigar.length) {
-        if (this->next_cigar()){
+    if (this->subcigar_index == (int64_t)this->current_cigar.length) {
+        // Fetch the next valid cigar if it exists
+        if (this->next_valid_cigar(coordinate, this->current_cigar, target_cigar_codes)) {
             this->update_containers(coordinate, cigar);
             this->increment_coordinate(coordinate, cigar);
+
+            return this->current_cigar_in_bounds();
         }
-        // If no next cigar, return false
-        else {
-            this->valid_iterator = false;
+        else{
+            return false;
         }
     }
 
     // In the middle of a cigar operation
-    else if (this->i_subcigar < (int64_t) this->current_cigar.length) {
+    else{
         this->update_containers(coordinate, cigar);
         this->increment_coordinate(coordinate, cigar);
-    }
 
-    return this->valid_iterator;
+        return this->current_cigar_in_bounds();
+    }
 }

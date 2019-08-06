@@ -28,7 +28,16 @@ using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
 
 
+//RunlengthSequenceElement::RunlengthSequenceElement(string name, string sequence, vector<uint16_t> lengths){
+//    this->name = name;
+//    this->sequence = sequence;
+//    this->lengths = lengths;
+//}
+
+
 void runlength_encode(RunlengthSequenceElement& runlength_sequence, SequenceElement& sequence){
+    runlength_sequence = {};
+
     // First just copy the name
     runlength_sequence.name = sequence.name;
 
