@@ -98,12 +98,13 @@ void MarginPolishReader::parse_coverage_string(MarginPolishSegment& mp_segment, 
     ///
     /// Read a line of the MarginPolish runlength TSV and converts it to a vector of CoverageElements
     ///
-    // Append consensus base to MarginPolish segment
-    mp_segment.sequence += line[2];
 
     // For iterating elements within the tab separated string
     uint64_t start_index = line.find_first_of('\t') + 2;
     uint64_t c = 0;
+
+    // Append consensus base to MarginPolish segment
+    mp_segment.sequence += line[start_index-1];
 
     // Placeholders for Coverage element
     string base;
@@ -197,4 +198,46 @@ void MarginPolishReader::fetch_read(MarginPolishSegment& mp_segment, string& rea
 
     path file_path = this->file_paths.at(read_name);
     this->read_file(mp_segment, file_path);
+}
+
+
+void MarginPolishReader::read_consensus_sequence_from_file(MarginPolishSegment& mp_segment, path& file_path){
+    ///
+    /// Iterate all the lines in a marginpolish runlength output file (TSV)
+    ///
+    // Open file
+    ifstream file = ifstream(file_path);
+    if (not file.good()){
+        throw runtime_error("ERROR: could not open file " + file_path.string());
+    }
+
+    // File iteration variables
+    string line;
+    uint64_t l = 0;
+    uint16_t tab_separator_index;
+
+    while (getline(file, line)){
+        if (l > 2){
+            tab_separator_index = line.find_first_of('\t');
+            mp_segment.sequence += line[tab_separator_index+1];
+        }
+        l++;
+    }
+}
+
+
+void MarginPolishReader::fetch_consensus_sequence(MarginPolishSegment& mp_segment, string& read_name){
+    ///
+    /// Fetch a read by its read name (which is derived from its filename) and skip fetching all the coverage data
+    ///
+    // Clear the container
+    mp_segment = {};
+
+    if (this->file_paths.empty()){
+        this->index();
+    }
+    mp_segment.name = read_name;
+
+    path file_path = this->file_paths.at(read_name);
+    this->read_consensus_sequence_from_file(mp_segment, file_path);
 }

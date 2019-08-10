@@ -21,6 +21,8 @@ public:
     int64_t ref_index;          // Index of full reference sequence
     int64_t read_index;         // Index of aligned (possibly clipped) SAM sequence
     int64_t read_true_index;    // Index of true unaligned fasta sequence
+
+    Coordinate();
 };
 
 

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <experimental/filesystem>
-#include <assert.h>
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
 #include "Runlength.hpp"

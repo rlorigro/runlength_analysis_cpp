@@ -23,6 +23,7 @@ const array <string,10> Cigar::cigar_name_key = {"M",    // 0 BAM_CMATCH
                                             "=",    // 7 BAM_CEQUAL
                                             "X"};   // 8 BAM_CDIF
 
+
 const unordered_map<string,uint8_t> Cigar::cigar_code_key = {{"M", 0},
                                                              {"I", 1},
                                                              {"D", 2},
@@ -33,7 +34,9 @@ const unordered_map<string,uint8_t> Cigar::cigar_code_key = {{"M", 0},
                                                              {"=", 7},
                                                              {"X", 8}};
 
+
 const array <string, 2> AlignedSegment::bases = {"=ACMGRSVTWYHKDBN", "=TGKCYSBAWRDKHVN"};
+
 
 const array <bool, 10> AlignedSegment::cigar_ref_move = {true,      //BAM_CMATCH      0
                                                           false,     //BAM_CINS        1
@@ -46,6 +49,7 @@ const array <bool, 10> AlignedSegment::cigar_ref_move = {true,      //BAM_CMATCH
                                                           true,      //BAM_CDIFF       8
                                                           false};    //BAM_CBACK       9
 
+
 const array <bool, 10> AlignedSegment::cigar_read_move = {true,     //BAM_CMATCH      0
                                                            true,     //BAM_CINS        1
                                                            false,    //BAM_CDEL        2
@@ -57,6 +61,7 @@ const array <bool, 10> AlignedSegment::cigar_read_move = {true,     //BAM_CMATCH
                                                            true,     //BAM_CDIFF       8
                                                            false};   //BAM_CBACK       9
 
+
 const array <bool, 10> AlignedSegment::cigar_true_read_move = {true,     //BAM_CMATCH      0
                                                               true,     //BAM_CINS        1
                                                               false,    //BAM_CDEL        2
@@ -67,6 +72,9 @@ const array <bool, 10> AlignedSegment::cigar_true_read_move = {true,     //BAM_C
                                                               true,     //BAM_CEQUAL      7
                                                               true,     //BAM_CDIFF       8
                                                               false};   //BAM_CBACK       9
+
+
+Coordinate::Coordinate() = default;
 
 
 Cigar::Cigar(uint32_t bytes){

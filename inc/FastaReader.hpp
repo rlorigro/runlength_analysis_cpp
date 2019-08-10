@@ -23,6 +23,18 @@ public:
 };
 
 
+class FastaIndex {
+public:
+    uint64_t byte_index;    // Where in the fasta is the start of the sequence
+    uint64_t length;        // How long is the sequence
+
+    FastaIndex(uint64_t byte_index, uint64_t length);
+    FastaIndex();
+
+    uint64_t size();
+};
+
+
 class FastaReader{
 public:
     /// Attributes ///
@@ -31,8 +43,7 @@ public:
     char header_symbol;
     uint64_t line_index;
     bool end_of_file;
-    unordered_map <string,uint64_t> read_indexes;
-    unordered_map <string,uint32_t> read_lengths;
+    unordered_map <string, FastaIndex > read_indexes;
 
     /// Methods ///
     FastaReader(path file_path);
@@ -44,10 +55,10 @@ public:
     void index();
 
     // Return a copy of the read indexes
-    unordered_map <string,uint64_t> get_index();
+    unordered_map<string,FastaIndex> get_index();
 
     // Set the read_indexes attribute manually
-    void set_index(unordered_map <string,uint64_t>& read_indexes);
+    void set_index(unordered_map<string,FastaIndex>& read_indexes);
 
     // Fetch a sequence from file, and generate index first if necessary
     void fetch_sequence(SequenceElement& element, string& sequence_name);

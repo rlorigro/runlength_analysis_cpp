@@ -35,6 +35,7 @@ class FastaWriter{
         template<class T> void write(vector<T>& sequences);
 };
 
+
 template<class T> void FastaWriter::write(T& sequence){
     this->fasta_file << string(1, this->header_symbol);
     this->fasta_file << sequence.name;

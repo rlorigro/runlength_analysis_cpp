@@ -41,7 +41,7 @@ path minimap_align(path ref_sequence_path,
     path output_filename = read_filename_prefix + "_VS_" + ref_filename_prefix + ".sam";
     path output_path = output_dir / output_filename;
 
-    cout << output_filename.string() << "\n";
+    cout << "REDIRECTING TO: " << output_filename.string() << "\n";
 
     // Set up arguments in a readable, modular format
     vector <string> arguments = {"minimap2",

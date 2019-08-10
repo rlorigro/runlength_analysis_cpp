@@ -27,13 +27,19 @@ int main(){
 
     for (auto& element: read_paths){
         name = element.first;
-        cout << element.first << " " << element.second << "\n";
+        cout << "\n" << element.first << " " << element.second << "\n";
         reader.fetch_read(segment, name);
 
         segment.print();
         segments.push_back(segment);
     }
+
+    for (auto& element: read_paths){
+        name = element.first;
+        cout << element.first << " " << element.second << "\n";
+        reader.fetch_consensus_sequence(segment, name);
+
+        segment.print();
+        segments.push_back(segment);
+    }
 }
-
-
-

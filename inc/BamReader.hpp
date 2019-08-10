@@ -1,4 +1,3 @@
-
 #ifndef RUNLENGTH_ANALYSIS_CIGARPARSER_H
 #define RUNLENGTH_ANALYSIS_CIGARPARSER_H
 
@@ -6,13 +5,19 @@
 #include "htslib/bgzf.h"
 #include "htslib/sam.h"
 #include "AlignedSegment.hpp"
+#include "FastaReader.hpp"
 #include <experimental/filesystem>
+#include <unordered_map>
 #include <string>
+#include <vector>
 #include <array>
 
+using std::unordered_map;
 using std::array;
 using std::string;
+using std::vector;
 using std::experimental::filesystem::path;
+
 
 /**
  * ****************************
@@ -31,6 +36,19 @@ using std::experimental::filesystem::path;
  * #define BAM_CBACK       9
  *
 **/
+
+
+// For occasional convenience
+class Region {
+public:
+    string name;
+    uint64_t start;
+    uint64_t stop;
+
+    Region(string name, uint64_t start, uint64_t stop);
+    Region();
+    string to_string();
+};
 
 
 class BamReader{
@@ -57,16 +75,7 @@ public:
     explicit BamReader(path bam_path);
     void initialize_region(string& ref_name, uint64_t start, uint64_t stop);
     void load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header);
-//    string get_read_base(AlignedSegment& aligned_segment, int64_t read_start_index, int64_t i);
-//    void get_cigar(Cigar& cigar, AlignedSegment& aligned_segment, int64_t i);
-//    int64_t infer_reference_stop_position_from_alignment(AlignedSegment& aligned_segment);
-//    uint64_t get_ref_index_increment(Cigar& cigar);
-//    uint64_t get_read_index_increment(Cigar& cigar);
     bool next_alignment(AlignedSegment& aligned_segment);
-//    void print_region(string ref_name, uint64_t ref_start, uint64_t ref_stop);
-
-    // Iterate cigars to return ref/read index for every match
-//    pair<uint64_t,uint64_t> get_next_match_index();
 
 private:
     /// Attributes ///
@@ -75,5 +84,9 @@ private:
 
 };
 
+
+void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_size, uint64_t length);
+
+vector<Region> chunk_sequences_from_fasta_index_into_regions(unordered_map<string,FastaIndex> index_map, uint64_t chunk_size);
 
 #endif //RUNLENGTH_ANALYSIS_CIGARPARSER_H

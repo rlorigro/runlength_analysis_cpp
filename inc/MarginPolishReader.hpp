@@ -62,6 +62,8 @@ public:
     void fetch_read(MarginPolishSegment& mp_segment, string& read_name);
     void parse_coverage_string(MarginPolishSegment& mp_segment, string& line);
     bool parse_reversal_string(string reversal_string);
+    void read_consensus_sequence_from_file(MarginPolishSegment& mp_segment, path& file_path);
+    void fetch_consensus_sequence(MarginPolishSegment& mp_segment, string& read_name);
 
 private:
     /// Attributes ///

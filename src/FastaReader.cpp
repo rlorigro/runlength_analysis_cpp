@@ -1,3 +1,6 @@
+#include "FastaReader.hpp"
+#include "htslib/faidx.h"
+#include "htslib/hts.h"
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -6,10 +9,7 @@
 #include <stdexcept>
 #include <exception>
 #include <experimental/filesystem>
-#include "htslib/hts.h"
-#include "htslib/faidx.h"
 #include "boost/algorithm/string.hpp"
-#include "FastaReader.hpp"
 
 using std::unordered_map;
 using std::runtime_error;
@@ -38,6 +38,19 @@ bool is_tab(char c){
 }
 
 
+FastaIndex::FastaIndex(uint64_t byte_index, uint64_t length){
+    this->byte_index = byte_index;
+    this->length = length;
+}
+
+uint64_t FastaIndex::size(){
+    return this->length;
+}
+
+
+FastaIndex::FastaIndex() = default;
+
+
 FastaReader::FastaReader(path file_path){
     this->file_path = file_path;
     this->index_path = file_path.string() + ".fai";
@@ -53,7 +66,7 @@ FastaReader::FastaReader(path file_path){
 }
 
 
-unordered_map<string,uint64_t> FastaReader::get_index(){
+unordered_map<string,FastaIndex> FastaReader::get_index(){
     if (this->read_indexes.empty()){
         this->index();
     }
@@ -62,7 +75,7 @@ unordered_map<string,uint64_t> FastaReader::get_index(){
 }
 
 
-void FastaReader::set_index(unordered_map <string,uint64_t>& index){
+void FastaReader::set_index(unordered_map<string,FastaIndex>& index){
     this->read_indexes = index;
 }
 
@@ -82,7 +95,7 @@ void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name
 
     try {
         // Set ifstream cursor to the start of this read's sequence
-        this->fasta_file.seekg(this->read_indexes.at(sequence_name));
+        this->fasta_file.seekg(this->read_indexes.at(sequence_name).byte_index);
     }
     catch(std::out_of_range& e){
         throw out_of_range("ERROR: sequence not found in fasta index: " + sequence_name);
@@ -135,6 +148,9 @@ void FastaReader::build_fasta_index(){
 void FastaReader::read_fasta_index(){
     ifstream index_file = ifstream(this->index_path);
     vector <string> elements;
+    uint64_t byte_index;
+    uint64_t length;
+    string read_name;
     string line;
 
     // Check if file is readable or exists
@@ -146,8 +162,15 @@ void FastaReader::read_fasta_index(){
     while(getline(index_file, line)){
         split(elements, line, is_tab);
 
-        // Each index element is a pair of sequence name (column 0) and byte position (column 2)
-        read_indexes[elements[0]] = stoull(elements[2]);
+        // Each index element is a pair of sequence name (column 0), byte position (column 2), and sequence length (column 1)
+        byte_index = stoull(elements[2]);
+        length = stoull(elements[1]);
+        read_name = elements[0];
+
+        bool no_conflict = this->read_indexes.insert({read_name, FastaIndex(byte_index, length)}).second;
+        if (not no_conflict){
+            throw runtime_error("ERROR: duplicate reads detected in FASTA: " + read_name);
+        }
     }
 }
 

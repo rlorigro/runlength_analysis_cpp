@@ -14,6 +14,57 @@ using std::abs;
 using std::experimental::filesystem::path;
 
 
+// Helper function for iterating BAMs
+void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_size, uint64_t length){
+    uint64_t l = 0;
+    uint64_t start;
+    uint64_t stop;
+
+    // Chunk the sequence by "chunk_size"
+    while (l < length - 1){
+        start = l;
+        stop = l + chunk_size - 1;
+
+        // If the current chunk would exceed the length of the sequence
+        if (stop >= length){
+            // Set the stop point to the last index. A chunk can be 0-width.. e.g.: [9,9]
+            stop = length - 1;
+        }
+
+        regions.emplace_back(read_name, start, stop);
+        l += chunk_size;
+    }
+}
+
+
+vector<Region> chunk_sequences_from_fasta_index_into_regions(unordered_map<string,FastaIndex> index_map, uint64_t chunk_size){
+    ///
+    /// Take all the sequences in some iterable object and chunk their lengths
+    ///
+    vector <Region> regions;
+
+    // For every sequence
+    for (auto& [read_name, fasta_index]: index_map){
+        chunk_sequence(regions, read_name, chunk_size, fasta_index.length);
+    }
+
+    return regions;
+}
+
+
+Region::Region(string name, uint64_t start, uint64_t stop){
+    this->name = name;
+    this->start = start;
+    this->stop = stop;
+}
+
+Region::Region() = default;
+
+string Region::to_string(){
+    string s = this->name + ":" + std::to_string(this->start) + "-" + std::to_string(this->stop);
+    return s;
+}
+
 BamReader::BamReader(path bam_path){
     this->bam_path = bam_path.string();
     this->bam_file = nullptr;
