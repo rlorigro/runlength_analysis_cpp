@@ -124,14 +124,20 @@ string Cigar::to_string() {
 
 
 string AlignedSegment::to_string(){
-    string reversal_string = reversal ? "R" : "F";
+    string reversal_string;
+
+    if (reversal) {
+        reversal_string = "R";
+    } else {
+        reversal_string = "F";
+    }
 
     string s = this->ref_name + " "
                + std::to_string(this->ref_start_index) + " "
                + reversal_string + " "
                + std::to_string(this->read_length) + " "
                + this->read_name + " "
-               + std::to_string(this->n_cigar) + "\n";
+               + std::to_string(this->n_cigar);
 
     return s;
 }

@@ -35,6 +35,16 @@ string CoverageElement::to_string(){
 }
 
 
+uint8_t CoverageElement::get_base_index() {
+    return base_to_index(this->base);
+}
+
+
+bool CoverageElement::is_conventional_base() {
+    return is_valid_base(this->base);
+}
+
+
 MarginPolishReader::MarginPolishReader(path directory_path){
     this->directory_path = directory_path;
 }
@@ -73,6 +83,11 @@ void MarginPolishReader::index(){
 
 unordered_map<string,path> MarginPolishReader::get_index(){
     return this->file_paths;
+}
+
+
+void MarginPolishReader::set_index(unordered_map<string,path>& file_paths){
+    this->file_paths = file_paths;
 }
 
 

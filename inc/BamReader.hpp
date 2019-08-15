@@ -63,6 +63,9 @@ public:
     hts_itr_t* bam_iterator;
     bam1_t* alignment;
 
+    // Bit operations
+    uint16_t secondary_mask;
+
     // Volatile metadata
     bool valid_region;
     string ref_name;
@@ -75,7 +78,7 @@ public:
     explicit BamReader(path bam_path);
     void initialize_region(string& ref_name, uint64_t start, uint64_t stop);
     void load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header);
-    bool next_alignment(AlignedSegment& aligned_segment);
+    bool next_alignment(AlignedSegment& aligned_segment, uint16_t map_quality_cutoff=0, bool filter_secondary=false);
 
 private:
     /// Attributes ///

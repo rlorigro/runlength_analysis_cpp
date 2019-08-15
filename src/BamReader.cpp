@@ -72,6 +72,8 @@ BamReader::BamReader(path bam_path){
     this->bam_iterator = nullptr;
     this->alignment = bam_init1();
 
+    this->secondary_mask = 256;
+
     this->valid_region = false;
     this->ref_name = "";
     this->region_start = -1;
@@ -79,12 +81,12 @@ BamReader::BamReader(path bam_path){
 
     // bam file
     if ((this->bam_file = hts_open(this->bam_path.string().c_str(), "r")) == 0) {
-        throw runtime_error("ERROR: Cannot open bam file" + string(this->bam_path));
+        throw runtime_error("ERROR: Cannot open bam file: " + string(this->bam_path));
     }
 
     // bam index
     if ((this->bam_index = sam_index_load(this->bam_file, this->bam_path.string().c_str())) == 0) {
-        throw runtime_error("ERROR: Cannot open index for bam file " + string(this->bam_path) + "\n");
+        throw runtime_error("ERROR: Cannot open index for bam file: " + string(this->bam_path) + "\n");
     }
 
     this->bam_header = sam_hdr_read(this->bam_file);
@@ -125,12 +127,14 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
     aligned_segment.cigars = bam_get_cigar(alignment);
     aligned_segment.n_cigar = alignment->core.n_cigar;
     aligned_segment.reversal = bam_is_rev(alignment);
+    aligned_segment.is_secondary = ((alignment->core.flag & this->secondary_mask) == 0);
+    aligned_segment.map_quality = alignment->core.qual;
 
     aligned_segment.initialize_cigar_iterator();
 }
 
 
-bool BamReader::next_alignment(AlignedSegment& aligned_segment){
+bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_quality_cutoff, bool filter_secondary){
     ///
     /// Iterate the alignments within a region, returning references
     ///
@@ -139,16 +143,33 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment){
         throw runtime_error("ERROR: BAM reader must be initialized with `initialize_region()` before iterating");
     }
 
-    // Iterate/fetch alignments
-    int64_t result;
-    if ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
-        aligned_segment = {};
-        load_alignment(aligned_segment, this->alignment, this->bam_header);
-    }
-    else{
-        this->valid_region = false;
-    }
+    bool found_valid_alignment = false;
+    while ((not found_valid_alignment) and this->valid_region) {
 
+        // Call next() on samtools
+        int64_t result;
+        if ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
+
+            // Load alignment into container
+            aligned_segment = {};
+            load_alignment(aligned_segment, this->alignment, this->bam_header);
+            found_valid_alignment = true;
+
+            // Check secondary filter
+            if (filter_secondary and (not aligned_segment.is_secondary)){
+                found_valid_alignment = false;
+            }
+
+            // Check map quality filter
+            if (uint16_t(aligned_segment.map_quality) <= map_quality_cutoff){
+                found_valid_alignment = false;
+            }
+
+        } else {
+            // No more alignments left
+            this->valid_region = false;
+        }
+    }
     return this->valid_region;
 }
 

@@ -57,6 +57,8 @@ public:
     uint32_t* cigars;
     uint32_t n_cigar;
     bool reversal;
+    bool is_secondary;
+    int64_t map_quality;
 
     // Class constants
     static const array <string, 2> bases;

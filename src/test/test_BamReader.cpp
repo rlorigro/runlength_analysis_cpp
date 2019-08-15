@@ -151,7 +151,7 @@ int main() {
 
         int i = 0;
 
-        cout << aligned_segment.to_string();
+        cout << aligned_segment.to_string() << "\n";
 
         while (aligned_segment.next_coordinate(coordinate, cigar)) {
             cigars += cigar.get_cigar_code_as_string();
@@ -206,7 +206,7 @@ int main() {
 
         int i = 0;
 
-        cout << aligned_segment.to_string();
+        cout << aligned_segment.to_string() << "\n";
 
         while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
             if (i > 3000) break;
@@ -235,5 +235,48 @@ int main() {
         cout << "\n";
 
         test_cigars(truth_set_sum, aligned_segment, cigars);
+    }
+
+    // Get test BAM path
+    path relative_quality_bam_path = "/data/test/flag_and_quality_test.bam";
+    path absolute_quality_bam_path = project_directory / relative_quality_bam_path;
+
+    // Initialize BAM reader and relevant containers
+    bam_reader = BamReader(absolute_quality_bam_path);
+    ref_name = "synthetic_ref_0";
+    bam_reader.initialize_region(ref_name, 0, 1337);
+
+    uint16_t map_quality_threshold;
+    bool filter_secondary;
+
+    cout << "\nTESTING BAM FILTERS (NO FILTER):\n";
+
+    map_quality_threshold = 0;
+    filter_secondary = false;
+
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+        cout << aligned_segment.to_string() << "\n";
+    }
+
+    cout << "\nTESTING BAM FILTERS (MQ>5 and NOT SECONDARY):\n";
+
+    bam_reader.initialize_region(ref_name, 0, 1337);
+
+    map_quality_threshold = 5;
+    filter_secondary = true;
+
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+        cout << aligned_segment.to_string() << "\n";
+    }
+
+    cout << "\nTESTING BAM FILTERS (MQ>5):\n";
+
+    bam_reader.initialize_region(ref_name, 0, 1337);
+
+    map_quality_threshold = 5;
+    filter_secondary = false;
+
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+        cout << aligned_segment.to_string() << "\n";
     }
 }

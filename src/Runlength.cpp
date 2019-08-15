@@ -4,6 +4,7 @@
 #include "FastaWriter.hpp"
 #include "BamReader.hpp"
 #include "Runlength.hpp"
+#include "Matrix.hpp"
 #include "Align.hpp"
 #include <vector>
 #include <thread>
@@ -247,13 +248,20 @@ void update_runlength_matrix(AlignedSegment& aligned_segment,
 
 
 void parse_region(path bam_path,
-    unordered_map<string,RunlengthSequenceElement>& ref_runlength_sequences,
+    path marginpolish_directory,
+    unordered_map <string,path>& read_paths,
+    unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
     vector <Region>& regions,
-    vector <vector <uint16_t> >& runlength_matrix,
+    runlength_matrix& runlength_matrix,
     atomic <uint64_t>& job_index){
     ///
     ///
     ///
+
+    // Initialize MarginPolishReader and relevant containers
+    MarginPolishReader marginpolish_reader = MarginPolishReader(marginpolish_directory);
+    MarginPolishSegment marginpolish_segment;
+    marginpolish_reader.set_index(read_paths);
 
     // Initialize BAM reader and relevant containers
     BamReader bam_reader = BamReader(bam_path);
@@ -262,54 +270,74 @@ void parse_region(path bam_path,
     Region region;
     Cigar cigar;
 
-    uint64_t thread_job_index;
+//    uint64_t thread_job_index;
     string ref_name;
-    string cigars;
-    string ref_alignment;
-    string read_alignment;
-    string read_alignment_inferred;
+
+    bool filter_secondary = true;
+    uint16_t map_quality_cutoff = 5;
+
+    // Volatiles
+    bool in_left_bound;
+    bool in_right_bound;
+    string true_base;
+    string consensus_base;
+    uint16_t true_length = -1;
+    uint16_t observed_length = -1;
+    uint8_t observed_base_index;
+    vector<CoverageElement> coverage_data;
 
     // Only allow matches
     unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("=")};
 
     while (job_index < regions.size()) {
-        thread_job_index = job_index.fetch_add(1);
+        uint64_t thread_job_index = job_index.fetch_add(1);
         region = regions.at(thread_job_index);
 
         bam_reader.initialize_region(region.name, region.start, region.stop);
 
         int i = 0;
 
-        while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
-            cigars += cigar.get_cigar_code_as_string();
+        while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
+            marginpolish_reader.fetch_read(marginpolish_segment, aligned_segment.read_name);
+//            cout << aligned_segment.to_string() << "\n";
 
-            // Subset alignment to portions of the read that are within the window/region
-            if ((region.start <= uint64_t(coordinate.ref_index - 1)) and (uint64_t(coordinate.ref_index - 1) < region.stop)) {
-                if (cigar.is_ref_move()) {
-                    ref_alignment += ref_runlength_sequences.at(region.name).sequence[coordinate.ref_index];
-                } else {
-                    ref_alignment += "-";
-                }
-                if (cigar.is_read_move()) {
-                    read_alignment += aligned_segment.get_read_base(coordinate.read_index);
-                    read_alignment_inferred += "_";
-                } else {
-                    read_alignment += "*";
-                    read_alignment_inferred += "*";
+            // Iterate cigars that match the criteria (must be '=')
+            while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
+                in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
+                in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
+                true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
+                consensus_base = marginpolish_segment.sequence[coordinate.read_true_index];
+
+                // Subset alignment to portions of the read that are within the window/region
+                if (in_left_bound and in_right_bound) {
+                    true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+                    coverage_data = marginpolish_segment.coverage_data[coordinate.read_true_index];
+
+                    // Walk through all the coverage data for this position and update the matrix for each observation
+                    // Only matches are allowed so checking the read base effectively checks the true base
+                    for (auto& coverage_element: coverage_data){
+
+                        // Skip anything other than ACTG
+                        if (not coverage_element.is_conventional_base()){
+                            continue;
+                        }
+
+                        // Do not record bases that were mismatches within the coverage data
+                        if (coverage_element.base != consensus_base){
+                            continue;
+                        }
+
+                        observed_length = coverage_element.length;
+                        observed_base_index = coverage_element.get_base_index();
+                        runlength_matrix[coverage_element.reversal][observed_base_index][true_length][observed_length] += coverage_element.weight;
+                    }
                 }
             }
+
             i++;
         }
 
-        if (i > 0) {
-            cout << region.to_string() << "\n" << flush;
-            cout << aligned_segment.to_string();
-            cout << cigars << "\n";
-            cout << ref_alignment << "\n";
-            cout << read_alignment << "\n";
-            cout << read_alignment_inferred << "\n";
-            cout << "\n\n";
-        }
+        cerr << "\33[2K\rParsed: " << region.to_string() << flush;
     }
 }
 
@@ -327,6 +355,8 @@ void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,
 
 
 void measure_runlength_distribution(path bam_path,
+        path marginpolish_directory,
+        unordered_map <string,path>& read_paths,
         unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
         vector <Region>& regions,
         uint16_t max_runlength,
@@ -335,14 +365,11 @@ void measure_runlength_distribution(path bam_path,
     ///
     ///
 
-    // Initialize template 2d matrix with 0
-    vector <vector <uint16_t> > matrix(max_runlength, vector<uint16_t>(max_runlength, 0));
-
-    // Make as many matrices as there are threads
-    vector <vector <vector <uint16_t> > > runlength_matrices_per_thread(max_threads, matrix);
+    runlength_matrix template_matrix(boost::extents[2][4][max_runlength+1][max_runlength+1]);   // 0 length included
+    vector<runlength_matrix> matrices_per_thread(max_threads, template_matrix);
 
     vector<thread> threads;
-    atomic<uint64_t> job_index;
+    atomic<uint64_t> job_index = 0;
 
     // Launch threads
     for (uint64_t i=0; i<max_threads; i++){
@@ -350,9 +377,11 @@ void measure_runlength_distribution(path bam_path,
             // Call thread safe function to read and write to file
             threads.emplace_back(thread(parse_region,
                     ref(bam_path),
+                    ref(marginpolish_directory),
+                    ref(read_paths),
                     ref(ref_runlength_sequences),
                     ref(regions),
-                    ref(matrix),
+                    ref(matrices_per_thread[i]),
                     ref(job_index)));
         } catch (const exception &e) {
             cerr << e.what() << "\n";
@@ -365,6 +394,17 @@ void measure_runlength_distribution(path bam_path,
         t.join();
     }
     cerr << "\n" << flush;
+
+    cerr << "Summing matrices from " << max_threads << " threads...\n";
+
+    runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
+
+    cout << matrix_to_string(matrix_sum) << "\n";
+
+    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix_sum);
+
+    cout << matrix_to_string(nondirectional_matrix);
+
 }
 
 
@@ -374,7 +414,7 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
         uint16_t max_runlength,
         uint16_t max_threads){
 
-    cout << "USING " + to_string(max_threads) + " THREADS\n";
+    cerr << "Using " + to_string(max_threads) + " threads\n";
 
     // How big (bp) should the regions be for iterating the BAM? Regardless of size,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
@@ -409,21 +449,24 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     bool index = true;
     bool delete_intermediates = false;  //TODO: switch to true
     uint16_t k = 19;
-    string minimap_preset = "asm20";    //TODO: make command line argument
+    string minimap_preset = "asm20";    //TODO: make command line argument?
     bool explicit_mismatch = true;
 
     // Align Marginpolish reads to the reference
     path bam_path;
     bam_path = align(reference_fasta_path_rle, reads_fasta_path_rle, output_directory, sort, index, delete_intermediates, k, minimap_preset, explicit_mismatch, max_threads);
 
-    //TODO: cut off 50bp overlaps on MarginPolish TSVs!!
+    //TODO: cut off 50bp overlaps on MarginPolish TSVs?
 
     // Chunk alignment regions
     vector<Region> regions;
     chunk_sequences_into_regions(regions, ref_runlength_sequences, chunk_size);
 
+    cerr << "Iterating alignments...\n" << std::flush;
+
     // Launch threads for parsing alignments and generating matrices
-    measure_runlength_distribution(bam_path, ref_runlength_sequences, regions, max_runlength, 1);
+    measure_runlength_distribution(bam_path, marginpolish_directory, read_paths, ref_runlength_sequences, regions, max_runlength, max_threads);
 
     // Save matrices
+
 }

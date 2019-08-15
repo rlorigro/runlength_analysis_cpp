@@ -1,6 +1,7 @@
 #ifndef RUNLENGTH_ANALYSIS_MARGINPOLISHREADER_HPP
 #define RUNLENGTH_ANALYSIS_MARGINPOLISHREADER_HPP
 
+#include "Base.hpp"
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -28,6 +29,8 @@ public:
 
     /// Methods ///
     string to_string();
+    uint8_t get_base_index();
+    bool is_conventional_base();
 };
 
 
@@ -57,6 +60,7 @@ public:
 
     // Return a copy of the read indexes
     unordered_map<string,path> get_index();
+    void set_index(unordered_map<string, path>& file_paths);
 
     void read_file(MarginPolishSegment& mp_segment, path& file_path);
     void fetch_read(MarginPolishSegment& mp_segment, string& read_name);

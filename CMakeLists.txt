@@ -156,7 +156,10 @@ set(SOURCES
         src/Align.cpp
         src/AlignedSegment.cpp
         src/BamReader.cpp
-        src/MarginPolishReader.cpp)
+        src/MarginPolishReader.cpp
+        src/Base.cpp
+        src/Matrix.cpp
+        src/RunnieReader.cpp)
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})
@@ -282,6 +285,11 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_Runlength_parallel)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_RunnieReader)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
