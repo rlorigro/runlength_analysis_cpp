@@ -22,7 +22,7 @@ int main() {
     unordered_map <string, RunlengthSequenceElement> runlength_sequences;
 
 //    runlength_encode_fasta_file(absolute_data_path, runlength_sequences, "output/", 4);
-    runlength_encode_fasta_file("/home/ryan/data/GRCh38/hg38_no_alts.fasta", runlength_sequences, "output/", 32);
+    runlength_encode_fasta_file("/home/ryan/data/GRCh38/hg38_no_alts.fasta", runlength_sequences, "output/", false, 32);
 
     cout << runlength_sequences.size() << "\n";
     for (auto& element: runlength_sequences){

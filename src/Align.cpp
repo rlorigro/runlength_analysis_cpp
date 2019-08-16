@@ -41,7 +41,7 @@ path minimap_align(path ref_sequence_path,
     path output_filename = read_filename_prefix + "_VS_" + ref_filename_prefix + ".sam";
     path output_path = output_dir / output_filename;
 
-    cout << "REDIRECTING TO: " << output_filename.string() << "\n";
+    cerr << "REDIRECTING TO: " << output_filename.string() << "\n";
 
     // Set up arguments in a readable, modular format
     vector <string> arguments = {"minimap2",
@@ -59,7 +59,7 @@ path minimap_align(path ref_sequence_path,
 
     // Convert arguments to single string
     string argument_string = join(arguments, ' ');
-    cout << "\nRUNNING: " << argument_string << "\n";
+    cerr << "\nRUNNING: " << argument_string << "\n";
 
     run_command(argument_string);
 
@@ -81,7 +81,7 @@ path samtools_sort(path input_path, uint16_t max_threads){
 
     // Convert arguments to single string
     string argument_string = join(arguments, ' ');
-    cout << "\nRUNNING: " << argument_string << "\n";
+    cerr << "\nRUNNING: " << argument_string << "\n";
 
     run_command(argument_string);
 
@@ -99,7 +99,7 @@ path samtools_index(path input_path, uint16_t max_threads){
 
     // Convert arguments to single string
     string argument_string = join(arguments, ' ');
-    cout << "\nRUNNING: " << argument_string << "\n";
+    cerr << "\nRUNNING: " << argument_string << "\n";
 
     run_command(argument_string);
 

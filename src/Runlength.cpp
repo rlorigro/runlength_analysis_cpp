@@ -32,13 +32,14 @@ using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
 
 
-void runlength_encode_fasta_sequence_to_file_and_memory(path& fasta_path,
-                                                        vector <pair <string, FastaIndex> >& read_index_vector,
-                                                        unordered_map<string, RunlengthSequenceElement>& runlength_sequences,
-                                                        mutex& map_mutex,
-                                                        mutex& file_write_mutex,
-                                                        FastaWriter& fasta_writer,
-                                                        atomic<uint64_t>& job_index){
+void runlength_encode_fasta_sequence_to_file(path& fasta_path,
+                                             vector <pair <string, FastaIndex> >& read_index_vector,
+                                             unordered_map<string, RunlengthSequenceElement>& runlength_sequences,
+                                             mutex& map_mutex,
+                                             mutex& file_write_mutex,
+                                             FastaWriter& fasta_writer,
+                                             bool store_in_memory,
+                                             atomic<uint64_t>& job_index){
 
     while (job_index < read_index_vector.size()) {
         // Fetch add
@@ -66,11 +67,12 @@ void runlength_encode_fasta_sequence_to_file_and_memory(path& fasta_path,
         fasta_writer.write(runlength_sequence);
         file_write_mutex.unlock();
 
-        // Append the sequence to a map of names:sequence
-        map_mutex.lock();
-        runlength_sequences[sequence.name] = move(runlength_sequence);
-        map_mutex.unlock();
-
+        if (store_in_memory) {
+            // Append the sequence to a map of names:sequence
+            map_mutex.lock();
+            runlength_sequences[sequence.name] = move(runlength_sequence);
+            map_mutex.unlock();
+        }
         // Print status update to stdout
         cerr << "\33[2K\rParsed: " << sequence.name << flush;
     }
@@ -121,6 +123,7 @@ void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unorde
 path runlength_encode_fasta_file(path input_file_path,
                                  unordered_map <string, RunlengthSequenceElement>& runlength_sequences,
                                  path output_dir,
+                                 bool store_in_memory,
                                  uint16_t max_threads) {
 
     // Generate parent directories if necessary
@@ -132,8 +135,8 @@ path runlength_encode_fasta_file(path input_file_path,
 
     path output_file_path = output_dir / output_filename;
 
-    cout << "READING FILE: " << input_file_path.string() << "\n";
-    cout << "WRITING FILE: " << output_file_path.string() << "\n";
+    cerr << "READING FILE: " << input_file_path.string() << "\n";
+    cerr << "WRITING FILE: " << output_file_path.string() << "\n";
 
     // This reader is used to fetch an index
     FastaReader fasta_reader(input_file_path);
@@ -159,13 +162,14 @@ path runlength_encode_fasta_file(path input_file_path,
         // Get data to send to threads (must not be sent by reference, or will lead to concurrency issues)
         try {
             // Call thread safe function to RL encode and write to file
-            threads.emplace_back(thread(runlength_encode_fasta_sequence_to_file_and_memory,
+            threads.emplace_back(thread(runlength_encode_fasta_sequence_to_file,
                                         ref(input_file_path),
                                         ref(read_index_vector),
                                         ref(runlength_sequences),
                                         ref(map_mutex),
                                         ref(file_write_mutex),
                                         ref(fasta_writer),
+                                        store_in_memory,
                                         ref(job_index)));
         } catch (const exception &e) {
             cerr << e.what() << "\n";
@@ -247,13 +251,13 @@ void update_runlength_matrix(AlignedSegment& aligned_segment,
 }
 
 
-void parse_region(path bam_path,
-    path marginpolish_directory,
-    unordered_map <string,path>& read_paths,
-    unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-    vector <Region>& regions,
-    runlength_matrix& runlength_matrix,
-    atomic <uint64_t>& job_index){
+void parse_aligned_marginpolish(path bam_path,
+                                path marginpolish_directory,
+                                unordered_map <string,path>& read_paths,
+                                unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                vector <Region>& regions,
+                                runlength_matrix& runlength_matrix,
+                                atomic <uint64_t>& job_index){
     ///
     ///
     ///
@@ -293,7 +297,8 @@ void parse_region(path bam_path,
         uint64_t thread_job_index = job_index.fetch_add(1);
         region = regions.at(thread_job_index);
 
-        bam_reader.initialize_region(region.name, region.start, region.stop);
+        // BAM coords are 1 based
+        bam_reader.initialize_region(region.name, region.start+1, region.stop+1);
 
         int i = 0;
 
@@ -341,6 +346,93 @@ void parse_region(path bam_path,
     }
 }
 
+void parse_aligned_fasta(path bam_path,
+                                path reads_fasta_path,
+                                unordered_map <string,FastaIndex>& read_indexes,
+                                unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                vector <Region>& regions,
+                                runlength_matrix& runlength_matrix,
+                                atomic <uint64_t>& job_index){
+    ///
+    ///
+    ///
+
+    // Initialize FastaReader and relevant containers
+    FastaReader fasta_reader = FastaReader(reads_fasta_path);
+    SequenceElement sequence;
+    RunlengthSequenceElement runlength_sequence;
+    fasta_reader.set_index(read_indexes);
+
+    // Initialize BAM reader and relevant containers
+    BamReader bam_reader = BamReader(bam_path);
+    AlignedSegment aligned_segment;
+    Coordinate coordinate;
+    Region region;
+    Cigar cigar;
+
+    string ref_name;
+
+    bool filter_secondary = true;
+    uint16_t map_quality_cutoff = 5;
+
+    // Volatiles
+    bool in_left_bound;
+    bool in_right_bound;
+    string true_base;
+    string observed_base;
+    uint16_t true_length = -1;
+    uint16_t observed_length = -1;
+    uint8_t observed_base_index;
+    vector<CoverageElement> coverage_data;
+
+    // Only allow matches
+    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("=")};
+
+    while (job_index < regions.size()) {
+        uint64_t thread_job_index = job_index.fetch_add(1);
+        region = regions.at(thread_job_index);
+
+        // BAM coords are 1 based
+        bam_reader.initialize_region(region.name, region.start+1, region.stop+1);
+
+        int i = 0;
+
+        while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
+            fasta_reader.fetch_sequence(sequence, aligned_segment.read_name);
+            runlength_encode(runlength_sequence, sequence);
+
+//            cout << aligned_segment.read_name << " " << runlength_sequence.sequence << "\n";
+
+            // Iterate cigars that match the criteria (must be '=')
+            while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
+                in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
+                in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
+
+                // Subset alignment to portions of the read that are within the window/region
+                if (in_left_bound and in_right_bound) {
+                    true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
+                    observed_base = runlength_sequence.sequence[coordinate.read_true_index];
+                    true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+//                    cout << true_base << " " << observed_base << " " << coordinate.ref_index << " " << coordinate.read_true_index << "\n";
+
+                    // Skip anything other than ACTG
+                    if (not is_valid_base(true_base)){
+                        continue;
+                    }
+
+                    observed_length = runlength_sequence.lengths[coordinate.read_true_index];
+                    observed_base_index = base_to_index(true_base);
+                    runlength_matrix[aligned_segment.reversal][observed_base_index][true_length][observed_length] += 1;
+                }
+            }
+
+            i++;
+        }
+
+        cerr << "\33[2K\rParsed: " << region.to_string() << flush;
+    }
+}
+
 
 void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,RunlengthSequenceElement>& sequences, uint64_t chunk_size){
     ///
@@ -354,13 +446,13 @@ void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,
 }
 
 
-void measure_runlength_distribution(path bam_path,
-        path marginpolish_directory,
-        unordered_map <string,path>& read_paths,
-        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-        vector <Region>& regions,
-        uint16_t max_runlength,
-        uint16_t max_threads){
+runlength_matrix get_marginpolish_runlength_matrix(path bam_path,
+                                       path marginpolish_directory,
+                                       unordered_map <string,path>& read_paths,
+                                       unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                       vector <Region>& regions,
+                                       uint16_t max_runlength,
+                                       uint16_t max_threads){
     ///
     ///
     ///
@@ -375,14 +467,14 @@ void measure_runlength_distribution(path bam_path,
     for (uint64_t i=0; i<max_threads; i++){
         try {
             // Call thread safe function to read and write to file
-            threads.emplace_back(thread(parse_region,
-                    ref(bam_path),
-                    ref(marginpolish_directory),
-                    ref(read_paths),
-                    ref(ref_runlength_sequences),
-                    ref(regions),
-                    ref(matrices_per_thread[i]),
-                    ref(job_index)));
+            threads.emplace_back(thread(parse_aligned_marginpolish,
+                                        ref(bam_path),
+                                        ref(marginpolish_directory),
+                                        ref(read_paths),
+                                        ref(ref_runlength_sequences),
+                                        ref(regions),
+                                        ref(matrices_per_thread[i]),
+                                        ref(job_index)));
         } catch (const exception &e) {
             cerr << e.what() << "\n";
             exit(1);
@@ -399,12 +491,56 @@ void measure_runlength_distribution(path bam_path,
 
     runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
-    cout << matrix_to_string(matrix_sum) << "\n";
+    return matrix_sum;
+}
 
-    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix_sum);
 
-    cout << matrix_to_string(nondirectional_matrix);
+runlength_matrix get_fasta_runlength_matrix(path bam_path,
+                                       path reads_fasta_path,
+                                       unordered_map <string,FastaIndex>& read_indexes,
+                                       unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                       vector <Region>& regions,
+                                       uint16_t max_runlength,
+                                       uint16_t max_threads){
+    ///
+    ///
+    ///
 
+    runlength_matrix template_matrix(boost::extents[2][4][max_runlength+1][max_runlength+1]);   // 0 length included
+    vector<runlength_matrix> matrices_per_thread(max_threads, template_matrix);
+
+    vector<thread> threads;
+    atomic<uint64_t> job_index = 0;
+
+    // Launch threads
+    for (uint64_t i=0; i<max_threads; i++){
+        try {
+            // Call thread safe function to read and write to file
+            threads.emplace_back(thread(parse_aligned_fasta,
+                                        ref(bam_path),
+                                        ref(reads_fasta_path),
+                                        ref(read_indexes),
+                                        ref(ref_runlength_sequences),
+                                        ref(regions),
+                                        ref(matrices_per_thread[i]),
+                                        ref(job_index)));
+        } catch (const exception &e) {
+            cerr << e.what() << "\n";
+            exit(1);
+        }
+    }
+
+    // Wait for threads to finish
+    for (auto& t: threads){
+        t.join();
+    }
+    cerr << "\n" << flush;
+
+    cerr << "Summing matrices from " << max_threads << " threads...\n";
+
+    runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
+
+    return matrix_sum;
 }
 
 
@@ -428,7 +564,12 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     // Runlength encode the reference (store in memory)
     unordered_map<string,RunlengthSequenceElement> ref_runlength_sequences;
     path reference_fasta_path_rle;
-    reference_fasta_path_rle = runlength_encode_fasta_file(reference_fasta_path, ref_runlength_sequences, output_directory, max_threads);
+    bool store_in_memory = true;
+    reference_fasta_path_rle = runlength_encode_fasta_file(reference_fasta_path,
+            ref_runlength_sequences,
+            output_directory,
+            store_in_memory,
+            max_threads);
 
     marginpolish_reader.index();
     unordered_map<string,path> read_paths = marginpolish_reader.get_index();
@@ -441,7 +582,11 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
 
     // Extract the sequences from MarginPolish TSVs (ignore coverage data for now)
     path reads_fasta_path_rle;
-    reads_fasta_path_rle = write_all_marginpolish_consensus_sequences_to_fasta(marginpolish_reader, read_names, marginpolish_directory, output_directory, max_threads);
+    reads_fasta_path_rle = write_all_marginpolish_consensus_sequences_to_fasta(marginpolish_reader,
+            read_names,
+            marginpolish_directory,
+            output_directory,
+            max_threads);
 
     // Index all the files in the MP directory
     // Setup Alignment parameters
@@ -454,7 +599,16 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
 
     // Align Marginpolish reads to the reference
     path bam_path;
-    bam_path = align(reference_fasta_path_rle, reads_fasta_path_rle, output_directory, sort, index, delete_intermediates, k, minimap_preset, explicit_mismatch, max_threads);
+    bam_path = align(reference_fasta_path_rle,
+            reads_fasta_path_rle,
+            output_directory,
+            sort,
+            index,
+            delete_intermediates,
+            k,
+            minimap_preset,
+            explicit_mismatch,
+            max_threads);
 
     //TODO: cut off 50bp overlaps on MarginPolish TSVs?
 
@@ -465,8 +619,104 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     cerr << "Iterating alignments...\n" << std::flush;
 
     // Launch threads for parsing alignments and generating matrices
-    measure_runlength_distribution(bam_path, marginpolish_directory, read_paths, ref_runlength_sequences, regions, max_runlength, max_threads);
+    runlength_matrix matrix = get_marginpolish_runlength_matrix(bam_path,
+            marginpolish_directory,
+            read_paths,
+            ref_runlength_sequences,
+            regions,
+            max_runlength,
+            max_threads);
 
-    // Save matrices
+    // Print matrices
+    cout << matrix_to_string(matrix) << "\n";
+    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
+    cout << matrix_to_string(nondirectional_matrix);
+}
 
+
+void measure_runlength_distribution_from_fasta(path reads_fasta_path,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_runlength,
+        uint16_t max_threads){
+
+    cerr << "Using " + to_string(max_threads) + " threads\n";
+
+    // How big (bp) should the regions be for iterating the BAM? Regardless of size,
+    // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
+    // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
+    // associated with iterating reads that extend beyond the region (at the edges)
+    uint64_t chunk_size = 1*1000*1000;
+
+    // Initialize readers
+    FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);
+    FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
+
+    // Flag that decides whether RLE sequences should be added to a hash map in memory
+    bool store_in_memory;
+
+    // Runlength encode the REFERENCE, rewrite to another FASTA, and store in memory
+    unordered_map<string,RunlengthSequenceElement> ref_runlength_sequences;
+    path reference_fasta_path_rle;
+    store_in_memory = true;
+    reference_fasta_path_rle = runlength_encode_fasta_file(reference_fasta_path,
+            ref_runlength_sequences,
+            output_directory,
+            store_in_memory,
+            max_threads);
+
+    // Runlength encode the READ SEQUENCES, rewrite to another FASTA, and DON'T store in memory
+    unordered_map<string, RunlengthSequenceElement> _;
+    path reads_fasta_path_rle;
+    store_in_memory = false;
+    reads_fasta_path_rle = runlength_encode_fasta_file(reads_fasta_path,
+            _,
+            output_directory,
+            store_in_memory,
+            max_threads);
+
+    // Index all the files in the MP directory
+    // Setup Alignment parameters
+    bool sort = true;
+    bool index = true;
+    bool delete_intermediates = false;  //TODO: switch to true
+    uint16_t k = 19;
+    string minimap_preset = "asm20";    //TODO: make command line argument?
+    bool explicit_mismatch = true;
+
+    // Align reads to the reference
+    path bam_path;
+    bam_path = align(reference_fasta_path_rle,
+            reads_fasta_path_rle,
+            output_directory,
+            sort,
+            index,
+            delete_intermediates,
+            k,
+            minimap_preset,
+            explicit_mismatch,
+            max_threads);
+
+    // Chunk alignment regions
+    vector<Region> regions;
+    chunk_sequences_into_regions(regions, ref_runlength_sequences, chunk_size);
+
+    cerr << "Iterating alignments...\n" << std::flush;
+
+    reads_fasta_reader.index();
+    unordered_map<string,FastaIndex> read_indexes = reads_fasta_reader.get_index();
+
+    // Launch threads for parsing alignments and generating matrices
+    runlength_matrix matrix = get_fasta_runlength_matrix(bam_path,
+            reads_fasta_path,
+            read_indexes,
+            ref_runlength_sequences,
+            regions,
+            max_runlength,
+            max_threads);
+
+    // Print matrices
+    cout << matrix_to_string(matrix) << "\n";
+    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
+    cout << matrix_to_string(nondirectional_matrix);
 }

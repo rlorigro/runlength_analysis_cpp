@@ -32,6 +32,7 @@ public:
 class RunnieSequence{
 public:
     /// Attributes ///
+    string name;
     string sequence;
     vector <double> scales;
     vector <double> shapes;
@@ -51,7 +52,9 @@ public:
 
     void index();
     void index_file(path file_path);
-    void fetch_read(string& read_name);
+    void parse_line(RunnieSequence& sequence, string& line);
+    void fetch_sequence(RunnieSequence& sequence, string& read_name);
+    void fetch_all_sequences(vector<RunnieSequence>& sequences);
     void update_index(path& file_path,
         ifstream& file,
         string& line,

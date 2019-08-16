@@ -27,6 +27,7 @@ RunnieReader::RunnieReader(path directory_path){
     this->directory_path = directory_path;
 }
 
+
 void RunnieReader::update_index(path& file_path,
         ifstream& file,
         string& line,
@@ -50,7 +51,7 @@ void RunnieReader::update_index(path& file_path,
         cout << read_name << " " << file_path.string() << " " << byte_index << " " << read_length << "\n";
     }
 
-    // If its not the end of the file, update as if it
+    // If it's not the end of the file
     if (not file.eof()) {
         // Current header saved until next header is found
         read_name = line.substr(2, line.size() - 1);
@@ -58,6 +59,7 @@ void RunnieReader::update_index(path& file_path,
         current_header_byte_index = file.tellg();
     }
 }
+
 
 void RunnieReader::index_file(path file_path){
     // Open file
@@ -98,5 +100,82 @@ void RunnieReader::index(){
     for (const path& file_path: directory_iterator(this->directory_path)){
         this->index_file(file_path);
     }
+}
 
+
+void RunnieReader::parse_line(RunnieSequence& sequence, string& line){
+    sequence.sequence += line[0];
+
+    string scale_string;
+    string shape_string;
+    double scale;
+    double shape;
+
+    uint8_t column_index = 0;
+    for (auto& c: line){
+        if (c == '\t'){
+            // Count the current column
+            column_index++;
+        }
+        else{
+            // Shape param (beta) is in column 1
+            if (column_index == 1){
+                shape_string += c;
+            }
+            // Scale param (alpha) is in column 2
+            else if (column_index == 2){
+                scale_string += c;
+            }
+        }
+    }
+
+    // Convert string representations of hex floating points to doubles
+    scale = stod(scale_string);
+    shape = stod(shape_string);
+
+    sequence.scales.emplace_back(scale);
+    sequence.shapes.emplace_back(shape);
+
+    cout << scale_string << "->" << scale << " " << shape_string << "->" << shape << "\n";
+}
+
+
+void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
+    // Clear the container
+    sequence = {};
+
+    RunnieIndex read_index = this->read_indexes.at(read_name);
+
+    cout << read_index.file_path << " " << read_index.byte_index << " " << read_index.length << "\n";
+
+    // Open file
+    ifstream file = ifstream(read_index.file_path);
+    if (not file.good()){
+        throw runtime_error("ERROR: could not open file " + read_index.file_path.string());
+    }
+
+    // Skip to sequence start position in file
+    file.seekg(read_index.byte_index);
+
+    // File iteration variables
+    string line;
+    uint64_t l = 0;
+
+    // The sequence length is known from the first pass during indexing
+    while (getline(file, line) and (l < read_index.length)){
+        this->parse_line(sequence, line);
+        l++;
+    }
+}
+
+
+void RunnieReader::fetch_all_sequences(vector<RunnieSequence>& sequences){
+    RunnieSequence sequence;
+    string read_name;
+
+    for (auto& item: this->read_indexes){
+        read_name = item.first;
+        sequences.push_back(sequence);
+        this->fetch_sequence(sequences.back(), read_name);
+    }
 }

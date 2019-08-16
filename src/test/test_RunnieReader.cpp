@@ -17,5 +17,22 @@ int main() {
 
     RunnieReader reader = RunnieReader(absolute_data_path);
     reader.index();
+
+    vector<RunnieSequence> sequences;
+    reader.fetch_all_sequences(sequences);
+
+    for (auto& sequence: sequences){
+        cout << sequence.sequence << "\n";
+
+        for (auto& scale: sequence.scales){
+            cout << scale << ",";
+        }
+        cout << "\n";
+
+        for (auto& shape: sequence.shapes){
+            cout << shape << ",";
+        }
+        cout << "\n";
+    }
 }
 

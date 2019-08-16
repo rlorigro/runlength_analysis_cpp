@@ -2,7 +2,7 @@
 #include "Base.hpp"
 
 
-string matrix_to_string(runlength_matrix matrix){
+string matrix_to_string(runlength_matrix matrix, size_t cutoff){
     string matrix_string;
     string reversal_string;
 
@@ -12,6 +12,11 @@ string matrix_to_string(runlength_matrix matrix){
     size_t n_bases = shape_a[1];
     size_t n_true_lengths = shape_a[2];
     size_t n_observed_lengths = shape_a[3];
+
+    if (cutoff > 0){
+        n_true_lengths = cutoff;
+        n_observed_lengths = cutoff;
+    }
 
     for (size_t r=0; r<n_directions; r++) {
         if (r == 0){

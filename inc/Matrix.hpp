@@ -22,7 +22,7 @@ typedef multi_array<double,4> runlength_matrix;
 
 void operator+=(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
-string matrix_to_string(runlength_matrix matrix);
+string matrix_to_string(runlength_matrix matrix, size_t cutoff=0);
 
 void increment_matrix(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
