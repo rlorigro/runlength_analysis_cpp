@@ -50,6 +50,7 @@ uint64_t FastaIndex::size(){
 
 FastaIndex::FastaIndex() = default;
 
+FastaReader::FastaReader() = default;
 
 FastaReader::FastaReader(path file_path){
     this->file_path = file_path;
@@ -88,6 +89,7 @@ void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name
     // Fill in the "name" field of the sequence element
     element.name = sequence_name;
 
+    // Reset EOF flag and ifstream if file was already iterated before
     if (this->fasta_file.tellg() == -1){
         this->end_of_file = false;
         this->fasta_file.clear();
@@ -98,7 +100,7 @@ void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name
         this->fasta_file.seekg(this->read_indexes.at(sequence_name).byte_index);
     }
     catch(std::out_of_range& e){
-        throw out_of_range("ERROR: sequence not found in fasta index: " + sequence_name);
+        throw out_of_range("ERROR: sequence '" + sequence_name + "' not found in fasta index for file: " + this->file_path.string());
     }
 
     // Fill in the "sequence" field of the sequence element

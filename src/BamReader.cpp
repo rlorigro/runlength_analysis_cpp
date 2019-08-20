@@ -65,6 +65,8 @@ string Region::to_string(){
     return s;
 }
 
+BamReader::BamReader() = default;
+
 BamReader::BamReader(path bam_path){
     this->bam_path = bam_path.string();
     this->bam_file = nullptr;
