@@ -47,6 +47,7 @@ public:
 
     /// Methods ///
     FastaReader(path file_path);
+    FastaReader();
 
     // Fetch header + sequence assuming read position precedes a header
     void next_element(SequenceElement& element);

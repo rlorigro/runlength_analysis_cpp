@@ -149,16 +149,17 @@ include_directories(
 
 # Define our shared library sources. NOT test executables.
 set(SOURCES
-        src/FastaReader.cpp
-        src/FastaWriter.cpp
-        src/Runlength.cpp
-        src/Miscellaneous.cpp
         src/Align.cpp
         src/AlignedSegment.cpp
         src/BamReader.cpp
-        src/MarginPolishReader.cpp
         src/Base.cpp
+        src/FastaReader.cpp
+        src/FastaWriter.cpp
+        src/Miscellaneous.cpp
+        src/MarginPolishReader.cpp
         src/Matrix.cpp
+        src/PileupGenerator.cpp
+        src/Runlength.cpp
         src/RunnieReader.cpp)
 
 project(runlength_analysis)
@@ -234,17 +235,7 @@ include_directories( ${Boost_INCLUDE_DIR} )
 
 # -------- TESTS --------
 
-set(FILENAME_PREFIX test_htslib)
-add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
-set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
-target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
-
 set(FILENAME_PREFIX test_htslib_indexed)
-add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
-set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
-target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
-
-set(FILENAME_PREFIX test_threading_simple)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
@@ -260,16 +251,6 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_Runlength)
-add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
-set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
-target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
-
-set(FILENAME_PREFIX test_fai_fetch)
-add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
-set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
-target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
-
-set(FILENAME_PREFIX test_fai_fetch_custom)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
@@ -294,14 +275,14 @@ add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
-# -------- SCRIPTS --------
-
-set(FILENAME_PREFIX fasta_to_RLE_fasta)
-add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
+set(FILENAME_PREFIX test_PileupGenerator)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
-set(FILENAME_PREFIX fasta_to_RLE_fasta_parallel)
+# -------- SCRIPTS --------
+
+set(FILENAME_PREFIX fasta_to_RLE_fasta)
 add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
