@@ -179,3 +179,4 @@ void RunnieReader::fetch_all_sequences(vector<RunnieSequence>& sequences){
         this->fetch_sequence(sequences.back(), read_name);
     }
 }
+

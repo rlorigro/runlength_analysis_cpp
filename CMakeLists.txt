@@ -159,7 +159,8 @@ set(SOURCES
         src/MarginPolishReader.cpp
         src/Base.cpp
         src/Matrix.cpp
-        src/RunnieReader.cpp)
+        src/RunnieReader.cpp
+        src/DiscreteWeibull.cpp)
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})

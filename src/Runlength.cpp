@@ -106,13 +106,6 @@ void write_marginpolish_consensus_sequence_to_fasta(path& marginpolish_directory
 }
 
 
-//void get_key_vector_from_map(vector<string>& keys, unordered_map<string, uint64_t>& map_object){
-//    for (auto& element: map_object){
-//        keys.push_back(element.first);
-//    }
-//}
-
-
 void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object){
     for (auto& item: map_object){
         items.emplace_back(item.first, item.second);
@@ -304,7 +297,6 @@ void parse_aligned_marginpolish(path bam_path,
 
         while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
             marginpolish_reader.fetch_read(marginpolish_segment, aligned_segment.read_name);
-//            cout << aligned_segment.to_string() << "\n";
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
@@ -345,6 +337,7 @@ void parse_aligned_marginpolish(path bam_path,
         cerr << "\33[2K\rParsed: " << region.to_string() << flush;
     }
 }
+
 
 void parse_aligned_fasta(path bam_path,
                                 path reads_fasta_path,
@@ -401,8 +394,6 @@ void parse_aligned_fasta(path bam_path,
             fasta_reader.fetch_sequence(sequence, aligned_segment.read_name);
             runlength_encode(runlength_sequence, sequence);
 
-//            cout << aligned_segment.read_name << " " << runlength_sequence.sequence << "\n";
-
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
                 in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
@@ -413,7 +404,6 @@ void parse_aligned_fasta(path bam_path,
                     true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
                     observed_base = runlength_sequence.sequence[coordinate.read_true_index];
                     true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
-//                    cout << true_base << " " << observed_base << " " << coordinate.ref_index << " " << coordinate.read_true_index << "\n";
 
                     // Skip anything other than ACTG
                     if (not is_valid_base(true_base)){
