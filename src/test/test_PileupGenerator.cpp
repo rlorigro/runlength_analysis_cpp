@@ -21,5 +21,9 @@ int main(){
     PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, absolute_fasta_ref_path, absolute_fasta_reads_path);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
-    pileup_generator.fetch_region(region);
+    pileup_generator.fetch_region(region, 10);
+
+    region = Region("synthetic_ref_0", 0, 1337);
+    pileup_generator.fetch_region(region, 10);
+
 }

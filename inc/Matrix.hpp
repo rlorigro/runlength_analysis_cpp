@@ -22,12 +22,23 @@ typedef multi_array<double,4> runlength_matrix;
 
 void operator+=(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
+void operator+=(runlength_matrix& matrix_a, double increment);
+
 string matrix_to_string(runlength_matrix matrix, size_t cutoff=0);
 
 void increment_matrix(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
+void increment_matrix(runlength_matrix& matrix_a, double increment);
+
 runlength_matrix sum_matrices(vector<runlength_matrix> matrices);
 
 runlength_matrix sum_reverse_complements(runlength_matrix& matrix);
+
+void update_runlength_matrix_with_weibull_probabilities(runlength_matrix& matrix,
+        bool& reversal,
+        uint8_t& base_index,
+        uint16_t& true_length,
+        double& scale,
+        double& shape);
 
 #endif //RUNLENGTH_ANALYSIS_MATRIX_HPP

@@ -7,6 +7,7 @@
 
 using std::move;
 using std::cout;
+using std::cerr;
 using std::flush;
 using std::to_string;
 using std::getline;
@@ -208,6 +209,7 @@ void MarginPolishReader::fetch_read(MarginPolishSegment& mp_segment, string& rea
     /// Fetch a read by its read name, which is derived from its filename
     ///
     if (this->file_paths.empty()){
+        cerr << "Index not loaded for marginpolish directory, generating now...\n";
         this->index();
     }
 
@@ -249,6 +251,7 @@ void MarginPolishReader::fetch_consensus_sequence(MarginPolishSegment& mp_segmen
     mp_segment = {};
 
     if (this->file_paths.empty()){
+        cerr << "Index not loaded for marginpolish directory, generating now...\n";
         this->index();
     }
     mp_segment.name = read_name;

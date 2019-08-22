@@ -2,11 +2,14 @@
 #include "RunnieReader.hpp"
 #include <algorithm>
 #include <iostream>
+#include <stdexcept>
 
 using std::experimental::filesystem::directory_iterator;
 using std::replace;
 using std::ostream;
+using std::exception;
 using std::cout;
+using std::cerr;
 
 
 RunnieIndex::RunnieIndex(path file_path, uint64_t byte_index, uint64_t length){
@@ -46,9 +49,8 @@ void RunnieReader::update_index(path& file_path,
         bool no_conflict = this->read_indexes.try_emplace(read_name, RunnieIndex(file_path, byte_index, read_length)).second;
         if (not no_conflict) {
             throw runtime_error(
-                    "ERROR: duplicate reads detected in Runnie: " + file_path.string() + " " + read_name);
+                    "ERROR: duplicate or nonexistent read detected in Runnie: " + file_path.string() + " " + read_name);
         }
-        cout << read_name << " " << file_path.string() << " " << byte_index << " " << read_length << "\n";
     }
 
     // If it's not the end of the file
@@ -80,7 +82,6 @@ void RunnieReader::index_file(path file_path){
     uint64_t current_header_byte_index = 0;
 
     while (getline(file, line)){
-//        cout << line << "\n";
         if (line[0] == '#'){
             this->update_index(file_path,file,line,l,read_name,byte_index,read_length,current_header_line_index,current_header_byte_index);
         }
@@ -88,6 +89,17 @@ void RunnieReader::index_file(path file_path){
     }
     this->update_index(file_path,file,line,l,read_name,byte_index,read_length,current_header_line_index,current_header_byte_index);
 }
+
+
+unordered_map <string, RunnieIndex> RunnieReader::get_index(){
+    return this->read_indexes;
+}
+
+
+void RunnieReader::set_index(unordered_map <string, RunnieIndex> index){
+    this->read_indexes = index;
+}
+
 
 
 void RunnieReader::index(){
@@ -135,18 +147,27 @@ void RunnieReader::parse_line(RunnieSequence& sequence, string& line){
 
     sequence.scales.emplace_back(scale);
     sequence.shapes.emplace_back(shape);
-
-    cout << scale_string << "->" << scale << " " << shape_string << "->" << shape << "\n";
 }
 
 
-void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
+void RunnieReader::fetch_sequence_bases(RunnieSequence& sequence, string& read_name){
+    ///
+    /// Dont read the whole file, just fetch the nucleotide bases for the sequence
+    ///
+
     // Clear the container
     sequence = {};
 
+    // Name is known from prior indexing
+    sequence.name = read_name;
+
+    // Fetch index
     RunnieIndex read_index = this->read_indexes.at(read_name);
 
-    cout << read_index.file_path << " " << read_index.byte_index << " " << read_index.length << "\n";
+    if (this->read_indexes.empty()){
+        cerr << "Index not loaded for runnie directory, generating now...\n";
+        this->index();
+    }
 
     // Open file
     ifstream file = ifstream(read_index.file_path);
@@ -163,7 +184,50 @@ void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
 
     // The sequence length is known from the first pass during indexing
     while (getline(file, line) and (l < read_index.length)){
-        this->parse_line(sequence, line);
+        sequence.sequence += line[0];
+        l++;
+    }
+}
+
+
+
+void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
+    // Clear the container
+    sequence = {};
+
+    // Name is known from prior indexing
+    sequence.name = read_name;
+
+    if (this->read_indexes.empty()){
+        cerr << "Index not loaded for runnie directory, generating now...\n";
+        this->index();
+    }
+
+    // Fetch index
+    RunnieIndex read_index = this->read_indexes.at(read_name);
+
+    // Open file
+    ifstream file = ifstream(read_index.file_path);
+    if (not file.good()){
+        throw runtime_error("ERROR: could not open file " + read_index.file_path.string());
+    }
+
+    // Skip to sequence start position in file
+    file.seekg(read_index.byte_index);
+
+    // File iteration variables
+    string line;
+    uint64_t l = 0;
+
+    // The sequence length is known from the first pass during indexing
+    while (getline(file, line) and (l < read_index.length)){
+        try {
+            this->parse_line(sequence, line);
+        }
+        catch (const exception& e){
+            cout << e.what() << "\n";
+            cout << "runnie parser failed at line " << l << " in file: " << read_index.file_path << "\n";
+        }
         l++;
     }
 }

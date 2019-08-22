@@ -12,6 +12,7 @@
 #include <experimental/filesystem>
 
 using std::cout;
+using std::ostream;
 using std::deque;
 using std::unordered_map;
 using std::experimental::filesystem::path;
@@ -29,9 +30,14 @@ public:
     unordered_map <int64_t, vector <vector <string> > > insert_columns;
     vector <vector <string> > pileup;
 
+    string null_character = "_";
+
     /// Methods ///
     PileupGenerator(path bam_path, path ref_fasta_path, path reads_fasta_path);
-    void fetch_region(Region region);
+    void print_lowest_free_indexes();
+    void print_matrix();
+
+    void fetch_region(Region region, uint16_t maximum_depth=50);
     int64_t find_depth_index(int64_t start_index);
 
 private:

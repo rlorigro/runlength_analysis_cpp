@@ -42,6 +42,13 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
         uint16_t max_threads);
 
 
+void measure_runlength_distribution_from_runnie(path runnie_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_runlength,
+        uint16_t max_threads);
+
+
 void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object);
 
 

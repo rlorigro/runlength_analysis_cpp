@@ -60,6 +60,9 @@ public:
     bool is_secondary;
     int64_t map_quality;
 
+    // For PileupGenerator
+    int64_t subcigar_index;
+
     // Class constants
     static const array <string, 2> bases;
     static const array <bool, 10> cigar_ref_move;
@@ -104,7 +107,6 @@ private:
     int64_t read_index;
     int64_t read_true_index;
     int64_t cigar_index;
-    int64_t subcigar_index;
     Cigar current_cigar = Cigar(3);
 //    bool valid_iterator;
 

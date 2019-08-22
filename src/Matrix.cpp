@@ -1,5 +1,9 @@
+#include "DiscreteWeibull.hpp"
 #include "Matrix.hpp"
 #include "Base.hpp"
+#include <algorithm>
+
+using std::min;
 
 
 string matrix_to_string(runlength_matrix matrix, size_t cutoff){
@@ -88,9 +92,17 @@ void increment_matrix(runlength_matrix& matrix_a, runlength_matrix& matrix_b){
 }
 
 
+void operator+=(runlength_matrix& matrix_a, double increment){
+    ///
+    /// Increment 'matrix_a' element-wise with fixed value
+    ///
+    increment_matrix(matrix_a, increment);
+}
+
+
 void increment_matrix(runlength_matrix& matrix_a, double increment){
     ///
-    /// Increment 'matrix_a' element-wise with values from 'matrix_b'
+    /// Increment 'matrix_a' element-wise with fixed value
     ///
     auto shape_a = matrix_a.shape();
 
@@ -163,3 +175,30 @@ runlength_matrix sum_reverse_complements(runlength_matrix& matrix){
 
     return sum;
 }
+
+
+void update_runlength_matrix_with_weibull_probabilities(runlength_matrix& matrix,
+        bool& reversal,
+        uint8_t& base_index,
+        uint16_t& true_length,
+        double& scale,
+        double& shape){
+    ///
+    /// Evaluate the Discrete Weibull Distribution for a given scale and shape, taking an ALLOCATED (!) vector which
+    /// defines the range to evaluate over
+    ///
+
+    auto matrix_shape = matrix.shape();
+
+    size_t n_observed_lengths = matrix_shape[3];
+    size_t n_true_lengths = matrix_shape[2];
+
+    // Skip any counts that are too large
+    if (true_length < n_true_lengths - 1){
+        for (size_t i = 0; i < n_observed_lengths-1; i++) {
+            matrix[reversal][base_index][true_length][i+1] +=
+            evaluate_weibull_cdf(i, scale, shape) - evaluate_weibull_cdf(i + 1, scale, shape);
+        }
+    }
+}
+
