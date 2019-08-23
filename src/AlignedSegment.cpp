@@ -118,6 +118,11 @@ bool Cigar::is_read_move(){
 }
 
 
+bool Cigar::is_true_read_move(){
+    return AlignedSegment::cigar_true_read_move[this->code];
+}
+
+
 string Cigar::to_string() {
     return "(" + Cigar::cigar_name_key.at(this->code) + "," + std::to_string(this->length) + ")";
 }

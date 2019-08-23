@@ -41,6 +41,7 @@ public:
     bool is_not_clip();
     bool is_ref_move();
     bool is_read_move();
+    bool is_true_read_move();
     string to_string();
 };
 

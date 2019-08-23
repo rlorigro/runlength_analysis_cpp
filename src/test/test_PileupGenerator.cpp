@@ -18,12 +18,12 @@ int main(){
     path relative_fasta_ref_path = "/data/test/test_alignable_reference_non_RLE.fasta";
     path absolute_fasta_ref_path = project_directory / relative_fasta_ref_path;
 
-    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, absolute_fasta_ref_path, absolute_fasta_reads_path);
+    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, absolute_fasta_ref_path, absolute_fasta_reads_path, 10);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
-    pileup_generator.fetch_region(region, 10);
+    pileup_generator.fetch_region(region);
 
-    region = Region("synthetic_ref_0", 0, 1337);
-    pileup_generator.fetch_region(region, 10);
+//    region = Region("synthetic_ref_0", 0, 1337);
+//    pileup_generator.fetch_region(region, 10);
 
 }
