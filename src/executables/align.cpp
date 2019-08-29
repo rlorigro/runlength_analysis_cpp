@@ -74,4 +74,6 @@ int main(int argc, char* argv[]){
     notify(vm);
 
     align(ref_sequence_path, read_sequence_path, output_dir, sort, index, !keep, k, minimap_preset, explicit_mismatch, max_threads);
+
+    return 0;
 }

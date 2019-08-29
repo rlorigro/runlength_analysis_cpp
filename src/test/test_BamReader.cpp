@@ -279,4 +279,6 @@ int main() {
     while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
         cout << aligned_segment.to_string() << "\n";
     }
+
+    return 0;
 }

@@ -80,5 +80,7 @@ int main(int argc, char* argv[]){
     cout << "READING FILE: " << string(input_file_path) << "\n";
 
     fasta_to_RLE_fasta(input_file_path, output_dir);
+
+    return 0;
 }
 

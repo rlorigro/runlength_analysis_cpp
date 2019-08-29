@@ -23,7 +23,5 @@ int main(){
     Region region = Region("synthetic_ref_0", 0, 1337);
     pileup_generator.fetch_region(region);
 
-//    region = Region("synthetic_ref_0", 0, 1337);
-//    pileup_generator.fetch_region(region, 10);
-
+    return 0;
 }

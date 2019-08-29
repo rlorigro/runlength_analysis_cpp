@@ -101,5 +101,7 @@ int main(){
     assert(element.name == "test2");
     assert(element.sequence == "GGGGTTTGGT");
     cout << "PASS\n";
+
+    return 0;
 }
 

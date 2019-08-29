@@ -24,4 +24,6 @@ int main(){
 
     element = {.name="test2", .sequence="GGGGTTTGGT"};
     fasta_writer.write(element);
+
+    return 0;
 }

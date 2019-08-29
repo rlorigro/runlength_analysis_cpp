@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <stdexcept>
 #include "boost/program_options.hpp"
@@ -10,6 +11,7 @@
 
 using std::cout;
 using std::string;
+using std::pair;
 using std::vector;
 using std::runtime_error;
 using boost::program_options::options_description;
@@ -33,9 +35,30 @@ void split_as_string(vector<string>& tokens, string& s, string& separators){
     Separator separator(separators.c_str());
     Tokenizer tok{s, separator};
 
-    for (string token: tok) {
+    for (auto& token: tok) {
         tokens.push_back(token);
     }
+}
+
+
+// Helper function
+void split_as_double(vector<double>& tokens, string& s, string& separators){
+    Separator separator(separators.c_str());
+    Tokenizer tok{s, separator};
+
+    for (auto& token: tok) {
+        tokens.push_back(stod(token));
+    }
+}
+
+
+void parse_comma_separated_pair_as_doubles(pair<double,double>& p, string& s) {
+    size_t comma_index = s.find_first_of(',');
+    string first = s.substr(0,comma_index-1);
+    string second = s.substr(comma_index+1,s.size());
+
+    p.first = stod(first);
+    p.second = stod(second);
 }
 
 

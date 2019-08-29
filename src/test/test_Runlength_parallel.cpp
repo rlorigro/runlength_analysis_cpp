@@ -28,4 +28,6 @@ int main() {
     for (auto& element: runlength_sequences){
         cout << element.first << "\n";
     }
+
+    return 0;
 }

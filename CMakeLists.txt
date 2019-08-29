@@ -11,15 +11,14 @@ project(run_length_analysis VERSION 0.0.0)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_definitions(-ggdb3 -O0 -Wall)      # Debugging + No optimization
-#add_definitions(-O3 -Wall)              # Much optimization
+set (CMAKE_CXX_FLAGS "-fexceptions -fno-new-ttp-matching")
+#add_definitions(-ggdb3 -O0 -Wall)      # Debugging + No optimization
+add_definitions(-O3 -Wall)              # Much optimization
 
 # Definitions needed to eliminate runtime dependency
 # on the boost system library.
 add_definitions(-DBOOST_SYSTEM_NO_DEPRECATED)
 add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
-
-
 
 
 ##############################################
@@ -153,6 +152,7 @@ set(SOURCES
         src/AlignedSegment.cpp
         src/BamReader.cpp
         src/Base.cpp
+        src/CompressedRunnieWriter.cpp
         src/DiscreteWeibull.cpp
         src/FastaReader.cpp
         src/FastaWriter.cpp
@@ -161,7 +161,9 @@ set(SOURCES
         src/Matrix.cpp
         src/PileupGenerator.cpp
         src/Runlength.cpp
-        src/RunnieReader.cpp)
+        src/RunnieReader.cpp
+        )
+
 
 project(runlength_analysis)
 add_library(runlength_analysis SHARED ${SOURCES})
@@ -277,6 +279,16 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_PileupGenerator)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_boost_interval_map)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_CompressedRunnieWriter)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

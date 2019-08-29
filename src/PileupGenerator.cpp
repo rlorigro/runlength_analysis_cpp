@@ -29,6 +29,7 @@ int64_t PileupGenerator::find_depth_index(int64_t start_index){
     ///
     /// Decide where to insert a read in the pileup, depending on what space is available.
     ///
+
     int64_t depth_index = -1;
     int64_t lowest_width_index;
 
@@ -130,7 +131,7 @@ void PileupGenerator::get_base(string& read_base, Cigar& cigar, Coordinate& coor
 }
 
 
-void PileupGenerator::fetch_region(Region region) {
+void PileupGenerator::fetch_region(Region& region) {
     // Initialize BAM reader and relevant containers
     bam_reader.initialize_region(region.name, region.start, region.stop);
     AlignedSegment aligned_segment;

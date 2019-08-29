@@ -163,4 +163,6 @@ int main() {
     char* bam_path_chars = const_cast<char*>(absolute_input_path.c_str());
 
     read_bam_file(bam_path_chars);
+
+    return 0;
 }

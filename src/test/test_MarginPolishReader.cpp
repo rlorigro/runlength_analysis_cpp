@@ -42,4 +42,6 @@ int main(){
         segment.print();
         segments.push_back(segment);
     }
+
+    return 0;
 }

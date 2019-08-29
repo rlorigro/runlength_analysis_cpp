@@ -65,6 +65,6 @@ int main() {
         cout << sequence.sequence << "\n";
     }
 
-
+    return 0;
 }
 

@@ -57,5 +57,7 @@ int main(int argc, char* argv[]){
         output_dir,
         max_runlength,
         max_threads);
+
+    return 0;
 }
 

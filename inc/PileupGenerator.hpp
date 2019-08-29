@@ -38,7 +38,7 @@ public:
     void print_lowest_free_indexes();
     void print_matrix();
 
-    void fetch_region(Region region);
+    void fetch_region(Region& region);
     int64_t find_depth_index(int64_t start_index);
     void get_base(string& read_base, Cigar& cigar, Coordinate& coordinate, SequenceElement& read_sequence);
     void parse_insert(int64_t pileup_width_index,
