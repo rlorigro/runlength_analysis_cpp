@@ -16,7 +16,6 @@ int main(){
 
     CompressedRunnieWriter writer = CompressedRunnieWriter(absolute_output_path, absolute_config_path);
 
-
     vector <pair <double,double> > centroids = {
         {0.156069,1.002322}, {0.175813,1.011429}, {0.183684,1.030105}, {0.185382,1.056303}, {0.185996,1.093240}, {0.186825,1.148644}, {0.188556,1.230392}, {0.190575,1.352536}, {0.194290,1.534103}, {0.199117,1.794003}, {0.205292,2.169827}, {0.213860,2.763479}, {0.226342,3.943392},
         {0.406617,1.006949}, {0.412261,1.023396}, {0.418709,1.049256}, {0.424790,1.082861}, {0.430500,1.123991}, {0.435762,1.176022}, {0.439835,1.246539}, {0.442233,1.342999}, {0.443559,1.473933}, {0.442880,1.648744}, {0.441515,1.883996}, {0.438055,2.195935}, {0.433257,2.617896}, {0.428404,3.206205}, {0.427783,4.130736}, {0.441926,5.594763},
@@ -36,12 +35,52 @@ int main(){
         {6.631657,1.225412}, {6.769243,2.101613}, {6.753055,3.014492}, {6.682895,3.792377}, {6.551478,4.469776}, {6.480785,5.066805}, {6.374827,5.556591}, {6.548307,6.115139}, {6.365558,6.697764}, {6.329936,7.368201}, {6.305574,7.931390}, {6.218989,8.629417}, {6.259816,9.426295}, {6.349632,10.523216}, {6.258312,12.223754}, {6.124640,15.270804}
     };
 
-//    cout << writer.recursive_interval_map << '\n';
+    auto a = writer.recursive_interval_map.find(0.156069);
 
-    for (auto& params: centroids){
-        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n';
+    if (a != writer.recursive_interval_map.end()) {
+        cout << a->second << '\n';
+
+        cout << "1.002322 : ";
+        auto b1 = a->second.find(1.002322);
+        if (b1 != a->second.end()) {
+            cout << b1->first << '\n';
+        }
+        else{
+            cout << "NOT FOUND\n";
+        }
+
+        cout << "1.005 : ";
+        auto b2 = a->second.find(1.005);
+        if (b2 != a->second.end()) {
+            cout << b2->first << '\n';
+        }
+        else{
+            cout << "NOT FOUND\n";
+        }
+
+        cout << "1.009 : ";
+        auto b3 = a->second.find(1.009);
+        if (b3 != a->second.end()) {
+            cout << b3->first << '\n';
+        }
+        else{
+            cout << "NOT FOUND\n";
+        }
     }
 
+    vector<string> bases = {"A","C","G","T"};
+    RunnieSequence sequence;
+
+    size_t i = 0;
+    for (auto& params: centroids){
+        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n';
+        sequence.sequence += bases[i%4];
+        sequence.scales.push_back(centroids[i].first);
+        sequence.shapes.push_back(centroids[i].second);
+        i++;
+    }
+
+    writer.write_sequence(sequence);
 
     return 0;
 }
