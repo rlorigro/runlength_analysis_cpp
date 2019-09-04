@@ -1,5 +1,7 @@
 
 #include "CompressedRunnieWriter.hpp"
+#include "DiscreteWeibull.hpp"
+
 
 int main(){
     path script_path = __FILE__;
@@ -70,6 +72,7 @@ int main(){
 
     vector<string> bases = {"A","C","G","T"};
     RunnieSequence sequence;
+    sequence.name = "centroids";
 
     size_t i = 0;
     for (auto& params: centroids){
@@ -81,6 +84,16 @@ int main(){
     }
 
     writer.write_sequence(sequence);
+
+    i = 0;
+    for (auto& params: centroids){
+        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n' << std::flush;
+        vector<double> distribution(100);
+        evaluate_discrete_weibull(distribution, params.first, params.second);
+
+        print_distribution(distribution);
+        i++;
+    }
 
     return 0;
 }

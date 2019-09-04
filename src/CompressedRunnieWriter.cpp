@@ -4,30 +4,36 @@
 #include "CompressedRunnieWriter.hpp"
 #include "Miscellaneous.hpp"
 #include "RunnieReader.hpp"
+#include <experimental/filesystem>
 #include <utility>
 #include <bitset>
 
 using boost::icl::interval_map;
 using boost::icl::interval;
 using boost::icl::total_enricher;
+using std::experimental::filesystem::create_directories;
+using std::unordered_map;
 using std::make_pair;
 using std::getline;
 using std::bitset;
+using std::cerr;
 
 
 CompressedRunnieWriter::CompressedRunnieWriter(path file_path, path params_path) {
-    cout << "WRITING TO: " << file_path << '\n';
+    cerr << "WRITING TO: " << file_path << '\n';
 
     this->sequence_file_path = file_path;
     this->index_file_path = file_path.string() + ".idx";
     this->params_path = params_path;
 
-    this->sequence_file = ofstream(this->sequence_file_path);
-    this->index_file = ofstream(this->index_file_path);
+    // Ensure that the output directory exists
+    create_directories(this->sequence_file_path.parent_path());
 
-//    if (not this->sequence_file.good()){
-//        throw runtime_error("ERROR: could not open file " + file_path.string());
-//    }
+    this->sequence_file = ofstream(this->sequence_file_path,ofstream::binary);
+
+    if (not this->sequence_file.is_open()){
+        throw runtime_error("ERROR: could not open file " + file_path.string());
+    }
 
     this->load_parameters();
 }
@@ -35,7 +41,8 @@ CompressedRunnieWriter::CompressedRunnieWriter(path file_path, path params_path)
 
 void CompressedRunnieWriter::build_recursive_interval_tree(){
     ///
-    /// Build a recursive interval tree such that each scale interval refers to its substituent shape tree
+    /// Build a recursive interval tree such that each scale interval refers to its substituent shape tree, which refers
+    /// to the encoding for (shape|scale)
     ///
 
     // This is incremented for each cluster/2D interval
@@ -115,15 +122,74 @@ void CompressedRunnieWriter::load_parameters(){
 }
 
 
-void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
-    uint8_t encoding = 0;
+void CompressedRunnieWriter::write_sequence_block(RunnieSequence& sequence){
+    // Write the sequence to the file
+    this->sequence_file.write(reinterpret_cast<char*>(sequence.sequence.data()), sequence.sequence.size());
+}
 
-    for (size_t i=0; i<sequence.sequence.size(); i++){
+
+void CompressedRunnieWriter::write_encoding_block(RunnieSequence& sequence){
+    uint8_t encoding = -1;
+
+    // Write the sequence to the file
+    for (size_t i=0; i<sequence.scales.size(); i++){
         encoding = this->fetch_encoding(sequence.scales[i], sequence.shapes[i]);
-
-        this->sequence_file << to_string(sequence.sequence[i]);
-        this->sequence_file << ',';
-        this->sequence_file << bitset<8>(encoding).to_string();
-        this->sequence_file << '\n';
+        this->sequence_file.write(reinterpret_cast<char*>(encoding),1);
     }
+}
+
+
+void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
+    CompressedRunnieIndex index;
+
+    // Add sequence start position to index
+    index.sequence_byte_index = this->sequence_file.tellp();
+
+    // Store the length of this sequence
+    index.sequence_length = sequence.sequence.size();
+
+    this->write_sequence_block(sequence);
+    this->write_encoding_block(sequence);
+
+    // Append index object to vector
+    this->indexes.push_back(index);
+}
+
+
+void CompressedRunnieWriter::write_index(CompressedRunnieIndex& index){
+    // Where is the sequence
+    this->sequence_file.write(reinterpret_cast<char*>(index.sequence_byte_index), sizeof(uint64_t)/sizeof(char));
+
+    // How long is the sequence
+    this->sequence_file.write(reinterpret_cast<char*>(index.sequence_length), sizeof(uint64_t)/sizeof(char));
+
+    // How long is the name of the sequence
+    this->sequence_file.write(reinterpret_cast<char*>(index.name.size()), sizeof(size_t)/sizeof(char));
+
+    // What is the name
+    this->sequence_file.write(reinterpret_cast<char*>(index.name.data()), index.name.size());
+}
+
+
+void CompressedRunnieWriter::write_indexes(){
+    // Store the current file byte index so the beginning of the INDEX table can be located later
+    uint64_t indexes_start_position = this->sequence_file.tellp();
+
+    // Iterate all the indexes, write them to the file
+    for (auto& index: this->indexes){
+        write_index(index);
+    }
+
+    // Store the current file byte index so the beginning of the CHANNEL table can be located later
+    uint64_t channel_metadata_start_position = this->sequence_file.tellp();
+
+    // Write dem channels bby
+    this->sequence_file.write(reinterpret_cast<char*>(this->n_channels), sizeof(uint64_t)/sizeof(char));
+    this->sequence_file.write(reinterpret_cast<char*>(this->channel_size_1), sizeof(uint64_t)/sizeof(char));
+
+    // Write the pointer to the beginning of the index table
+    this->sequence_file.write(reinterpret_cast<char*>(indexes_start_position), sizeof(uint64_t)/sizeof(char));
+
+    // Write the pointer to the beginning of the channels table
+    this->sequence_file.write(reinterpret_cast<char*>(channel_metadata_start_position), sizeof(uint64_t)/sizeof(char));
 }
