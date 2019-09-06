@@ -1,10 +1,45 @@
 
 #include "CompressedRunnieWriter.hpp"
+#include "CompressedRunnieReader.hpp"
 #include "DiscreteWeibull.hpp"
 
 
+void write_file(path absolute_output_path, path absolute_config_path, vector <pair <double,double> >& centroids){
+    CompressedRunnieWriter writer = CompressedRunnieWriter(absolute_output_path, absolute_config_path);
+
+   vector<string> bases = {"A","C","G","T"};
+   RunnieSequence sequence;
+   sequence.name = "centroids";
+
+   size_t i = 0;
+   for (auto& params: centroids){
+//       cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n';
+       sequence.sequence += bases[i%4];
+       sequence.scales.push_back(centroids[i].first);
+       sequence.shapes.push_back(centroids[i].second);
+       i++;
+   }
+
+
+   cout << "sequence.name: " << sequence.name << '\n';
+   writer.write_sequence(sequence);
+   writer.write_indexes();
+
+   //    i = 0;
+//    for (auto& params: centroids){
+//        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n' << std::flush;
+//        vector<double> distribution(100);
+//        evaluate_discrete_weibull(distribution, params.first, params.second);
+//
+//        print_distribution(distribution);
+//        i++;
+//    }
+
+}
+
 int main(){
     path script_path = __FILE__;
+    cout << script_path;
     path project_directory = script_path.parent_path().parent_path().parent_path();
 
     path relative_config_path = "/data/test/runnie/compression_parameters.tsv";     //TODO: move to `/config/`
@@ -15,8 +50,6 @@ int main(){
     path absolute_output_path = project_directory / relative_output_path / filename;
 
     cout << "WRITING: " << absolute_output_path << "\n";
-
-    CompressedRunnieWriter writer = CompressedRunnieWriter(absolute_output_path, absolute_config_path);
 
     vector <pair <double,double> > centroids = {
         {0.156069,1.002322}, {0.175813,1.011429}, {0.183684,1.030105}, {0.185382,1.056303}, {0.185996,1.093240}, {0.186825,1.148644}, {0.188556,1.230392}, {0.190575,1.352536}, {0.194290,1.534103}, {0.199117,1.794003}, {0.205292,2.169827}, {0.213860,2.763479}, {0.226342,3.943392},
@@ -37,63 +70,12 @@ int main(){
         {6.631657,1.225412}, {6.769243,2.101613}, {6.753055,3.014492}, {6.682895,3.792377}, {6.551478,4.469776}, {6.480785,5.066805}, {6.374827,5.556591}, {6.548307,6.115139}, {6.365558,6.697764}, {6.329936,7.368201}, {6.305574,7.931390}, {6.218989,8.629417}, {6.259816,9.426295}, {6.349632,10.523216}, {6.258312,12.223754}, {6.124640,15.270804}
     };
 
-    auto a = writer.recursive_interval_map.find(0.156069);
+    write_file(absolute_output_path, absolute_config_path, centroids);
 
-    if (a != writer.recursive_interval_map.end()) {
-        cout << a->second << '\n';
+    CompressedRunnieReader reader = CompressedRunnieReader("/home/ryan/code/runlength_analysis_cpp/output/test_CompressedRunnieWriter.rq");
 
-        cout << "1.002322 : ";
-        auto b1 = a->second.find(1.002322);
-        if (b1 != a->second.end()) {
-            cout << b1->first << '\n';
-        }
-        else{
-            cout << "NOT FOUND\n";
-        }
-
-        cout << "1.005 : ";
-        auto b2 = a->second.find(1.005);
-        if (b2 != a->second.end()) {
-            cout << b2->first << '\n';
-        }
-        else{
-            cout << "NOT FOUND\n";
-        }
-
-        cout << "1.009 : ";
-        auto b3 = a->second.find(1.009);
-        if (b3 != a->second.end()) {
-            cout << b3->first << '\n';
-        }
-        else{
-            cout << "NOT FOUND\n";
-        }
-    }
-
-    vector<string> bases = {"A","C","G","T"};
-    RunnieSequence sequence;
-    sequence.name = "centroids";
-
-    size_t i = 0;
-    for (auto& params: centroids){
-        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n';
-        sequence.sequence += bases[i%4];
-        sequence.scales.push_back(centroids[i].first);
-        sequence.shapes.push_back(centroids[i].second);
-        i++;
-    }
-
-    writer.write_sequence(sequence);
-
-    i = 0;
-    for (auto& params: centroids){
-        cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n' << std::flush;
-        vector<double> distribution(100);
-        evaluate_discrete_weibull(distribution, params.first, params.second);
-
-        print_distribution(distribution);
-        i++;
-    }
+    reader.read_footer();
+    reader.read_indexes();
 
     return 0;
 }

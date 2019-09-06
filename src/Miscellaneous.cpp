@@ -10,6 +10,8 @@
 #include <boost/tokenizer.hpp>
 
 using std::cout;
+using std::ostream;
+using std::istream;
 using std::string;
 using std::pair;
 using std::vector;
@@ -97,6 +99,25 @@ variables_map parse_arguments(int argc, char* argv[], options_description option
         cout << options << "\n";
         throw runtime_error("ERROR: incorrect arguments");
     }
+}
+
+
+void write_string_to_binary(ostream& s, string& stringaling){
+    ///
+    /// Without worrying about size conversions, write any string to a file using ostream.write
+    ///
+
+    s.write(reinterpret_cast<const char*>(stringaling.data()), stringaling.size());
+}
+
+
+void read_string_from_binary(istream& s, string& stringaling, uint64_t length){
+    ///
+    /// Without worrying about size conversions, read any value to a file using ostream.write
+    ///
+    stringaling.resize(length);
+    cout << "Reading value size of: " << length << " at position: " << s.tellg() << '\n';
+    s.read(reinterpret_cast<char*>(stringaling.data()), length);
 }
 
 

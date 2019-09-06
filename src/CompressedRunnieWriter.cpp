@@ -124,17 +124,17 @@ void CompressedRunnieWriter::load_parameters(){
 
 void CompressedRunnieWriter::write_sequence_block(RunnieSequence& sequence){
     // Write the sequence to the file
-    this->sequence_file.write(reinterpret_cast<char*>(sequence.sequence.data()), sequence.sequence.size());
+    write_string_to_binary(this->sequence_file, sequence.sequence);
 }
 
 
 void CompressedRunnieWriter::write_encoding_block(RunnieSequence& sequence){
     uint8_t encoding = -1;
 
-    // Write the sequence to the file
+    // Write the encodings to the file
     for (size_t i=0; i<sequence.scales.size(); i++){
         encoding = this->fetch_encoding(sequence.scales[i], sequence.shapes[i]);
-        this->sequence_file.write(reinterpret_cast<char*>(encoding),1);
+        write_value_to_binary(this->sequence_file, encoding);
     }
 }
 
@@ -148,6 +148,9 @@ void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
     // Store the length of this sequence
     index.sequence_length = sequence.sequence.size();
 
+    // Store the name of this sequence
+    index.name = sequence.name;
+
     this->write_sequence_block(sequence);
     this->write_encoding_block(sequence);
 
@@ -158,16 +161,16 @@ void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
 
 void CompressedRunnieWriter::write_index(CompressedRunnieIndex& index){
     // Where is the sequence
-    this->sequence_file.write(reinterpret_cast<char*>(index.sequence_byte_index), sizeof(uint64_t)/sizeof(char));
+    write_value_to_binary(this->sequence_file, index.sequence_byte_index);
 
     // How long is the sequence
-    this->sequence_file.write(reinterpret_cast<char*>(index.sequence_length), sizeof(uint64_t)/sizeof(char));
+    write_value_to_binary(this->sequence_file, index.sequence_length);
 
     // How long is the name of the sequence
-    this->sequence_file.write(reinterpret_cast<char*>(index.name.size()), sizeof(size_t)/sizeof(char));
+    write_value_to_binary(this->sequence_file, index.name.size());
 
     // What is the name
-    this->sequence_file.write(reinterpret_cast<char*>(index.name.data()), index.name.size());
+    write_string_to_binary(this->sequence_file, index.name);
 }
 
 
@@ -183,13 +186,16 @@ void CompressedRunnieWriter::write_indexes(){
     // Store the current file byte index so the beginning of the CHANNEL table can be located later
     uint64_t channel_metadata_start_position = this->sequence_file.tellp();
 
-    // Write dem channels bby
-    this->sequence_file.write(reinterpret_cast<char*>(this->n_channels), sizeof(uint64_t)/sizeof(char));
-    this->sequence_file.write(reinterpret_cast<char*>(this->channel_size_1), sizeof(uint64_t)/sizeof(char));
+    // Write channel metadata
+    write_value_to_binary(this->sequence_file, this->n_channels);
+    write_value_to_binary(this->sequence_file, this->channel_size_1);
 
     // Write the pointer to the beginning of the index table
-    this->sequence_file.write(reinterpret_cast<char*>(indexes_start_position), sizeof(uint64_t)/sizeof(char));
+    write_value_to_binary(this->sequence_file, indexes_start_position);
 
     // Write the pointer to the beginning of the channels table
-    this->sequence_file.write(reinterpret_cast<char*>(channel_metadata_start_position), sizeof(uint64_t)/sizeof(char));
+    write_value_to_binary(this->sequence_file, channel_metadata_start_position);
+
+    cout << indexes_start_position << '\n';
+    cout << channel_metadata_start_position << '\n';
 }

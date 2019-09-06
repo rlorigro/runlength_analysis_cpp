@@ -4,6 +4,7 @@
 
 #include "boost/icl/interval_map.hpp"
 #include "boost/icl/interval.hpp"
+#include "Miscellaneous.hpp"
 #include "RunnieReader.hpp"
 #include <utility>
 #include <string>
@@ -33,6 +34,7 @@ class CompressedRunnieIndex {
 public:
     /// Attributes ///
     string name;
+    uint64_t name_length;
     uint64_t sequence_byte_index;
     uint64_t sequence_length;
 
