@@ -87,7 +87,15 @@ int main(){
     CompressedRunnieReader reader = CompressedRunnieReader("/home/ryan/code/runlength_analysis_cpp/output/test_CompressedRunnieWriter.rq");
 
     reader.read_footer();
+
+    cout << "reader.channel_metadata_start_position: " << reader.channel_metadata_start_position << '\n';
+    cout << "reader.indexes_start_position: " << reader.indexes_start_position << '\n';
+
     reader.read_indexes();
+
+    for (auto& index_element: reader.indexes){
+        cout << index_element << '\n';
+    }
 
     CompressedRunnieSequence compressed_sequence;
     reader.read_sequence(compressed_sequence, reader.indexes[0]);

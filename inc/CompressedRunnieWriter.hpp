@@ -29,7 +29,6 @@ using std::experimental::filesystem::create_directories;
 
 using lower_interval_map = interval_map<double,uint8_t,total_enricher>;
 
-
 class CompressedRunnieIndex {
 public:
     /// Attributes ///
@@ -40,6 +39,8 @@ public:
 
     /// Methods ///
 };
+
+ostream& operator<<(ostream& s, CompressedRunnieIndex& index);
 
 class CompressedRunnieWriter {
 public:

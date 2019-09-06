@@ -122,4 +122,30 @@ void read_string_from_binary(istream& s, string& stringaling, uint64_t length){
 }
 
 
+void pread_bytes(int file_descriptor, char* buffer_pointer, size_t bytes_to_read, off_t& byte_index){
+    while (bytes_to_read) {
+        const ssize_t byte_count = ::pread(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
+        if (byte_count <= 0) {
+            throw runtime_error("Error " + std::to_string(errno) + " while reading: " + string(::strerror(errno)));
+        }
+        bytes_to_read -= byte_count;
+        buffer_pointer += byte_count;
+        byte_index += byte_count;
+    }
+}
+
+void pread_string_from_binary(int file_descriptor, string& s, uint64_t length, off_t& byte_index){
+    ///
+    /// Same as the non-p version of this function, but instead is implemented with Linux pread, which is threadsafe
+    ///
+
+    s.resize(length);
+
+    size_t bytes_to_read = length;
+    char* buffer_pointer = reinterpret_cast<char*>(s.data());
+
+    pread_bytes(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
+}
+
+
 #endif //RUNLENGTH_ANALYSIS_CPP_MISCELLANEOUS_H

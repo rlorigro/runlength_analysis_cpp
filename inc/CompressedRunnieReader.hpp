@@ -41,11 +41,11 @@ public:
     path sequence_file_path;
     path index_file_path;
     path params_path;
-    ifstream sequence_file;
+    int sequence_file_descriptor;
 
     uint64_t indexes_start_position;
     uint64_t channel_metadata_start_position;
-    uint64_t file_length;
+    off_t file_length;
 
     // How many accessory channels will be paired 1:1 with each nucleotide sequence
     uint64_t n_channels;
@@ -60,7 +60,7 @@ public:
     CompressedRunnieReader(path file_path);
     void read_footer();
     void read_indexes();
-    void read_index_entry(CompressedRunnieIndex& index_element);
+    void read_index_entry(CompressedRunnieIndex& index_element, off_t& byte_index);
     void read_sequence(CompressedRunnieSequence& sequence, CompressedRunnieIndex& index_element);
 
 };

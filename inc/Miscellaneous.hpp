@@ -77,37 +77,36 @@ template<class T> void read_vector_from_binary(istream& s, vector<T>& v, uint64_
 }
 
 
-template<class T> void pread_value_from_binary(int file_descriptor,  T& v, uint64_t& byte_index){
-    uint64_t bytes_to_read = sizeof(T);
-    T* buffer_pointer = &v;
+void pread_bytes(int file_descriptor, char* buffer_pointer, size_t bytes_to_read, off_t& byte_index);
 
-    while (bytes_to_read) {
-        const ssize_t byte_count = ::pread(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
-        if (byte_count <= 0) {
-            throw runtime_error("Error " + std::to_string(errno) + " while reading: " + string(::strerror(errno)));
-        }
-        bytes_to_read -= byte_count;
-        buffer_pointer += byte_count;
-        byte_index += byte_count;
-    }
+
+void pread_string_from_binary(int file_descriptor, string& s, uint64_t length, off_t& byte_index);
+
+
+template<class T> void pread_value_from_binary(int file_descriptor,  T& v, off_t& byte_index){
+    ///
+    /// Same as the non-p version of this function, but instead is implemented with Linux pread, which is threadsafe
+    ///
+
+    size_t bytes_to_read = sizeof(T);
+    char* buffer_pointer = reinterpret_cast<char*>(&v);
+
+    pread_bytes(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
 }
 
 
-template<class T> void pread_vector_from_binary(int file_descriptor, vector<T>& v, uint64_t length, uint64_t& byte_index){
+template<class T> void pread_vector_from_binary(int file_descriptor, vector<T>& v, uint64_t length, off_t& byte_index){
+    ///
+    /// Same as the non-p version of this function, but instead is implemented with Linux pread, which is threadsafe
+    ///
+
     v.resize(length);
 
-    uint64_t bytes_to_read = sizeof(T)*length;
-    T* buffer_pointer = v.data();
+    size_t bytes_to_read = sizeof(T)*length;
+    char* buffer_pointer = reinterpret_cast<char*>(v.data());
 
-    while (bytes_to_read) {
-        const ssize_t byte_count = ::pread(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
-        if (byte_count <= 0) {
-            throw runtime_error("Error " + std::to_string(errno) + " while reading: " + string(::strerror(errno)));
-        }
-        bytes_to_read -= byte_count;
-        buffer_pointer += byte_count;
-        byte_index += byte_count;
-    }
+    pread_bytes(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
 }
+
 
 #endif //RUNLENGTH_ANALYSIS_CPP_MISCELLANEOUS_H
