@@ -115,8 +115,9 @@ void read_string_from_binary(istream& s, string& stringaling, uint64_t length){
     ///
     /// Without worrying about size conversions, read any value to a file using ostream.write
     ///
-    stringaling.resize(length);
     cout << "Reading value size of: " << length << " at position: " << s.tellg() << '\n';
+
+    stringaling.resize(length);
     s.read(reinterpret_cast<char*>(stringaling.data()), length);
 }
 

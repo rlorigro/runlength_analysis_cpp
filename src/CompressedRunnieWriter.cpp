@@ -140,6 +140,10 @@ void CompressedRunnieWriter::write_encoding_block(RunnieSequence& sequence){
 
 
 void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
+    if (sequence.sequence.empty()){
+        throw runtime_error("ERROR: empty sequence provided to CompressedRunnieWriter: " + sequence.name);
+    }
+
     CompressedRunnieIndex index;
 
     // Add sequence start position to index

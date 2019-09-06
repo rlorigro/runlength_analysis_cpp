@@ -23,6 +23,18 @@ using std::experimental::filesystem::path;
 using std::experimental::filesystem::create_directories;
 
 
+class CompressedRunnieSequence {
+public:
+    /// Attributes ///
+    string name;
+    string sequence;
+    vector <uint8_t> encoding;
+
+    /// Methods ///
+    void print_encoding();
+};
+
+
 class CompressedRunnieReader{
 public:
     /// Attributes ///
@@ -49,6 +61,7 @@ public:
     void read_footer();
     void read_indexes();
     void read_index_entry(CompressedRunnieIndex& index_element);
+    void read_sequence(CompressedRunnieSequence& sequence, CompressedRunnieIndex& index_element);
 
 };
 

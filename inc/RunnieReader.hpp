@@ -38,6 +38,7 @@ public:
     vector <double> shapes;
 
     /// Methods ///
+    RunnieSequence()=default;
 };
 
 

@@ -9,20 +9,32 @@ void write_file(path absolute_output_path, path absolute_config_path, vector <pa
 
    vector<string> bases = {"A","C","G","T"};
    RunnieSequence sequence;
+
+   sequence = {};
    sequence.name = "centroids";
 
-   size_t i = 0;
-   for (auto& params: centroids){
-//       cout << params.first << " " << params.second << " " << int(writer.fetch_encoding(params.first, params.second)) << '\n';
+   for (size_t i=0; i<centroids.size(); i++){
        sequence.sequence += bases[i%4];
        sequence.scales.push_back(centroids[i].first);
        sequence.shapes.push_back(centroids[i].second);
-       i++;
    }
-
 
    cout << "sequence.name: " << sequence.name << '\n';
    writer.write_sequence(sequence);
+
+  sequence = {};
+  sequence.name = "centroids_reverse";
+
+  cout << centroids.size() << '\n';
+   for (size_t i=centroids.size(); i>0; i--){
+       sequence.sequence += bases[i%4];
+       sequence.scales.push_back(centroids[(i-1)].first);
+       sequence.shapes.push_back(centroids[(i-1)].second);
+   }
+
+   cout << "sequence.name: " << sequence.name << '\n';
+   writer.write_sequence(sequence);
+
    writer.write_indexes();
 
    //    i = 0;
@@ -76,6 +88,10 @@ int main(){
 
     reader.read_footer();
     reader.read_indexes();
+
+    CompressedRunnieSequence compressed_sequence;
+    reader.read_sequence(compressed_sequence, reader.indexes[0]);
+    reader.read_sequence(compressed_sequence, reader.indexes[1]);
 
     return 0;
 }
