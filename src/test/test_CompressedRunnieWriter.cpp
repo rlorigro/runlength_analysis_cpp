@@ -49,6 +49,7 @@ void write_file(path absolute_output_path, path absolute_config_path, vector <pa
 
 }
 
+
 int main(){
     path script_path = __FILE__;
     cout << script_path;
@@ -86,12 +87,8 @@ int main(){
 
     CompressedRunnieReader reader = CompressedRunnieReader("/home/ryan/code/runlength_analysis_cpp/output/test_CompressedRunnieWriter.rq");
 
-    reader.read_footer();
-
     cout << "reader.channel_metadata_start_position: " << reader.channel_metadata_start_position << '\n';
     cout << "reader.indexes_start_position: " << reader.indexes_start_position << '\n';
-
-    reader.read_indexes();
 
     for (auto& index_element: reader.indexes){
         cout << index_element << '\n';
@@ -99,7 +96,14 @@ int main(){
 
     CompressedRunnieSequence compressed_sequence;
     reader.read_sequence(compressed_sequence, reader.indexes[0]);
+
+    cout << compressed_sequence.sequence << '\n';
+    compressed_sequence.print_encoding();
+
     reader.read_sequence(compressed_sequence, reader.indexes[1]);
+
+    cout << compressed_sequence.sequence << '\n';
+    compressed_sequence.print_encoding();
 
     return 0;
 }

@@ -3,7 +3,7 @@
 #define RUNLENGTH_ANALYSIS_COMPRESSEDRUNNIEREADER_HPP
 
 #include "CompressedRunnieWriter.hpp"
-#include "RunnieReader.hpp"
+#include "BinaryIO.hpp"
 #include <utility>
 #include <string>
 #include <iostream>
@@ -39,8 +39,6 @@ class CompressedRunnieReader{
 public:
     /// Attributes ///
     path sequence_file_path;
-    path index_file_path;
-    path params_path;
     int sequence_file_descriptor;
 
     uint64_t indexes_start_position;
@@ -51,7 +49,7 @@ public:
     uint64_t n_channels;
 
     // What is the unit size of each channel
-    uint64_t channel_size_1;
+    vector<uint64_t> channel_sizes;
 
     vector<CompressedRunnieIndex> indexes;
     unordered_map<string,size_t> index_map;
@@ -59,10 +57,10 @@ public:
     /// Methods ///
     CompressedRunnieReader(path file_path);
     void read_footer();
+    void read_channel_metadata();
     void read_indexes();
     void read_index_entry(CompressedRunnieIndex& index_element, off_t& byte_index);
     void read_sequence(CompressedRunnieSequence& sequence, CompressedRunnieIndex& index_element);
-
 };
 
 #endif //RUNLENGTH_ANALYSIS_COMPRESSEDRUNNIEREADER_HPP

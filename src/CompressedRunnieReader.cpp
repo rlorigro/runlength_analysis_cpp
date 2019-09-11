@@ -1,8 +1,6 @@
 
 #include "CompressedRunnieReader.hpp"
 #include "CompressedRunnieWriter.hpp"
-#include "Miscellaneous.hpp"
-#include <fcntl.h>
 
 
 void CompressedRunnieSequence::print_encoding(){
@@ -27,6 +25,12 @@ CompressedRunnieReader::CompressedRunnieReader(path file_path) {
 
     // Find file size in bytes
     this->file_length = lseek(this->sequence_file_descriptor, 0, SEEK_END);
+
+    // Initialize remaining parameters using the file footer data
+    this->read_footer();
+
+    // Read table of contents, needed for random access
+    this->read_indexes();
 }
 
 
@@ -62,8 +66,25 @@ void CompressedRunnieReader::read_indexes(){
 }
 
 
+void CompressedRunnieReader::read_channel_metadata(){
+    ///
+    /// Read the description of the channels that accompany the nucleotide sequence. Not currently used for initializing
+    /// data vectors, since CompressedRunnieSequence.encodings specifies the data type.
+    ///
+    off_t byte_index = this->channel_metadata_start_position;
+    pread_value_from_binary(this->sequence_file_descriptor, this->n_channels, byte_index);
+    this->channel_sizes.resize(n_channels);
+
+    for (uint64_t i=0; i<this->n_channels; i++) {
+        pread_value_from_binary(this->sequence_file_descriptor, this->channel_sizes[i], byte_index);
+    }
+}
+
+
 void CompressedRunnieReader::read_footer(){
     off_t byte_index = this->file_length - 2*sizeof(uint64_t);
     pread_value_from_binary(this->sequence_file_descriptor, this->indexes_start_position, byte_index);
     pread_value_from_binary(this->sequence_file_descriptor, this->channel_metadata_start_position, byte_index);
+
+    this-> read_channel_metadata();
 }

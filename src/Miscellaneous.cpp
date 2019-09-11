@@ -64,6 +64,25 @@ void parse_comma_separated_pair_as_doubles(pair<double,double>& p, string& s) {
 }
 
 
+size_t find_nth_character(string& s, char c, size_t n){
+    size_t n_found = 0;
+    size_t index = -1;
+
+    for (size_t i=0; i<s.size(); i++){
+        if (s[i] == c){
+            n_found += 1;
+
+            if (n_found == n){
+                index = i;
+                break;
+            }
+        }
+    }
+
+    return index;
+}
+
+
 string join(vector <string> s, char delimiter){
     string joined_string;
 
@@ -99,52 +118,6 @@ variables_map parse_arguments(int argc, char* argv[], options_description option
         cout << options << "\n";
         throw runtime_error("ERROR: incorrect arguments");
     }
-}
-
-
-void write_string_to_binary(ostream& s, string& stringaling){
-    ///
-    /// Without worrying about size conversions, write any string to a file using ostream.write
-    ///
-
-    s.write(reinterpret_cast<const char*>(stringaling.data()), stringaling.size());
-}
-
-
-void read_string_from_binary(istream& s, string& stringaling, uint64_t length){
-    ///
-    /// Without worrying about size conversions, read any value to a file using ostream.write
-    ///
-    cout << "Reading value size of: " << length << " at position: " << s.tellg() << '\n';
-
-    stringaling.resize(length);
-    s.read(reinterpret_cast<char*>(stringaling.data()), length);
-}
-
-
-void pread_bytes(int file_descriptor, char* buffer_pointer, size_t bytes_to_read, off_t& byte_index){
-    while (bytes_to_read) {
-        const ssize_t byte_count = ::pread(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
-        if (byte_count <= 0) {
-            throw runtime_error("Error " + std::to_string(errno) + " while reading: " + string(::strerror(errno)));
-        }
-        bytes_to_read -= byte_count;
-        buffer_pointer += byte_count;
-        byte_index += byte_count;
-    }
-}
-
-void pread_string_from_binary(int file_descriptor, string& s, uint64_t length, off_t& byte_index){
-    ///
-    /// Same as the non-p version of this function, but instead is implemented with Linux pread, which is threadsafe
-    ///
-
-    s.resize(length);
-
-    size_t bytes_to_read = length;
-    char* buffer_pointer = reinterpret_cast<char*>(s.data());
-
-    pread_bytes(file_descriptor, buffer_pointer, bytes_to_read, byte_index);
 }
 
 

@@ -109,7 +109,7 @@ void write_runnie_sequence_to_fasta(path& runnie_directory,
 }
 
 
-void write_marginpolish_consensus_sequence_to_fasta(path& marginpolish_directory,
+void write_segment_consensus_sequence_to_fasta(path& parent_directory,
                                                unordered_map<string,path>& read_paths,
                                                vector<string> read_names,
                                                mutex& file_write_mutex,
@@ -120,20 +120,20 @@ void write_marginpolish_consensus_sequence_to_fasta(path& marginpolish_directory
         uint64_t thread_job_index = job_index.fetch_add(1);
 
         // Initialize containers
-        MarginPolishSegment marginpolish_segment;
+        CoverageSegment segment;
 
         // Fetch Fasta sequence
-        MarginPolishReader marginpolish_reader = MarginPolishReader(marginpolish_directory);
+        MarginPolishReader marginpolish_reader = MarginPolishReader(parent_directory);
         marginpolish_reader.set_index(read_paths);
-        marginpolish_reader.fetch_consensus_sequence(marginpolish_segment, read_names[thread_job_index]);
+        marginpolish_reader.fetch_consensus_sequence(segment, read_names[thread_job_index]);
 
         // Write RLE sequence to file (no lengths written)
         file_write_mutex.lock();
-        fasta_writer.write(marginpolish_segment);
+        fasta_writer.write(segment);
         file_write_mutex.unlock();
 
         // Print status update to stdout
-        cerr << "\33[2K\rParsed: " << marginpolish_segment.name << flush;
+        cerr << "\33[2K\rParsed: " << segment.name << flush;
     }
 }
 
@@ -286,7 +286,7 @@ path write_all_marginpolish_consensus_sequences_to_fasta(MarginPolishReader& mp_
     for (uint64_t i=0; i<max_threads; i++){
         try {
             // Call thread safe function to read and write to file
-            threads.emplace_back(thread(write_marginpolish_consensus_sequence_to_fasta,
+            threads.emplace_back(thread(write_segment_consensus_sequence_to_fasta,
                                         ref(marginpolish_directory),
                                         ref(read_paths),
                                         ref(read_names),
@@ -417,7 +417,7 @@ void parse_aligned_runnie(path bam_path,
 
 
 void parse_aligned_marginpolish(path bam_path,
-                                path marginpolish_directory,
+                                path parent_directory,
                                 unordered_map <string,path>& read_paths,
                                 unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                 vector <Region>& regions,
@@ -428,8 +428,8 @@ void parse_aligned_marginpolish(path bam_path,
     ///
 
     // Initialize MarginPolishReader and relevant containers
-    MarginPolishReader marginpolish_reader = MarginPolishReader(marginpolish_directory);
-    MarginPolishSegment marginpolish_segment;
+    MarginPolishReader marginpolish_reader = MarginPolishReader(parent_directory);
+    CoverageSegment segment;
     marginpolish_reader.set_index(read_paths);
 
     // Initialize BAM reader and relevant containers
@@ -468,19 +468,19 @@ void parse_aligned_marginpolish(path bam_path,
         int i = 0;
 
         while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
-            marginpolish_reader.fetch_read(marginpolish_segment, aligned_segment.read_name);
+            marginpolish_reader.fetch_read(segment, aligned_segment.read_name);
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
                 in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
                 in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
                 true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
-                consensus_base = marginpolish_segment.sequence[coordinate.read_true_index];
+                consensus_base = segment.sequence[coordinate.read_true_index];
 
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
                     true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
-                    coverage_data = marginpolish_segment.coverage_data[coordinate.read_true_index];
+                    coverage_data = segment.coverage_data[coordinate.read_true_index];
 
                     // Walk through all the coverage data for this position and update the matrix for each observation
                     // Only matches are allowed so checking the read base effectively checks the true base

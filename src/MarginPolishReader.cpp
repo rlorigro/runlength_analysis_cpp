@@ -17,50 +17,9 @@ using std::experimental::filesystem::directory_iterator;
 using std::experimental::filesystem::path;
 
 
-CoverageElement::CoverageElement(string base, uint16_t length, bool reversal, double weight){
-    ///
-    /// The lowest level object which represents one read's worth of observed alignment data at one position
-    ///
-    this->base = base;
-    this->length = length;
-    this->reversal = reversal;
-    this->weight = weight;
-}
-
-
-const string CoverageElement::reversal_string = "FR";
-
-
-string CoverageElement::to_string(){
-    return this->base + std::to_string(this->length) + this->reversal_string[this->reversal] + std::to_string(this->weight);
-}
-
-
-uint8_t CoverageElement::get_base_index() {
-    return base_to_index(this->base);
-}
-
-
-bool CoverageElement::is_conventional_base() {
-    return is_valid_base(this->base);
-}
-
 
 MarginPolishReader::MarginPolishReader(path directory_path){
     this->directory_path = directory_path;
-}
-
-
-void MarginPolishSegment::print(){
-    uint64_t i = 0;
-    for (auto& coverage_pileup: this->coverage_data){
-        cout << to_string(i) << " " << this->sequence[i] << " ";
-        for (auto& coverage_element: coverage_pileup){
-            cout << coverage_element.to_string() << " ";
-        }
-        cout << "\n";
-        i++;
-    }
 }
 
 
@@ -98,10 +57,10 @@ bool MarginPolishReader::parse_reversal_string(string reversal_string){
     ///
     bool reversal;
     if (reversal_string == "+"){
-        reversal = true;
+        reversal = false;
     }
     else if (reversal_string == "-"){
-        reversal = false;
+        reversal = true;
     }
     else{
         throw runtime_error("ERROR: Invalid reversal string " + reversal_string);
@@ -110,7 +69,7 @@ bool MarginPolishReader::parse_reversal_string(string reversal_string){
 }
 
 
-void MarginPolishReader::parse_coverage_string(MarginPolishSegment& mp_segment, string& line){
+void MarginPolishReader::parse_coverage_string(CoverageSegment& mp_segment, string& line){
     ///
     /// Read a line of the MarginPolish runlength TSV and converts it to a vector of CoverageElements
     ///
@@ -176,7 +135,7 @@ void MarginPolishReader::parse_coverage_string(MarginPolishSegment& mp_segment, 
 }
 
 
-void MarginPolishReader::read_file(MarginPolishSegment& mp_segment, path& file_path){
+void MarginPolishReader::read_file(CoverageSegment& mp_segment, path& file_path){
     ///
     /// Iterate all the lines in a marginpolish runlength output file (TSV)
     ///
@@ -204,7 +163,7 @@ void MarginPolishReader::read_file(MarginPolishSegment& mp_segment, path& file_p
 }
 
 
-void MarginPolishReader::fetch_read(MarginPolishSegment& mp_segment, string& read_name){
+void MarginPolishReader::fetch_read(CoverageSegment& mp_segment, string& read_name){
     ///
     /// Fetch a read by its read name, which is derived from its filename
     ///
@@ -218,7 +177,7 @@ void MarginPolishReader::fetch_read(MarginPolishSegment& mp_segment, string& rea
 }
 
 
-void MarginPolishReader::read_consensus_sequence_from_file(MarginPolishSegment& mp_segment, path& file_path){
+void MarginPolishReader::read_consensus_sequence_from_file(CoverageSegment& mp_segment, path& file_path){
     ///
     /// Iterate all the lines in a marginpolish runlength output file (TSV)
     ///
@@ -243,7 +202,7 @@ void MarginPolishReader::read_consensus_sequence_from_file(MarginPolishSegment& 
 }
 
 
-void MarginPolishReader::fetch_consensus_sequence(MarginPolishSegment& mp_segment, string& read_name){
+void MarginPolishReader::fetch_consensus_sequence(CoverageSegment& mp_segment, string& read_name){
     ///
     /// Fetch a read by its read name (which is derived from its filename) and skip fetching all the coverage data
     ///

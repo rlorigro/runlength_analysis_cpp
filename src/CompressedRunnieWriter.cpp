@@ -2,8 +2,8 @@
 #include "boost/icl/interval_map.hpp"
 #include "boost/icl/interval.hpp"
 #include "CompressedRunnieWriter.hpp"
-#include "Miscellaneous.hpp"
 #include "RunnieReader.hpp"
+#include "BinaryIO.hpp"
 #include <experimental/filesystem>
 #include <utility>
 #include <bitset>
