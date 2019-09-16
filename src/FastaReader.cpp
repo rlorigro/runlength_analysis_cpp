@@ -82,6 +82,8 @@ void FastaReader::set_index(unordered_map<string,FastaIndex>& index){
 
 
 void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name){
+    element = {};
+
     if (this->read_indexes.empty()){
         this->index();
     }
@@ -233,6 +235,7 @@ void FastaReader::read_next_sequence(SequenceElement& element){
 
 // Read the next lines of the file and update the SequenceElement object. If no lines exists, toggle this->file_end
 void FastaReader::next_element(SequenceElement& element){
+    element = {};
     this->read_next_header(element);
     this->read_next_sequence(element);
 }

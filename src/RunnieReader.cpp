@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 using std::experimental::filesystem::directory_iterator;
+using std::experimental::filesystem::is_regular_file;
 using std::replace;
 using std::ostream;
 using std::exception;
@@ -28,6 +29,7 @@ ostream& RunnieIndex::operator<<(ostream& s){
 
 RunnieReader::RunnieReader(path directory_path){
     this->directory_path = directory_path;
+    this->index();
 }
 
 
@@ -110,7 +112,9 @@ void RunnieReader::index(){
     string read_name;
 
     for (const path& file_path: directory_iterator(this->directory_path)){
-        this->index_file(file_path);
+        if (is_regular_file(file_path)) {
+            this->index_file(file_path);
+        }
     }
 }
 

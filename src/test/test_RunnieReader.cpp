@@ -17,7 +17,6 @@ int main() {
     cout << "RUNNIE READER TEST: \n";
 
     RunnieReader reader = RunnieReader(absolute_data_path);
-    reader.index();
 
     vector<RunnieSequence> sequences;
     reader.fetch_all_sequences(sequences);

@@ -5,6 +5,48 @@
 
 using std::min;
 
+string reference_matrix_to_string(reference_runlength_matrix& matrix, size_t cutoff){
+    string matrix_string;
+
+    auto shape_a = matrix.shape();
+    size_t n_bases = shape_a[0];
+    size_t max_runlength = shape_a[1];
+
+    if (cutoff == 0) {
+        cutoff = max_runlength;
+    }
+
+    for (size_t b=0; b<n_bases; b++) {
+        cout << ">" + index_to_base(b) + "\n";
+
+        for (size_t i = 0; i < cutoff; i++) {
+            matrix_string += to_string(matrix[b][i]) + ",";
+        }
+        matrix_string += '\n';
+    }
+
+    return matrix_string;
+}
+
+
+reference_runlength_matrix calculate_nondirectional_prior_from_reference_runlengths(reference_runlength_matrix& matrix, double pseudocount){
+    auto shape_a = matrix.shape();
+
+    size_t n_bases = shape_a[0];
+    size_t max_runlength = shape_a[1];
+    double sum;
+
+    for (size_t b=0; b<n_bases; b++) {
+        sum = 0;
+        for (size_t i = 0; i < max_runlength; i++) {
+            sum += matrix[b][i] + pseudocount/2;
+        }
+        for (size_t i = 0; i < max_runlength; i++) {
+            matrix[b][i] /= sum;
+        }
+    }
+}
+
 
 string matrix_to_string(runlength_matrix matrix, size_t cutoff){
     string matrix_string;

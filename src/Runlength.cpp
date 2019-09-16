@@ -1,4 +1,5 @@
 #include "MarginPolishReader.hpp"
+#include "CoverageReader.hpp"
 #include "AlignedSegment.hpp"
 #include "RunnieReader.hpp"
 #include "FastaReader.hpp"
@@ -705,6 +706,12 @@ runlength_matrix get_marginpolish_runlength_matrix(path bam_path,
     cerr << "\n" << flush;
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
+
+    int i = 0;
+    for (auto& matrix: matrices_per_thread){
+        i++;
+        cout << i << '\n' << matrix_to_string(matrix, 10) << '\n';
+    }
 
     runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
 

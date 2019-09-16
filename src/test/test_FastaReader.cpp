@@ -24,7 +24,6 @@ int main(){
 
     size_t sequence_index = 0;
     while (!fasta_reader.end_of_file) {
-        element = {};
         fasta_reader.next_element(element);
 
         if (sequence_index==0) {
@@ -64,7 +63,6 @@ int main(){
     string sequence_name;
 
     cout << "Testing third sequence: ";
-    element = {};
     sequence_name = "test3";
     fasta_reader.fetch_sequence(element, sequence_name);
 
@@ -74,7 +72,6 @@ int main(){
 
 
     cout << "Testing fourth sequence: ";
-    element = {};
     sequence_name = "test4";
     fasta_reader.fetch_sequence(element, sequence_name);
 
@@ -84,7 +81,6 @@ int main(){
 
 
     cout << "Testing first sequence: ";
-    element = {};
     sequence_name = "test1";
     fasta_reader.fetch_sequence(element, sequence_name);
 
@@ -94,7 +90,6 @@ int main(){
 
 
     cout << "Testing second sequence: ";
-    element = {};
     sequence_name = "test2";
     fasta_reader.fetch_sequence(element, sequence_name);
 

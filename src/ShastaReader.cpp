@@ -1,5 +1,4 @@
 #include "ShastaReader.hpp"
-#include "Miscellaneous.hpp"
 
 
 ShastaReader::ShastaReader(path directory_path){
@@ -98,7 +97,7 @@ size_t ShastaReader::parse_consensus(CoverageSegment& shasta_segment, string& li
 
 void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line) {
     ///
-    /// Read a line of the MarginPolish runlength TSV and converts it to a vector of CoverageElements
+    /// Reads a line of the Shasta runlength CSV and converts it to a vector of CoverageElements
     ///
 
     // For iterating elements within the tab separated string

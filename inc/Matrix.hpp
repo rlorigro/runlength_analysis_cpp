@@ -19,10 +19,13 @@ using std::to_string;
 
 
 typedef multi_array<double,4> runlength_matrix;
+typedef multi_array<double,2> reference_runlength_matrix;
 
 void operator+=(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
 void operator+=(runlength_matrix& matrix_a, double increment);
+
+string reference_matrix_to_string(reference_runlength_matrix& matrix, size_t cutoff=0);
 
 string matrix_to_string(runlength_matrix matrix, size_t cutoff=0);
 
@@ -40,5 +43,7 @@ void update_runlength_matrix_with_weibull_probabilities(runlength_matrix& matrix
         uint16_t& true_length,
         double& scale,
         double& shape);
+
+
 
 #endif //RUNLENGTH_ANALYSIS_MATRIX_HPP

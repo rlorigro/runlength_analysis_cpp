@@ -2,7 +2,6 @@
 #define RUNLENGTH_ANALYSIS_MARGINPOLISHREADER_HPP
 
 #include "CoverageSegment.hpp"
-//#include "Base.hpp"
 #include <unordered_map>
 #include <string>
 #include <vector>

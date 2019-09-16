@@ -55,7 +55,7 @@ int main(){
     cout << script_path;
     path project_directory = script_path.parent_path().parent_path().parent_path();
 
-    path relative_config_path = "/data/test/runnie/compression_parameters.tsv";     //TODO: move to `/config/`
+    path relative_config_path = "/data/test/runnie/config/compression_parameters.tsv";     //TODO: move to `/config/`
     path absolute_config_path = project_directory / relative_config_path;
 
     path relative_output_path = "/output/";
@@ -85,25 +85,29 @@ int main(){
 
     write_file(absolute_output_path, absolute_config_path, centroids);
 
-    CompressedRunnieReader reader = CompressedRunnieReader("/home/ryan/code/runlength_analysis_cpp/output/test_CompressedRunnieWriter.rq");
+    CompressedRunnieReader reader = CompressedRunnieReader("/home/ryan/code/runlength_analysis_cpp/data/test/runnie/rq/test_sequences.rq");
 
-    cout << "reader.channel_metadata_start_position: " << reader.channel_metadata_start_position << '\n';
-    cout << "reader.indexes_start_position: " << reader.indexes_start_position << '\n';
-
-    for (auto& index_element: reader.indexes){
-        cout << index_element << '\n';
-    }
+//    cout << "reader.channel_metadata_start_position: " << reader.channel_metadata_start_position << '\n';
+//    cout << "reader.indexes_start_position: " << reader.indexes_start_position << '\n';
 
     CompressedRunnieSequence compressed_sequence;
-    reader.read_sequence(compressed_sequence, reader.indexes[0]);
+    reader.get_sequence_data(compressed_sequence, 0);
 
     cout << compressed_sequence.sequence << '\n';
     compressed_sequence.print_encoding();
 
-    reader.read_sequence(compressed_sequence, reader.indexes[1]);
+    reader.get_sequence_data(compressed_sequence, 1);
 
     cout << compressed_sequence.sequence << '\n';
     compressed_sequence.print_encoding();
+
+    cout << "TESTING NAMED COMPRESSED RUNNIE SEQUENCE:\n";
+    NamedCompressedRunnieSequence named_compressed_sequence;
+    reader.get_sequence_data(named_compressed_sequence, 0);
+
+    cout << named_compressed_sequence.name << '\n';
+    cout << named_compressed_sequence.sequence << '\n';
+    named_compressed_sequence.print_encoding();
 
     return 0;
 }
