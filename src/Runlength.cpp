@@ -1,5 +1,6 @@
 #include "MarginPolishReader.hpp"
-#include "CoverageReader.hpp"
+#include "ShastaReader.hpp"
+//#include "CoverageReader.hpp"
 #include "AlignedSegment.hpp"
 #include "RunnieReader.hpp"
 #include "FastaReader.hpp"
@@ -110,7 +111,7 @@ void write_runnie_sequence_to_fasta(path& runnie_directory,
 }
 
 
-void write_segment_consensus_sequence_to_fasta(path& parent_directory,
+template <typename T> void write_segment_consensus_sequence_to_fasta(path& parent_directory,
                                                unordered_map<string,path>& read_paths,
                                                vector<string> read_names,
                                                mutex& file_write_mutex,
@@ -124,9 +125,9 @@ void write_segment_consensus_sequence_to_fasta(path& parent_directory,
         CoverageSegment segment;
 
         // Fetch Fasta sequence
-        MarginPolishReader marginpolish_reader = MarginPolishReader(parent_directory);
-        marginpolish_reader.set_index(read_paths);
-        marginpolish_reader.fetch_consensus_sequence(segment, read_names[thread_job_index]);
+        T reader = T(parent_directory);
+        reader.set_index(read_paths);
+        reader.fetch_consensus_sequence(segment, read_names[thread_job_index]);
 
         // Write RLE sequence to file (no lengths written)
         file_write_mutex.lock();
@@ -262,17 +263,26 @@ path write_all_runnie_sequences_to_fasta(RunnieReader& runnie_reader,
 }
 
 
-path write_all_marginpolish_consensus_sequences_to_fasta(MarginPolishReader& mp_reader,
+template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_reader,
         vector<string>& read_names,
         unordered_map<string,path>& read_paths,
-        path marginpolish_directory,
+        path input_directory,
         path output_directory,
         uint16_t max_threads){
 
     // Generate output file path
-    path output_fasta_filename = marginpolish_directory;
-    output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
+    path output_fasta_filename = input_directory;
+
+    if (output_fasta_filename.stem() == ".") {
+        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
+    }
+    else{
+        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
+    }
+
     path output_fasta_path = output_directory / output_fasta_filename;
+
+    cerr << "WRITING TO: " << output_fasta_filename <<'\n';
 
     // Initialize Fasta Writer
     FastaWriter read_fasta_writer = FastaWriter(output_fasta_path);
@@ -287,8 +297,8 @@ path write_all_marginpolish_consensus_sequences_to_fasta(MarginPolishReader& mp_
     for (uint64_t i=0; i<max_threads; i++){
         try {
             // Call thread safe function to read and write to file
-            threads.emplace_back(thread(write_segment_consensus_sequence_to_fasta,
-                                        ref(marginpolish_directory),
+            threads.emplace_back(thread(write_segment_consensus_sequence_to_fasta<T>,
+                                        ref(input_directory),
                                         ref(read_paths),
                                         ref(read_names),
                                         ref(file_write_mutex),
@@ -417,21 +427,21 @@ void parse_aligned_runnie(path bam_path,
 }
 
 
-void parse_aligned_marginpolish(path bam_path,
-                                path parent_directory,
-                                unordered_map <string,path>& read_paths,
-                                unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-                                vector <Region>& regions,
-                                runlength_matrix& runlength_matrix,
-                                atomic <uint64_t>& job_index){
+template<typename T> void parse_aligned_coverage(path bam_path,
+                                                 path parent_directory,
+                                                 unordered_map <string,path>& read_paths,
+                                                 unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                                 vector <Region>& regions,
+                                                 runlength_matrix& runlength_matrix,
+                                                 atomic <uint64_t>& job_index){
     ///
     ///
     ///
 
-    // Initialize MarginPolishReader and relevant containers
-    MarginPolishReader marginpolish_reader = MarginPolishReader(parent_directory);
+    // Initialize Reader and relevant containers
+    T reader = T(parent_directory);
     CoverageSegment segment;
-    marginpolish_reader.set_index(read_paths);
+    reader.set_index(read_paths);
 
     // Initialize BAM reader and relevant containers
     BamReader bam_reader = BamReader(bam_path);
@@ -469,7 +479,7 @@ void parse_aligned_marginpolish(path bam_path,
         int i = 0;
 
         while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
-            marginpolish_reader.fetch_read(segment, aligned_segment.read_name);
+            reader.fetch_read(segment, aligned_segment.read_name);
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
@@ -664,7 +674,7 @@ runlength_matrix get_runnie_runlength_matrix(path bam_path,
 }
 
 
-runlength_matrix get_marginpolish_runlength_matrix(path bam_path,
+template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
                                        path marginpolish_directory,
                                        unordered_map <string,path>& read_paths,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
@@ -685,7 +695,7 @@ runlength_matrix get_marginpolish_runlength_matrix(path bam_path,
     for (uint64_t i=0; i<max_threads; i++){
         try {
             // Call thread safe function to read and write to file
-            threads.emplace_back(thread(parse_aligned_marginpolish,
+            threads.emplace_back(thread(parse_aligned_coverage<T>,
                                         ref(bam_path),
                                         ref(marginpolish_directory),
                                         ref(read_paths),
@@ -768,11 +778,11 @@ runlength_matrix get_fasta_runlength_matrix(path bam_path,
 }
 
 
-void measure_runlength_distribution_from_marginpolish(path marginpolish_directory,
-        path reference_fasta_path,
-        path output_directory,
-        uint16_t max_runlength,
-        uint16_t max_threads){
+template <typename T> void measure_runlength_distribution_from_coverage_data(path input_directory,
+                                                       path reference_fasta_path,
+                                                       path output_directory,
+                                                       uint16_t max_runlength,
+                                                       uint16_t max_threads){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
 
@@ -782,7 +792,7 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     // associated with iterating reads that extend beyond the region (at the edges)
     uint64_t chunk_size = 1*1000*1000;
 
-    MarginPolishReader marginpolish_reader = MarginPolishReader(marginpolish_directory);
+    T reader = T(input_directory);
     FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
 
     // Runlength encode the reference (store in memory)
@@ -795,8 +805,8 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
             store_in_memory,
             max_threads);
 
-    marginpolish_reader.index();
-    unordered_map<string,path> read_paths = marginpolish_reader.get_index();
+    reader.index();
+    unordered_map<string,path> read_paths = reader.get_index();
 
     // Extract read names from index
     vector<string> read_names;
@@ -806,10 +816,10 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
 
     // Extract the sequences from MarginPolish TSVs (ignore coverage data for now)
     path reads_fasta_path_rle;
-    reads_fasta_path_rle = write_all_marginpolish_consensus_sequences_to_fasta(marginpolish_reader,
+    reads_fasta_path_rle = write_all_consensus_sequences_to_fasta(reader,
             read_names,
             read_paths,
-            marginpolish_directory,
+            input_directory,
             output_directory,
             max_threads);
 
@@ -822,7 +832,7 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     string minimap_preset = "asm20";    //TODO: make command line argument?
     bool explicit_mismatch = true;
 
-    // Align Marginpolish reads to the reference
+    // Align coverage segments to the reference
     path bam_path;
     bam_path = align(reference_fasta_path_rle,
             reads_fasta_path_rle,
@@ -844,8 +854,8 @@ void measure_runlength_distribution_from_marginpolish(path marginpolish_director
     cerr << "Iterating alignments...\n" << std::flush;
 
     // Launch threads for parsing alignments and generating matrices
-    runlength_matrix matrix = get_marginpolish_runlength_matrix(bam_path,
-            marginpolish_directory,
+    runlength_matrix matrix = get_runlength_matrix<T>(bam_path,
+            input_directory,
             read_paths,
             ref_runlength_sequences,
             regions,
@@ -1035,4 +1045,32 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     cout << matrix_to_string(matrix) << "\n\n";
     runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
     cout << matrix_to_string(nondirectional_matrix);
+}
+
+
+void measure_runlength_distribution_from_marginpolish(path input_directory,
+                                                       path reference_fasta_path,
+                                                       path output_directory,
+                                                       uint16_t max_runlength,
+                                                       uint16_t max_threads) {
+
+    measure_runlength_distribution_from_coverage_data<MarginPolishReader>(input_directory,
+            reference_fasta_path,
+            output_directory,
+            max_runlength,
+            max_threads);
+}
+
+
+void measure_runlength_distribution_from_shasta(path input_directory,
+                                                       path reference_fasta_path,
+                                                       path output_directory,
+                                                       uint16_t max_runlength,
+                                                       uint16_t max_threads) {
+
+    measure_runlength_distribution_from_coverage_data<ShastaReader>(input_directory,
+            reference_fasta_path,
+            output_directory,
+            max_runlength,
+            max_threads);
 }

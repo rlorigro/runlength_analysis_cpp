@@ -28,7 +28,19 @@ path runlength_encode_fasta_file(path input_file_path,
                                  uint16_t max_threads);
 
 
-void measure_runlength_distribution_from_marginpolish(path marginpolish_directory,
+//template <typename T> void measure_runlength_distribution_from_coverage_data(path input_directory,
+//                                                       path reference_fasta_path,
+//                                                       path output_directory,
+//                                                       uint16_t max_runlength,
+//                                                       uint16_t max_threads);
+
+void measure_runlength_distribution_from_marginpolish(path input_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_runlength,
+        uint16_t max_threads);
+
+void measure_runlength_distribution_from_shasta(path input_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,

@@ -1,4 +1,3 @@
-#include "MarginPolishReader.hpp"
 #include "Runlength.hpp"
 #include "boost/program_options.hpp"
 #include <iostream>
@@ -25,7 +24,7 @@ int main(int argc, char* argv[]){
 
         ("input_dir",
         value<path>(&input_dir),
-        "Path to directory containing MarginPolish TSVs")
+        "Path to directory containing Shasta CSVs")
 
         ("output_dir",
         value<path>(&output_dir)->
@@ -53,11 +52,11 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-    measure_runlength_distribution_from_marginpolish(input_dir,
-                                                      ref_fasta_path,
-                                                      output_dir,
-                                                      max_runlength,
-                                                      max_threads);
+    measure_runlength_distribution_from_shasta(input_dir,
+            ref_fasta_path,
+            output_dir,
+            max_runlength,
+            max_threads);
 
     return 0;
 }
