@@ -5,6 +5,7 @@
 
 using std::min;
 
+
 string reference_matrix_to_string(reference_runlength_matrix& matrix, size_t cutoff){
     string matrix_string;
 
@@ -29,23 +30,25 @@ string reference_matrix_to_string(reference_runlength_matrix& matrix, size_t cut
 }
 
 
-reference_runlength_matrix calculate_nondirectional_prior_from_reference_runlengths(reference_runlength_matrix& matrix, double pseudocount){
-    auto shape_a = matrix.shape();
-
-    size_t n_bases = shape_a[0];
-    size_t max_runlength = shape_a[1];
-    double sum;
-
-    for (size_t b=0; b<n_bases; b++) {
-        sum = 0;
-        for (size_t i = 0; i < max_runlength; i++) {
-            sum += matrix[b][i] + pseudocount/2;
-        }
-        for (size_t i = 0; i < max_runlength; i++) {
-            matrix[b][i] /= sum;
-        }
-    }
-}
+//reference_runlength_matrix calculate_nondirectional_prior_from_reference_runlengths(reference_runlength_matrix& matrix, double pseudocount){
+//    auto shape_a = matrix.shape();
+//
+//    size_t n_bases = shape_a[0];
+//    size_t max_runlength = shape_a[1];
+//    double sum;
+//
+//    for (size_t b=0; b<n_bases; b++) {
+//        sum = 0;
+//        for (size_t i = 0; i < max_runlength; i++) {
+//            sum += matrix[b][i] + pseudocount/2;
+//        }
+//        for (size_t i = 0; i < max_runlength; i++) {
+//            matrix[b][i] /= sum;
+//        }
+//    }
+//
+//    return;
+//}
 
 
 string matrix_to_string(runlength_matrix matrix, size_t cutoff){
