@@ -88,7 +88,11 @@ string matrix_to_string(runlength_matrix matrix, size_t cutoff){
                 }
                 matrix_string += "\n";
             }
-            matrix_string += "\n";
+
+            // Write a newline if it is not the last position in the file
+            if (not (r == n_directions - 1 and b == n_bases - 1)){
+                matrix_string += "\n";
+            }
         }
     }
 

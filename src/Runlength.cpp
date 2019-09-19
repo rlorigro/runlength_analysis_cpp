@@ -33,6 +33,32 @@ using std::exception;
 using std::atomic;
 using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
+using std::experimental::filesystem::absolute;
+
+
+void write_matrix_to_file(path output_directory, runlength_matrix& matrix){
+    path directional_matrix_path = absolute(output_directory) / "frequency_matrix_directional.csv";
+    ofstream directional_matrix_file = ofstream(directional_matrix_path);
+
+    path nondirectional_matrix_path = absolute(output_directory) / "frequency_matrix_nondirectional.csv";
+    ofstream nondirectional_matrix_file = ofstream(nondirectional_matrix_path);
+
+    if (not directional_matrix_file.is_open()){
+        throw runtime_error("ERROR: file could not be written: " + directional_matrix_path.string());
+    }
+
+    if (not nondirectional_matrix_file.is_open()){
+        throw runtime_error("ERROR: file could not be written: " + nondirectional_matrix_path.string());
+    }
+
+    cerr << "WRITING: matrix file " + directional_matrix_path.string() << '\n';
+    cerr << "WRITING: matrix file " + nondirectional_matrix_path.string() << '\n';
+
+    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
+
+    directional_matrix_file << (matrix_to_string(matrix));
+    nondirectional_matrix_file << (matrix_to_string(nondirectional_matrix));
+}
 
 
 void runlength_encode_fasta_sequence_to_file(path& fasta_path,
@@ -273,6 +299,7 @@ template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_re
     // Generate output file path
     path output_fasta_filename = input_directory;
 
+    // TODO: convert to absolute path!!
     if (output_fasta_filename.stem() == ".") {
         output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
     }
@@ -662,11 +689,11 @@ runlength_matrix get_runnie_runlength_matrix(path bam_path,
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
-    int i = 0;
-    for (auto& m: matrices_per_thread){
-        i++;
-        cout << "MATRIX " << i << ":\n" << matrix_to_string(m, 4) << "\n";
-    }
+//    int i = 0;
+//    for (auto& m: matrices_per_thread){
+//        i++;
+//        cout << "MATRIX " << i << ":\n" << matrix_to_string(m, 4) << "\n";
+//    }
 
     runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
@@ -717,11 +744,11 @@ template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
-    int i = 0;
-    for (auto& matrix: matrices_per_thread){
-        i++;
-        cout << i << '\n' << matrix_to_string(matrix, 10) << '\n';
-    }
+//    int i = 0;
+//    for (auto& matrix: matrices_per_thread){
+//        i++;
+//        cout << i << '\n' << matrix_to_string(matrix, 10) << '\n';
+//    }
 
     runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
@@ -862,10 +889,8 @@ template <typename T> void measure_runlength_distribution_from_coverage_data(pat
             max_runlength,
             max_threads);
 
-    // Print matrices
-    cout << matrix_to_string(matrix) << "\n\n";
-    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
-    cout << matrix_to_string(nondirectional_matrix);
+    // Write output
+    write_matrix_to_file(output_directory, matrix);
 }
 
 
@@ -953,10 +978,8 @@ void measure_runlength_distribution_from_runnie(path runnie_directory,
             max_runlength,
             max_threads);
 
-    // Print matrices
-    cout << matrix_to_string(matrix) << "\n\n";
-    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
-    cout << matrix_to_string(nondirectional_matrix);
+    // Write output
+    write_matrix_to_file(output_directory, matrix);
 }
 
 
@@ -1041,10 +1064,8 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
             max_runlength,
             max_threads);
 
-    // Print matrices
-    cout << matrix_to_string(matrix) << "\n\n";
-    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
-    cout << matrix_to_string(nondirectional_matrix);
+    // Write output
+    write_matrix_to_file(output_directory, matrix);
 }
 
 

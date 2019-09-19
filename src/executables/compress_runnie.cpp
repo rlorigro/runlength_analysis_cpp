@@ -21,6 +21,7 @@ void compress_runnie(path input_dir, path output_dir){
 
     path output_filename;
 
+    // TODO: convert to absolute path !!!!!!!!!
     if (input_dir.stem() == ".") {
         output_filename = input_dir.parent_path().stem().string() + ".rq";
     }

@@ -24,7 +24,7 @@ FastaWriter::FastaWriter(path file_path) {
     this->index = 0;
 
     // Check if file is readable or exists
-    if (!this->fasta_file.good()){
+    if (not this->fasta_file.is_open()){
         throw runtime_error("ERROR: file write error: " + string(file_path));
     }
 }
