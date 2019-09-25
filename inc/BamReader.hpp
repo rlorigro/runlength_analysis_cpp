@@ -77,6 +77,7 @@ public:
     /// Methods ///
     BamReader(path bam_path);
     BamReader();
+    ~BamReader();
     void initialize_region(string& ref_name, uint64_t start, uint64_t stop);
     void load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header);
     bool next_alignment(AlignedSegment& aligned_segment, uint16_t map_quality_cutoff=0, bool filter_secondary=false);

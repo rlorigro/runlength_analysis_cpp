@@ -299,12 +299,11 @@ template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_re
     // Generate output file path
     path output_fasta_filename = input_directory;
 
-    // TODO: convert to absolute path!!
-    if (output_fasta_filename.stem() == ".") {
-        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
+    if (absolute(output_fasta_filename).has_stem()) {
+        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
     }
     else{
-        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
+        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
     }
 
     path output_fasta_path = output_directory / output_fasta_filename;
@@ -387,7 +386,9 @@ void parse_aligned_runnie(path bam_path,
     Region region;
     Cigar cigar;
 
-//    uint64_t thread_job_index;
+    auto matrix_shape = runlength_matrix.shape();
+    size_t max_true_length = matrix_shape[2];
+
     string ref_name;
 
     bool filter_secondary = true;
@@ -440,6 +441,10 @@ void parse_aligned_runnie(path bam_path,
                     scale = runnie_sequence.scales[coordinate.read_true_index];
                     shape = runnie_sequence.shapes[coordinate.read_true_index];
 
+                    if (true_length >= max_true_length){
+                        continue;
+                    }
+
                     update_runlength_matrix_with_weibull_probabilities(runlength_matrix, aligned_segment.reversal, observed_base_index, true_length, scale, shape);
 //                    cout << matrix_to_string(runlength_matrix, 4) << " " << aligned_segment.reversal << " " << observed_base << " " << int(observed_base_index) << " " << true_length << " " << scale << " " << shape << "\n";
                 }
@@ -477,6 +482,10 @@ template<typename T> void parse_aligned_coverage(path bam_path,
     Region region;
     Cigar cigar;
 
+    auto matrix_shape = runlength_matrix.shape();
+    size_t max_true_length = matrix_shape[2];
+    size_t max_observed_length = matrix_shape[3];
+
 //    uint64_t thread_job_index;
     string ref_name;
 
@@ -487,7 +496,7 @@ template<typename T> void parse_aligned_coverage(path bam_path,
     bool in_left_bound;
     bool in_right_bound;
     string true_base;
-    string consensus_base;
+    char consensus_base;
     uint16_t true_length = -1;
     uint16_t observed_length = -1;
     uint8_t observed_base_index;
@@ -536,6 +545,11 @@ template<typename T> void parse_aligned_coverage(path bam_path,
 
                         observed_length = coverage_element.length;
                         observed_base_index = coverage_element.get_base_index();
+
+                        if (observed_length >= max_observed_length or true_length >= max_true_length){
+                            continue;
+                        }
+
                         runlength_matrix[coverage_element.reversal][observed_base_index][true_length][observed_length] += coverage_element.weight;
                     }
                 }
@@ -572,6 +586,10 @@ void parse_aligned_fasta(path bam_path,
     Coordinate coordinate;
     Region region;
     Cigar cigar;
+
+    auto matrix_shape = runlength_matrix.shape();
+    size_t max_true_length = matrix_shape[2];
+    size_t max_observed_length = matrix_shape[3];
 
     string ref_name;
 
@@ -622,6 +640,11 @@ void parse_aligned_fasta(path bam_path,
 
                     observed_length = runlength_sequence.lengths[coordinate.read_true_index];
                     observed_base_index = base_to_index(true_base);
+
+                    if (observed_length >= max_observed_length or true_length >= max_true_length){
+                        continue;
+                    }
+
                     runlength_matrix[aligned_segment.reversal][observed_base_index][true_length][observed_length] += 1;
                 }
             }
@@ -889,6 +912,8 @@ template <typename T> void measure_runlength_distribution_from_coverage_data(pat
             max_runlength,
             max_threads);
 
+    cerr << '\n';
+
     // Write output
     write_matrix_to_file(output_directory, matrix);
 }
@@ -978,6 +1003,8 @@ void measure_runlength_distribution_from_runnie(path runnie_directory,
             max_runlength,
             max_threads);
 
+    cerr << '\n';
+
     // Write output
     write_matrix_to_file(output_directory, matrix);
 }
@@ -1063,6 +1090,8 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
             regions,
             max_runlength,
             max_threads);
+
+    cerr << '\n';
 
     // Write output
     write_matrix_to_file(output_directory, matrix);

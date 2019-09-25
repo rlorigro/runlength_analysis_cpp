@@ -31,12 +31,14 @@ void MarginPolishReader::index(){
     string read_name;
 
     for (const path& file_path: directory_iterator(this->directory_path)){
-        filename_prefix = file_path.filename();
-        filename_prefix.replace_extension("");
-        read_name = filename_prefix;
-        replace(read_name.begin(), read_name.end(), '.', '_');
+        if (is_regular_file(file_path) and file_path.extension() == ".tsv") {
+            filename_prefix = file_path.filename();
+            filename_prefix.replace_extension("");
+            read_name = filename_prefix;
+            replace(read_name.begin(), read_name.end(), '.', '_');
 
-        this->file_paths[read_name] = file_path;
+            this->file_paths[read_name] = file_path;
+        }
     }
 }
 
@@ -82,10 +84,10 @@ void MarginPolishReader::parse_coverage_string(CoverageSegment& mp_segment, stri
     mp_segment.sequence += line[start_index-1];
 
     // Placeholders for Coverage element
-    string base;
+    char base;
     uint16_t length;
     bool reversal;
-    double weight;
+    float weight;
 
     // Buffers for elements with indeterminate number of chars
     string reversal_string;
@@ -102,9 +104,9 @@ void MarginPolishReader::parse_coverage_string(CoverageSegment& mp_segment, stri
             if (i > start_index){
                 reversal = this->parse_reversal_string(reversal_string);
                 length = uint16_t(stoi(length_string));
-                weight = stod(weight_string);
-                CoverageElement coverage_element = CoverageElement(base, length, reversal, weight);
-                pileup.push_back(move(coverage_element));
+                weight = stof(weight_string);
+//                CoverageElement coverage_element = CoverageElement(base, length, reversal, weight);
+                pileup.emplace_back(base, length, reversal, weight);
             }
             c = 0;
             length_string = "";

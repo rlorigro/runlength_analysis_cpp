@@ -112,7 +112,7 @@ void RunnieReader::index(){
     string read_name;
 
     for (const path& file_path: directory_iterator(this->directory_path)){
-        if (is_regular_file(file_path)) {
+        if (is_regular_file(file_path) and file_path.extension() == ".out") {
             this->index_file(file_path);
         }
     }

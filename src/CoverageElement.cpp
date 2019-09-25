@@ -1,7 +1,7 @@
 
 #include "CoverageElement.hpp"
 
-CoverageElement::CoverageElement(string base, uint16_t length, bool reversal, double weight){
+CoverageElement::CoverageElement(char base, uint16_t length, bool reversal, float weight){
     ///
     /// The lowest level object which represents one read's worth of observed alignment data at one position
     ///

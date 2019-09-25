@@ -11,12 +11,13 @@
 class CoverageElement{
 public:
     /// Attributes ///
-    string base;
-    uint16_t length;
-    bool reversal;
-    double weight;
 
-    CoverageElement(string base, uint16_t length, bool reversal, double weight);
+    float weight;
+    uint16_t length;
+    char base;
+    bool reversal;
+
+    CoverageElement(char base, uint16_t length, bool reversal, float weight);
     static const string reversal_string;
 
     /// Methods ///

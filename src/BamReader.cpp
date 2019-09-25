@@ -3,6 +3,7 @@
 #include "htslib/sam.h"
 #include <string>
 #include <stdexcept>
+#include <cstdlib>
 #include <experimental/filesystem>
 
 using std::string;
@@ -11,6 +12,7 @@ using std::vector;
 using std::array;
 using std::runtime_error;
 using std::abs;
+using std::free;
 using std::experimental::filesystem::path;
 
 
@@ -67,6 +69,14 @@ string Region::to_string(){
 
 BamReader::BamReader() = default;
 
+BamReader::~BamReader() {
+    free(this->bam_file);
+    free(this->bam_index);
+    free(this->bam_iterator);
+    free(this->alignment);
+}
+
+
 BamReader::BamReader(path bam_path){
     this->bam_path = bam_path.string();
     this->bam_file = nullptr;
@@ -121,6 +131,8 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
     /// Load data from shitty samtools structs into a cpp object
     ///
 
+    aligned_segment = {};
+
     aligned_segment.ref_start_index = alignment->core.pos + 1;
     aligned_segment.ref_name = bam_header->target_name[alignment->core.tid];
     aligned_segment.read_length = alignment->core.l_qseq;
@@ -153,7 +165,6 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
         if ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
 
             // Load alignment into container
-            aligned_segment = {};
             load_alignment(aligned_segment, this->alignment, this->bam_header);
             found_valid_alignment = true;
 

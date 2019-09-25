@@ -7,6 +7,7 @@
 using std::cout;
 using std::flush;
 using std::experimental::filesystem::path;
+using std::experimental::filesystem::absolute;
 using boost::program_options::options_description;
 using boost::program_options::variables_map;
 using boost::program_options::value;
@@ -21,12 +22,11 @@ void compress_runnie(path input_dir, path output_dir){
 
     path output_filename;
 
-    // TODO: convert to absolute path !!!!!!!!!
-    if (input_dir.stem() == ".") {
-        output_filename = input_dir.parent_path().stem().string() + ".rq";
+    if (absolute(input_dir).has_stem()) {
+        output_filename = input_dir.stem().string() + ".rq";
     }
     else{
-        output_filename = input_dir.stem().string() + ".rq";
+        output_filename = input_dir.parent_path().stem().string() + ".rq";
     }
 
     path output_path = output_dir / output_filename;
