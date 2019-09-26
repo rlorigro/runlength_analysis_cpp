@@ -299,11 +299,11 @@ template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_re
     // Generate output file path
     path output_fasta_filename = input_directory;
 
-    if (absolute(output_fasta_filename).has_stem()) {
-        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
+    if (absolute(output_fasta_filename).stem() == ".") {
+        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
     }
     else{
-        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
+        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
     }
 
     path output_fasta_path = output_directory / output_fasta_filename;

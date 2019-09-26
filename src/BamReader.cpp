@@ -162,7 +162,7 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
 
         // Call next() on samtools
         int64_t result;
-        if ((result = sam_itr_next(this->bam_file, this->bam_iterator, alignment)) >= 0) {
+        if ((result = sam_itr_next(this->bam_file, this->bam_iterator, this->alignment)) >= 0) {
 
             // Load alignment into container
             load_alignment(aligned_segment, this->alignment, this->bam_header);
@@ -182,6 +182,8 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
             // No more alignments left
             this->valid_region = false;
         }
+
+        // Free alignment member pointers
     }
     return this->valid_region;
 }

@@ -22,11 +22,11 @@ void compress_runnie(path input_dir, path output_dir){
 
     path output_filename;
 
-    if (absolute(input_dir).has_stem()) {
-        output_filename = input_dir.stem().string() + ".rq";
+    if (absolute(input_dir).stem() == ".") {
+        output_filename = input_dir.parent_path().stem().string() + ".rq";
     }
     else{
-        output_filename = input_dir.parent_path().stem().string() + ".rq";
+        output_filename = input_dir.stem().string() + ".rq";
     }
 
     path output_path = output_dir / output_filename;
