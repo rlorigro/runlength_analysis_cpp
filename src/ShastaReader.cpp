@@ -104,8 +104,6 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
     uint64_t start_index = parse_consensus(segment, line);
     uint64_t c = 0;
 
-//    cout << "start_index: " << start_index << '\n';
-
     // Placeholders for Coverage element
     char base;
     uint16_t length;
@@ -120,22 +118,14 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
 
     vector<CoverageElement> pileup;
 
-//    cout << line << '\n';
-
     // Iterate observations
     for (uint64_t i=start_index; i<=line.size()-1; i++){
         // Perform element level operations at start of next element and end of line
         if (line[i] == ',' or i == line.size()){
             if (i > start_index){
-//                cout << '\n';
-//                cout << "base:\t\t\t" << base << '\n';
-//                cout << "length_string:\t\t" << length_string << '\n';
-//                cout << "reversal_string:\t" << reversal_string << '\n';
-//                cout << "weight_string:\t\t" << weight_string << '\n';
                 reversal = this->parse_reversal_string(reversal_string);
                 length = uint16_t(stoi(length_string));
                 weight = stof(weight_string);
-//                CoverageElement coverage_element = CoverageElement(base, length, reversal, weight);
                 pileup.emplace_back(base, length, reversal, weight);
             }
             c = 0;
@@ -146,7 +136,6 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
         }
         // Parse element members
         else {
-//            cout << i << " " << line[i] << " " << space_found << " " << (not space_found and c > 1 and line[i] != '+' and line[i] != '-') << " " << (not space_found and c > 2 and line[i] != ' ') << " " << (line[i] == ' ') << '\n';
             if (c == 1) {
                 base = line[i];
             }
@@ -220,7 +209,6 @@ void ShastaReader::fetch_consensus_sequence(CoverageSegment& segment, string& re
         this->index();
     }
 
-//    cout << "fetching: " << read_name << '\n';
     segment.name = read_name;
 
     path file_path = this->file_paths.at(read_name);

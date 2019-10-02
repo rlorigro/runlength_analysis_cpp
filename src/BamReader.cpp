@@ -70,10 +70,10 @@ string Region::to_string(){
 BamReader::BamReader() = default;
 
 BamReader::~BamReader() {
-    free(this->bam_file);
+    hts_close(this->bam_file);
+    bam_hdr_destroy(this->bam_header);
+    bam_destroy1(this->alignment);
     free(this->bam_index);
-    free(this->bam_iterator);
-    free(this->alignment);
 }
 
 
@@ -159,6 +159,9 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
 
     bool found_valid_alignment = false;
     while ((not found_valid_alignment) and this->valid_region) {
+        // Free alignment member pointers
+        bam_destroy1(this->alignment);
+        this->alignment = bam_init1();
 
         // Call next() on samtools
         int64_t result;
@@ -183,7 +186,6 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
             this->valid_region = false;
         }
 
-        // Free alignment member pointers
     }
     return this->valid_region;
 }
