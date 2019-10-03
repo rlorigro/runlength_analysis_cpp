@@ -16,6 +16,39 @@ using std::free;
 using std::experimental::filesystem::path;
 
 
+CigarStats::CigarStats(){
+    this->n_matches = 0;
+    this->n_mismatches = 0;
+    this->n_inserts = 0;
+    this->n_deletes = 0;
+}
+
+
+void operator+=(CigarStats& cigar_stats_a, CigarStats& cigar_stats_b){
+    cigar_stats_a.n_matches += cigar_stats_b.n_matches;
+    cigar_stats_a.n_mismatches += cigar_stats_b.n_mismatches;
+    cigar_stats_a.n_inserts += cigar_stats_b.n_inserts;
+    cigar_stats_a.n_deletes += cigar_stats_b.n_deletes;
+}
+
+
+double CigarStats::calculate_identity() {
+    return double(this->n_matches)/double(this->n_matches + this->n_mismatches + this->n_inserts + this->n_deletes);
+}
+
+
+string CigarStats::to_string(){
+    string s;
+
+    s += "n_matches:\t" + std::to_string(this->n_matches) + "\n";
+    s += "n_mismatches:\t" + std::to_string(this->n_mismatches) + "\n";
+    s += "n_inserts:\t" + std::to_string(this->n_inserts) + "\n";
+    s += "n_deletes:\t" + std::to_string(this->n_deletes) + "\n";
+
+    return s;
+}
+
+
 // Helper function for iterating BAMs
 void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_size, uint64_t length){
     uint64_t l = 0;
@@ -39,39 +72,28 @@ void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_si
 }
 
 
-vector<Region> chunk_sequences_from_fasta_index_into_regions(unordered_map<string,FastaIndex> index_map, uint64_t chunk_size){
-    ///
-    /// Take all the sequences in some iterable object and chunk their lengths
-    ///
-    vector <Region> regions;
-
-    // For every sequence
-    for (auto& [read_name, fasta_index]: index_map){
-        chunk_sequence(regions, read_name, chunk_size, fasta_index.length);
-    }
-
-    return regions;
-}
-
-
 Region::Region(string name, uint64_t start, uint64_t stop){
     this->name = name;
     this->start = start;
     this->stop = stop;
 }
 
+
 Region::Region() = default;
+
 
 string Region::to_string(){
     string s = this->name + ":" + std::to_string(this->start) + "-" + std::to_string(this->stop);
     return s;
 }
 
+
 BamReader::BamReader() = default;
+
 
 BamReader::~BamReader() {
     hts_close(this->bam_file);
-    bam_hdr_destroy(this->bam_header);
+//    bam_hdr_destroy(this->bam_header);
     bam_destroy1(this->alignment);
     free(this->bam_index);
 }
@@ -101,20 +123,23 @@ BamReader::BamReader(path bam_path){
         throw runtime_error("ERROR: Cannot open index for bam file: " + string(this->bam_path) + "\n");
     }
 
-    this->bam_header = sam_hdr_read(this->bam_file);
+    // bam header
+    if ((this->bam_header = sam_hdr_read(this->bam_file)) == 0){
+        throw runtime_error("ERROR: Cannot open header for bam file: " + string(this->bam_path) + "\n");
+    }
 }
 
 
-void BamReader::initialize_region(string& ref_name, uint64_t start, uint64_t stop){
-    this->ref_name = ref_name;
+void BamReader::initialize_region(string& reference_name, uint64_t start, uint64_t stop){
+    this->ref_name = reference_name;
 
     // Find the ID for this contig/chromosome/region
-    this->ref_id = bam_name2id(bam_header, ref_name.c_str());
+    this->ref_id = bam_name2id(this->bam_header, reference_name.c_str());
 
     // sam_itr_queryi(const hts_idx_t *idx, int tid, int beg, int end);
     this->region_start = start;
     this->region_stop = stop;
-    this->bam_iterator = sam_itr_queryi(this->bam_index, this->ref_id, this->region_start, this->region_stop);
+    this->bam_iterator = sam_itr_queryi(this->bam_index, this->ref_id, start, stop);
 
     if (this->bam_iterator == nullptr) {
         throw runtime_error("ERROR: Cannot open iterator for region "

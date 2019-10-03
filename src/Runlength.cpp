@@ -1,6 +1,5 @@
 #include "MarginPolishReader.hpp"
 #include "ShastaReader.hpp"
-//#include "CoverageReader.hpp"
 #include "AlignedSegment.hpp"
 #include "RunnieReader.hpp"
 #include "FastaReader.hpp"
@@ -34,6 +33,18 @@ using std::atomic;
 using std::atomic_fetch_add;
 using std::experimental::filesystem::path;
 using std::experimental::filesystem::absolute;
+
+
+void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,RunlengthSequenceElement>& sequences, uint64_t chunk_size){
+    ///
+    /// Take all the sequences in some iterable object and chunk their lengths
+    ///
+
+    // For every sequence
+    for (auto& [name, item]: sequences){
+        chunk_sequence(regions, name, chunk_size, item.sequence.size());
+    }
+}
 
 
 void write_matrix_to_file(path output_directory, runlength_matrix& matrix){
@@ -162,13 +173,6 @@ template <typename T> void write_segment_consensus_sequence_to_fasta(path& paren
 
         // Print status update to stdout
         cerr << "\33[2K\rParsed: " << segment.name << flush;
-    }
-}
-
-
-void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object){
-    for (auto& item: map_object){
-        items.emplace_back(item.first, item.second);
     }
 }
 
@@ -423,8 +427,8 @@ void parse_aligned_runnie(path bam_path,
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
-                in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
-                in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
+                in_left_bound = (int64_t(region.start) <= coordinate.ref_index - 1);
+                in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
 
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
@@ -519,8 +523,9 @@ template<typename T> void parse_aligned_coverage(path bam_path,
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
-                in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
-                in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
+                in_left_bound = (int64_t(region.start) <= coordinate.ref_index - 1);
+                in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
+
                 true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
                 consensus_base = segment.sequence[coordinate.read_true_index];
 
@@ -624,8 +629,8 @@ void parse_aligned_fasta(path bam_path,
 
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
-                in_left_bound = (region.start <= uint64_t(coordinate.ref_index - 1));
-                in_right_bound = (uint64_t(coordinate.ref_index - 1) < region.stop);
+                in_left_bound = (int64_t(region.start) <= coordinate.ref_index - 1);
+                in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
 
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
@@ -653,18 +658,6 @@ void parse_aligned_fasta(path bam_path,
         }
 
         cerr << "\33[2K\rParsed: " << region.to_string() << flush;
-    }
-}
-
-
-void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,RunlengthSequenceElement>& sequences, uint64_t chunk_size){
-    ///
-    /// Take all the sequences in some iterable object and chunk their lengths
-    ///
-
-    // For every sequence
-    for (auto& [name, item]: sequences){
-        chunk_sequence(regions, name, chunk_size, item.sequence.size());
     }
 }
 
@@ -725,7 +718,7 @@ runlength_matrix get_runnie_runlength_matrix(path bam_path,
 
 
 template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
-                                       path marginpolish_directory,
+                                       path input_directory,
                                        unordered_map <string,path>& read_paths,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                        vector <Region>& regions,
@@ -747,7 +740,7 @@ template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
             // Call thread safe function to read and write to file
             threads.emplace_back(thread(parse_aligned_coverage<T>,
                                         ref(bam_path),
-                                        ref(marginpolish_directory),
+                                        ref(input_directory),
                                         ref(read_paths),
                                         ref(ref_runlength_sequences),
                                         ref(regions),

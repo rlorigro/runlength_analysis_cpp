@@ -28,6 +28,13 @@ using boost::trim_right;
 using boost::split;
 
 
+void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object){
+    for (auto& item: map_object){
+        items.emplace_back(item.first, item.second);
+    }
+}
+
+
 bool is_caret(char c){
     return (c == '>');
 }

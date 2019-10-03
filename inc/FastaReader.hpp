@@ -16,13 +16,6 @@ using std::ifstream;
 using std::experimental::filesystem::path;
 
 
-class SequenceElement{
-public:
-    string name;
-    string sequence;
-};
-
-
 class FastaIndex {
 public:
     uint64_t byte_index;    // Where in the fasta is the start of the sequence
@@ -32,6 +25,14 @@ public:
     FastaIndex();
 
     uint64_t size();
+};
+
+void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object);
+
+class SequenceElement{
+public:
+    string name;
+    string sequence;
 };
 
 

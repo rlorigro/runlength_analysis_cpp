@@ -4,6 +4,7 @@
 #include "htslib/hts.h"
 #include "htslib/bgzf.h"
 #include "htslib/sam.h"
+#include "RunlengthSequenceElement.hpp"
 #include "AlignedSegment.hpp"
 #include "FastaReader.hpp"
 #include <experimental/filesystem>
@@ -38,6 +39,24 @@ using std::experimental::filesystem::path;
 **/
 
 
+
+
+class CigarStats {
+public:
+    uint64_t n_matches;
+    uint64_t n_mismatches;
+    uint64_t n_inserts;
+    uint64_t n_deletes;
+
+    CigarStats();
+    string to_string();
+    double calculate_identity();
+};
+
+
+void operator+=(CigarStats& cigar_stats_a, CigarStats& cigar_stats_b);
+
+
 // For occasional convenience
 class Region {
 public:
@@ -69,7 +88,7 @@ public:
     // Volatile metadata
     bool valid_region;
     string ref_name;
-    uint32_t ref_id;
+    int ref_id;
     uint64_t region_start;
     uint64_t region_stop;
     AlignedSegment aligned_segment;
@@ -91,7 +110,5 @@ private:
 
 
 void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_size, uint64_t length);
-
-vector<Region> chunk_sequences_from_fasta_index_into_regions(unordered_map<string,FastaIndex> index_map, uint64_t chunk_size);
 
 #endif //RUNLENGTH_ANALYSIS_CIGARPARSER_H

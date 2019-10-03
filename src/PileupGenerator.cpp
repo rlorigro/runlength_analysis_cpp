@@ -1,12 +1,7 @@
 
 #include "PileupGenerator.hpp"
-
-#include "AlignedSegment.hpp"
-#include "BamReader.hpp"
-#include "FastaReader.hpp"
 #include <iostream>
 #include <experimental/filesystem>
-#include <Runlength.hpp>
 
 using std::cout;
 using std::ostream;

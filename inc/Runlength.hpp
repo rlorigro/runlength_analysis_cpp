@@ -1,21 +1,12 @@
 #ifndef RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP
 #define RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP
 
+#include "RunlengthSequenceElement.hpp"
 #include "FastaReader.hpp"
 #include "Matrix.hpp"
 #include <vector>
 
 using std::vector;
-
-
-class RunlengthSequenceElement{
-public:
-//    RunlengthSequenceElement(string name, string sequence, vector<uint16_t> lengths);
-
-    string name;
-    string sequence;
-    vector<uint16_t> lengths;
-};
 
 
 template<class T> void runlength_encode(RunlengthSequenceElement& runlength_sequence, T& sequence);
@@ -26,13 +17,6 @@ path runlength_encode_fasta_file(path input_file_path,
                                  path output_dir,
                                  bool store_in_memory,
                                  uint16_t max_threads);
-
-
-//template <typename T> void measure_runlength_distribution_from_coverage_data(path input_directory,
-//                                                       path reference_fasta_path,
-//                                                       path output_directory,
-//                                                       uint16_t max_runlength,
-//                                                       uint16_t max_threads);
 
 void measure_runlength_distribution_from_marginpolish(path input_directory,
         path reference_fasta_path,

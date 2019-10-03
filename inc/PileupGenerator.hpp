@@ -1,7 +1,7 @@
 #ifndef RUNLENGTH_ANALYSIS_PILEUPGENERATOR_HPP
 #define RUNLENGTH_ANALYSIS_PILEUPGENERATOR_HPP
 
-#include "AlignedSegment.hpp"
+//#include "AlignedSegment.hpp"
 #include "FastaReader.hpp"
 #include "BamReader.hpp"
 #include "Runlength.hpp"
