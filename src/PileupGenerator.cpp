@@ -149,6 +149,8 @@ void PileupGenerator::fetch_region(Region& region) {
     int64_t pileup_depth_index;
     string read_base;
 
+
+
     this->lowest_free_index_per_depth = {{0,0}};
 
     size_t region_size = region.stop - region.start;

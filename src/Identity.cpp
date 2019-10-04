@@ -145,6 +145,7 @@ void parse_alignments(path bam_path,
     string ref_name;
 
     bool filter_secondary = true;
+    bool filter_supplementary = false;
     uint16_t map_quality_cutoff = 5;
 
     // Volatiles
@@ -173,7 +174,7 @@ void parse_alignments(path bam_path,
 
         int i = 0;
 
-        while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
+        while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary, filter_supplementary)) {
             // Iterate cigars that match the criteria (must be '=')
             while (aligned_segment.next_valid_cigar(coordinate, cigar, valid_cigar_codes)) {
                 aligned_segment.update_containers(coordinate, cigar);
@@ -193,19 +194,19 @@ void parse_alignments(path bam_path,
                         cigar_stats.n_mismatches += cigar.length;
                     }
                     else if (cigar.code == delete_code){
-                        if (cigar.length > 50){ //TODO un hardcode this
-                            cout << region.name << '\t' << coordinate.ref_index << "\tD\t" << cigar.length << '\n';
+                        if (cigar.length < 50){     //TODO un-hardcode this <--
+                            cigar_stats.n_deletes += cigar.length;
                         }
                         else {
-                            cigar_stats.n_deletes += cigar.length;
+                            cout << region.name << '\t' << coordinate.ref_index << "\tD\t" << cigar.length << '\n';
                         }
                     }
                     else if (cigar.code == insert_code){
-                        if (cigar.length > 50){ //TODO un hardcode this
-                            cout << region.name << '\t' << coordinate.ref_index << "\tI\t" << cigar.length << '\n';
+                        if (cigar.length < 50){     //TODO un-hardcode this <--
+                            cigar_stats.n_inserts += cigar.length;
                         }
                         else {
-                            cigar_stats.n_inserts += cigar.length;
+                            cout << region.name << '\t' << coordinate.ref_index << "\tI\t" << cigar.length << '\n';
                         }
                     }
                     else{
@@ -287,7 +288,7 @@ void measure_identity_from_fasta(path reads_fasta_path,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 10*1000*1000;
+    uint64_t chunk_size = 100;
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);

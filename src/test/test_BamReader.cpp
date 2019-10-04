@@ -248,13 +248,15 @@ int main() {
 
     uint16_t map_quality_threshold;
     bool filter_secondary;
+    bool filter_supplementary;
 
     cout << "\nTESTING BAM FILTERS (NO FILTER):\n";
 
     map_quality_threshold = 0;
     filter_secondary = false;
+    filter_supplementary = false;
 
-    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary, filter_supplementary)) {
         cout << aligned_segment.to_string() << "\n";
     }
 
@@ -264,8 +266,33 @@ int main() {
 
     map_quality_threshold = 5;
     filter_secondary = true;
+    filter_supplementary = false;
 
-    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary, filter_supplementary)) {
+        cout << aligned_segment.to_string() << "\n";
+    }
+
+    cout << "\nTESTING BAM FILTERS (MQ>5 and NOT SECONDARY and NOT SUPPLEMENTARY):\n";
+
+    bam_reader.initialize_region(ref_name, 0, 1337);
+
+    map_quality_threshold = 5;
+    filter_secondary = true;
+    filter_supplementary = false;
+
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary, filter_supplementary)) {
+        cout << aligned_segment.to_string() << "\n";
+    }
+
+    cout << "\nTESTING BAM FILTERS (NOT SUPPLEMENTARY):\n";
+
+    bam_reader.initialize_region(ref_name, 0, 1337);
+
+    map_quality_threshold = 0;
+    filter_secondary = false;
+    filter_supplementary = true;
+
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary, filter_supplementary)) {
         cout << aligned_segment.to_string() << "\n";
     }
 
@@ -275,8 +302,9 @@ int main() {
 
     map_quality_threshold = 5;
     filter_secondary = false;
+    filter_supplementary = false;
 
-    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary)) {
+    while (bam_reader.next_alignment(aligned_segment, map_quality_threshold, filter_secondary, filter_supplementary)) {
         cout << aligned_segment.to_string() << "\n";
     }
 

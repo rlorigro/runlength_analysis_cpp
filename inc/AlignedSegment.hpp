@@ -59,6 +59,7 @@ public:
     uint32_t n_cigar;
     bool reversal;
     bool is_secondary;
+    bool is_supplementary;
     int64_t map_quality;
 
     // For PileupGenerator

@@ -88,7 +88,8 @@ public:
     bam1_t* alignment;
 
     // Bit operations
-    uint16_t secondary_mask;
+    static const uint16_t secondary_mask = 256;
+    static const uint16_t supplementary_mask = 2048;
 
     // Volatile metadata
     bool valid_region;
@@ -104,7 +105,10 @@ public:
     ~BamReader();
     void initialize_region(string& ref_name, uint64_t start, uint64_t stop);
     void load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header);
-    bool next_alignment(AlignedSegment& aligned_segment, uint16_t map_quality_cutoff=0, bool filter_secondary=false);
+    bool next_alignment(AlignedSegment& aligned_segment,
+                        uint16_t map_quality_cutoff=0,
+                        bool filter_secondary=true,
+                        bool filter_supplementary=false);
 
 private:
     /// Attributes ///

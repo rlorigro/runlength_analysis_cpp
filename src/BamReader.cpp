@@ -127,7 +127,8 @@ BamReader::BamReader(path bam_path){
     this->bam_iterator = nullptr;
     this->alignment = bam_init1();
 
-    this->secondary_mask = 256;
+//    this->secondary_mask = 256;
+//    this->supplementary_mask = 2048;
 
     this->valid_region = false;
     this->ref_name = "";
@@ -187,14 +188,18 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
     aligned_segment.cigars = bam_get_cigar(alignment);
     aligned_segment.n_cigar = alignment->core.n_cigar;
     aligned_segment.reversal = bam_is_rev(alignment);
-    aligned_segment.is_secondary = ((alignment->core.flag & this->secondary_mask) == 0);
+    aligned_segment.is_secondary = ((alignment->core.flag & BamReader::secondary_mask) == 0);
+    aligned_segment.is_supplementary = ((alignment->core.flag & BamReader::supplementary_mask) == 0);
     aligned_segment.map_quality = alignment->core.qual;
 
     aligned_segment.initialize_cigar_iterator();
 }
 
 
-bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_quality_cutoff, bool filter_secondary){
+bool BamReader::next_alignment(AlignedSegment& aligned_segment,
+        uint16_t map_quality_cutoff,
+        bool filter_secondary,
+        bool filter_supplementary){
     ///
     /// Iterate the alignments within a region, returning references
     ///
@@ -219,6 +224,11 @@ bool BamReader::next_alignment(AlignedSegment& aligned_segment, uint16_t map_qua
 
             // Check secondary filter
             if (filter_secondary and (not aligned_segment.is_secondary)){
+                found_valid_alignment = false;
+            }
+
+            // Check secondary filter
+            if (filter_supplementary and (not aligned_segment.is_supplementary)){
                 found_valid_alignment = false;
             }
 
