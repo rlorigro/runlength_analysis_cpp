@@ -8,6 +8,7 @@
 
 using std::string;
 using std::to_string;
+using std::cout;
 using std::vector;
 using std::array;
 using std::runtime_error;
@@ -24,11 +25,24 @@ CigarStats::CigarStats(){
 }
 
 
+//void CigarStats::update_lengths(Cigar& cigar) {
+//    if (this->cigar_lengths.count() > 0){
+//        cigar_stats.cigar_lengths[cigar.code][cigar.length]++;
+//    }
+//}
+
+
 void operator+=(CigarStats& cigar_stats_a, CigarStats& cigar_stats_b){
     cigar_stats_a.n_matches += cigar_stats_b.n_matches;
     cigar_stats_a.n_mismatches += cigar_stats_b.n_mismatches;
     cigar_stats_a.n_inserts += cigar_stats_b.n_inserts;
     cigar_stats_a.n_deletes += cigar_stats_b.n_deletes;
+
+    for (auto& [cigar_code, lengths]: cigar_stats_b.cigar_lengths){
+        for (auto& [length, count]: lengths){
+            cigar_stats_a.cigar_lengths[cigar_code][length] += count;
+        }
+    }
 }
 
 
@@ -44,6 +58,13 @@ string CigarStats::to_string(){
     s += "n_mismatches:\t" + std::to_string(this->n_mismatches) + "\n";
     s += "n_inserts:\t" + std::to_string(this->n_inserts) + "\n";
     s += "n_deletes:\t" + std::to_string(this->n_deletes) + "\n";
+
+    for (auto& [cigar_code, lengths]: this->cigar_lengths){
+        s += ">\"" + Cigar::cigar_name_key.at(cigar_code) + "\"\n";
+        for (auto& [length, count]: lengths){
+            s += std::to_string(length) + '\t' + std::to_string(count) + '\n';
+        }
+    }
 
     return s;
 }
@@ -92,10 +113,10 @@ BamReader::BamReader() = default;
 
 
 BamReader::~BamReader() {
-    hts_close(this->bam_file);
+//    hts_close(this->bam_file);
 //    bam_hdr_destroy(this->bam_header);
     bam_destroy1(this->alignment);
-    free(this->bam_index);
+//    free(this->bam_index);
 }
 
 

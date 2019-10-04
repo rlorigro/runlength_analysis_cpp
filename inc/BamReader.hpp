@@ -9,11 +9,13 @@
 #include "FastaReader.hpp"
 #include <experimental/filesystem>
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <vector>
 #include <array>
 
 using std::unordered_map;
+using std::map;
 using std::array;
 using std::string;
 using std::vector;
@@ -48,9 +50,12 @@ public:
     uint64_t n_inserts;
     uint64_t n_deletes;
 
+    map <uint8_t, map <uint64_t, uint64_t> > cigar_lengths;
+
     CigarStats();
     string to_string();
     double calculate_identity();
+    void update_lengths(Cigar& cigar);
 };
 
 

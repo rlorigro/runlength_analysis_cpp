@@ -74,7 +74,11 @@ const array <bool, 10> AlignedSegment::cigar_true_read_move = {true,     //BAM_C
                                                               false};   //BAM_CBACK       9
 
 
-Coordinate::Coordinate() = default;
+Coordinate::Coordinate(){
+    ref_index = 0;
+    read_index = 0;
+    read_true_index = 0;
+}
 
 
 Cigar::Cigar(uint32_t bytes){

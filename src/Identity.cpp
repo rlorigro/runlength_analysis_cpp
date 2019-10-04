@@ -15,6 +15,7 @@
 using std::vector;
 using std::string;
 using std::to_string;
+using std::make_pair;
 using std::thread;
 using std::cout;
 using std::cerr;
@@ -72,7 +73,7 @@ void load_fasta_sequences_from_file(path& fasta_path,
         map_mutex.unlock();
 
         // Print status update to stdout
-        cerr << "\33[2K\rParsed: " << sequence.name << flush;
+        cerr << "\33[2K\rParsed: " << read_name << flush;
     }
 }
 
@@ -122,21 +123,17 @@ void load_fasta_file(path input_file_path,
 }
 
 
-void parse_aligned_fasta(path bam_path,
-        path reads_fasta_path,
-        unordered_map <string,FastaIndex>& read_indexes,
-        unordered_map <string,SequenceElement>& ref_sequences,
-        CigarStats& cigar_stats,
-        vector <Region>& regions,
-        atomic <uint64_t>& job_index){
+void parse_alignments(path bam_path,
+                      unordered_map <string,SequenceElement>& ref_sequences,
+                      CigarStats& cigar_stats,
+                      vector <Region>& regions,
+                      atomic <uint64_t>& job_index){
     ///
     ///
     ///
 
     // Initialize FastaReader and relevant containers
-    FastaReader fasta_reader = FastaReader(reads_fasta_path);
     SequenceElement sequence;
-    fasta_reader.set_index(read_indexes);
 
     // Initialize BAM reader and relevant containers
     BamReader bam_reader = BamReader(bam_path);
@@ -177,37 +174,52 @@ void parse_aligned_fasta(path bam_path,
         int i = 0;
 
         while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
-            fasta_reader.fetch_sequence(sequence, aligned_segment.read_name);
-
             // Iterate cigars that match the criteria (must be '=')
-            while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
+            while (aligned_segment.next_valid_cigar(coordinate, cigar, valid_cigar_codes)) {
+                aligned_segment.update_containers(coordinate, cigar);
+                aligned_segment.increment_coordinate(coordinate, cigar);
+
                 in_left_bound = (int64_t(region.start) <= coordinate.ref_index);
                 in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
-                cout << region.start << " " << region.stop << " " << uint64_t(coordinate.ref_index) << '\n';
 
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
 
                     // Count up the operations
                     if (cigar.code == match_code){
-                        cigar_stats.n_matches += 1;
+                        cigar_stats.n_matches += cigar.length;
                     }
                     else if (cigar.code == mismatch_code){
-                        cigar_stats.n_mismatches += 1;
+                        cigar_stats.n_mismatches += cigar.length;
                     }
                     else if (cigar.code == delete_code){
-                        cigar_stats.n_deletes += 1;
+                        if (cigar.length > 50){ //TODO un hardcode this
+                            cout << region.name << '\t' << coordinate.ref_index << "\tD\t" << cigar.length << '\n';
+                        }
+                        else {
+                            cigar_stats.n_deletes += cigar.length;
+                        }
                     }
                     else if (cigar.code == insert_code){
-                        cigar_stats.n_inserts += 1;
+                        if (cigar.length > 50){ //TODO un hardcode this
+                            cout << region.name << '\t' << coordinate.ref_index << "\tI\t" << cigar.length << '\n';
+                        }
+                        else {
+                            cigar_stats.n_inserts += cigar.length;
+                        }
                     }
                     else{
-                        throw runtime_error("ERROR: unexpected cigar code: \n" + cigar.to_string());
+                        throw runtime_error("ERROR: unexpected cigar operation: \n" + cigar.to_string());
                     }
+
+                    cigar_stats.cigar_lengths[cigar.code][cigar.length]++;
                 }
                 else{
-                    cout << region.start << " " << region.stop << " " << uint64_t(coordinate.ref_index) << '\n';
+                    // Out of bounds
                 }
+
+                coordinate = {};
+                cigar = {};
             }
 
             i++;
@@ -219,8 +231,6 @@ void parse_aligned_fasta(path bam_path,
 
 
 CigarStats get_fasta_cigar_stats(path bam_path,
-                                       path reads_fasta_path,
-                                       unordered_map <string,FastaIndex>& read_indexes,
                                        unordered_map <string,SequenceElement>& ref_sequences,
                                        vector <Region>& regions,
                                        uint16_t max_threads){
@@ -236,10 +246,8 @@ CigarStats get_fasta_cigar_stats(path bam_path,
     for (uint64_t i=0; i<max_threads; i++){
         try {
             // Call thread safe function to read and write to file
-            threads.emplace_back(thread(parse_aligned_fasta,
+            threads.emplace_back(thread(parse_alignments,
                                         ref(bam_path),
-                                        ref(reads_fasta_path),
-                                        ref(read_indexes),
                                         ref(ref_sequences),
                                         ref(stats_per_thread[i]),
                                         ref(regions),
@@ -279,13 +287,13 @@ void measure_identity_from_fasta(path reads_fasta_path,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 1*1000*1000;
+    uint64_t chunk_size = 10*1000*1000;
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);
     FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
 
-    // Runlength encode the REFERENCE, rewrite to another FASTA, and store in memory
+    // Store ref sequences in memory
     unordered_map<string,SequenceElement> ref_sequences;
     load_fasta_file(reference_fasta_path, ref_sequences, max_threads);
 
@@ -322,14 +330,50 @@ void measure_identity_from_fasta(path reads_fasta_path,
 
     // Launch threads for parsing alignments and generating matrices
     CigarStats stats = get_fasta_cigar_stats(bam_path,
-            reads_fasta_path,
-            read_indexes,
             ref_sequences,
             regions,
             max_threads);
 
     cerr << '\n';
 
-    cout << stats.to_string();
     cout << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';
+    cout << stats.to_string();
+}
+
+
+void measure_identity_from_bam(path bam_path,
+        path reference_fasta_path,
+        uint16_t max_threads){
+
+    cerr << "Using " + to_string(max_threads) + " threads\n";
+
+    // How big (bp) should the regions be for iterating the BAM? Regardless of size,
+    // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
+    // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
+    // associated with iterating reads that extend beyond the region (at the edges)
+    uint64_t chunk_size = 10*1000*1000;
+
+    // Initialize readers
+    FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
+
+    // Store ref sequences in memory
+    unordered_map<string,SequenceElement> ref_sequences;
+    load_fasta_file(reference_fasta_path, ref_sequences, max_threads);
+
+    // Chunk alignment regions
+    vector<Region> regions;
+    chunk_sequences_into_regions(regions, ref_sequences, chunk_size);
+
+    cerr << "Iterating alignments...\n" << std::flush;
+
+    // Launch threads for parsing alignments and generating matrices
+    CigarStats stats = get_fasta_cigar_stats(bam_path,
+            ref_sequences,
+            regions,
+            max_threads);
+
+    cerr << '\n';
+
+    cout << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';
+    cout << stats.to_string();
 }
