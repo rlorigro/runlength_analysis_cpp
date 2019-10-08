@@ -6,7 +6,7 @@
 using std::make_shared;
 using std::runtime_error;
 using std::cout;
-
+using std::to_string;
 
 QuadCoordinate::QuadCoordinate()=default;
 
@@ -28,6 +28,17 @@ BoundingBox::BoundingBox(QuadCoordinate center, float half_size){
 
 QuadTree::QuadTree(BoundingBox boundary){
     this->boundary = boundary;
+}
+
+
+void QuadTree::redistribute_points(){
+    uint8_t index;
+
+    while (not this->points.empty()){
+        index = this->find_quadrant(this->points.back());
+        this->subtrees[index]->insert(this->points.back());
+        this->points.pop_back();
+    }
 }
 
 
@@ -60,6 +71,8 @@ void QuadTree::subdivide(){
     QuadCoordinate bottom_right_center = QuadCoordinate(x_right, y_bottom);
     BoundingBox bottom_right_bounds = BoundingBox(bottom_right_center, new_half_size);
     this->subtrees[QuadTree::BOTTOM_RIGHT] = make_shared<QuadTree>(QuadTree(bottom_right_bounds));
+
+    this->redistribute_points();
 }
 
 
@@ -120,20 +133,23 @@ uint8_t QuadTree::find_quadrant(QuadCoordinate c){
 bool QuadTree::insert(QuadCoordinate c){
     bool success = false;
 
+    // Check whether the point is within one of the quadrants of this tree, if so return the quadrant
     uint8_t index = this->find_quadrant(c);
 
     if (index != QuadTree::NOT_FOUND) {
-        cout << "quadrant: " << int(index) << '\n';
-
+        // If this quadtree is below capacity and it has not formed any children, just append the point
         if (this->points.size() < QuadTree::capacity and this->subtrees[0] == nullptr) {
             this->points.push_back(c);
             success = true;
         }
+
+        // If capacity has been exceeded, and children need to be spawned, spawn them and pass the point onward
         else if (this->subtrees[0] == nullptr){
-            cout << "subdividing :) \n";
             this->subdivide();
             success = this->subtrees[index]->insert(c);
         }
+
+        // If this tree already has children and exceeded capacity, pass the point onward
         else {
             success = this->subtrees[index]->insert(c);
         }
@@ -142,3 +158,51 @@ bool QuadTree::insert(QuadCoordinate c){
     return success;
 }
 
+
+void QuadTree::append_dot_string(string& edges, string& labels, uint64_t n){
+    if (n>100){
+        throw runtime_error("NO.");
+    }
+
+    string name;
+    string label;
+    uint64_t n_child;
+
+    size_t i = 0;
+    for (auto& subtree: this->subtrees){
+        if (not subtree){
+            continue;
+        }
+
+        n_child = n + i + 1;
+        label = to_string(subtree->points.size());
+        name = to_string(n_child);
+
+        edges += "\n\t" + to_string(n) + "->" + name + ";";
+
+        if (not subtree->points.empty()){
+            labels += "\t" + name + "[label=\"" + label + "\"];\n";
+        }
+
+        subtree->append_dot_string(edges, labels, n_child);
+
+        i++;
+    }
+}
+
+
+void QuadTree::write_as_dot(path output_dir){
+    string dot_string = "digraph G {\n";
+    string edges;
+    string labels;
+
+    uint64_t n = 0;
+
+    this->append_dot_string(edges, labels, n);
+
+    dot_string += labels;
+    dot_string += edges;
+    dot_string += "\n}\n";
+
+    cout << dot_string;
+}

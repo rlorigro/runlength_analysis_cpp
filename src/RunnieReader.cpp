@@ -29,7 +29,6 @@ ostream& RunnieIndex::operator<<(ostream& s){
 
 RunnieReader::RunnieReader(path directory_path){
     this->directory_path = directory_path;
-    this->index();
 }
 
 
@@ -51,7 +50,12 @@ void RunnieReader::update_index(path& file_path,
         bool no_conflict = this->read_indexes.try_emplace(read_name, RunnieIndex(file_path, byte_index, read_length)).second;
         if (not no_conflict) {
             throw runtime_error(
-                    "ERROR: duplicate or nonexistent read detected in Runnie: " + file_path.string() + " " + read_name);
+                    "ERROR: duplicate or nonexistent read detected in Runnie: " + read_name +
+                    "\nin file: " + file_path.string() +
+                    "\non line: " + to_string(current_header_line_index) +
+                    "\n\t" + this->read_indexes.at(read_name).file_path.string() +
+                    "\n\t" + to_string(this->read_indexes.at(read_name).byte_index)  +
+                    "\n\t" + to_string(this->read_indexes.at(read_name).length) );
         }
     }
 

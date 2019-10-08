@@ -5,10 +5,14 @@
 #include <memory>
 #include <vector>
 #include <array>
+#include <string>
+#include <experimental/filesystem>
 
 using std::vector;
 using std::array;
 using std::shared_ptr;
+using std::string;
+using std::experimental::filesystem::path;
 
 
 class QuadCoordinate{
@@ -54,7 +58,10 @@ public:
     QuadTree(BoundingBox boundary);
     bool insert(QuadCoordinate coordinate);
     void subdivide();
+    void redistribute_points();
     void find();
+    void write_as_dot(path output_dir);
+    void append_dot_string(string& edges, string& labels, uint64_t n);
 
 private:
     /// Attributes ///

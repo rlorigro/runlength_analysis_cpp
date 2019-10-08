@@ -10,7 +10,6 @@ void write_file(path absolute_output_path, path absolute_config_path, vector <pa
    vector<string> bases = {"A","C","G","T"};
    RunnieSequence sequence;
 
-   sequence = {};
    sequence.name = "centroids";
 
    for (size_t i=0; i<centroids.size(); i++){
@@ -22,10 +21,9 @@ void write_file(path absolute_output_path, path absolute_config_path, vector <pa
    cout << "sequence.name: " << sequence.name << '\n';
    writer.write_sequence(sequence);
 
-  sequence = {};
-  sequence.name = "centroids_reverse";
+   sequence.name = "centroids_reverse";
 
-  cout << centroids.size() << '\n';
+   cout << centroids.size() << '\n';
    for (size_t i=centroids.size(); i>0; i--){
        sequence.sequence += bases[i%4];
        sequence.scales.push_back(centroids[(i-1)].first);
@@ -55,7 +53,7 @@ int main(){
     cout << script_path;
     path project_directory = script_path.parent_path().parent_path().parent_path();
 
-    path relative_config_path = "/data/test/runnie/config/compression_parameters.tsv";     //TODO: move to `/config/`
+    path relative_config_path = "/data/test/runnie/config/compression_parameters_human_5mb_10-9-2019.tsv";     //TODO: move to `/config/`
     path absolute_config_path = project_directory / relative_config_path;
 
     path relative_output_path = "/output/";

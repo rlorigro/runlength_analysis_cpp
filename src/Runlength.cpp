@@ -301,9 +301,9 @@ template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_re
         uint16_t max_threads){
 
     // Generate output file path
-    path output_fasta_filename = input_directory;
+    path output_fasta_filename = absolute(input_directory);
 
-    if (absolute(output_fasta_filename).stem() == ".") {
+    if (output_fasta_filename.stem() == ".") {
         output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
     }
     else{

@@ -30,8 +30,6 @@ ostream& operator<<(ostream& s, CompressedRunnieIndex& index) {
 
 
 CompressedRunnieWriter::CompressedRunnieWriter(path file_path, path params_path) {
-    cerr << "WRITING TO: " << file_path << '\n';
-
     this->sequence_file_path = file_path;
     this->index_file_path = file_path.string() + ".idx";
     this->params_path = params_path;
@@ -86,6 +84,13 @@ uint8_t CompressedRunnieWriter::fetch_encoding(double scale, double shape){
 
 void CompressedRunnieWriter::load_parameters(){
     ifstream params_file = ifstream(this->params_path);
+
+    cerr << "Loading compression parameters: " + this->params_path.string() + "\n";
+
+    if (not params_file.good()){
+        throw runtime_error("ERROR: CompressedRunnieWriter could not load config file: " + this->params_path.string());
+    }
+
     vector<string> tokens;
     vector<double> bounds;
     pair<double,double> interval = {-1.0,-1.0};
@@ -118,15 +123,13 @@ void CompressedRunnieWriter::load_parameters(){
 
             // Convert vector of shape bounds into vector of pairs (intervals)
             for (size_t i=0; i<bounds.size()-1; i++){
-               intervals.emplace_back(bounds[i], bounds[i+1]);
+                intervals.emplace_back(bounds[i], bounds[i+1]);
             }
 
             // Add a vector of intervals to the shape intervals
             this->shape_intervals.emplace_back(intervals);
         }
     }
-
-    cout << "\n\n";
 
     this-> build_recursive_interval_tree();
 }
