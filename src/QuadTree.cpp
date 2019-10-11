@@ -2,11 +2,14 @@
 #include "QuadTree.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 
+using std::ofstream;
 using std::make_shared;
 using std::runtime_error;
 using std::cout;
 using std::to_string;
+
 
 QuadCoordinate::QuadCoordinate()=default;
 
@@ -159,14 +162,10 @@ bool QuadTree::insert(QuadCoordinate c){
 }
 
 
-void QuadTree::append_dot_string(string& edges, string& labels, uint64_t n){
-    if (n>100){
-        throw runtime_error("NO.");
-    }
-
+void QuadTree::append_dot_string(string& edges, string& labels, uint64_t& n){
     string name;
     string label;
-    uint64_t n_child;
+    uint64_t n_parent = n;
 
     size_t i = 0;
     for (auto& subtree: this->subtrees){
@@ -174,17 +173,17 @@ void QuadTree::append_dot_string(string& edges, string& labels, uint64_t n){
             continue;
         }
 
-        n_child = n + i + 1;
+        n += 1;
         label = to_string(subtree->points.size());
-        name = to_string(n_child);
+        name = to_string(n);
 
-        edges += "\n\t" + to_string(n) + "->" + name + ";";
+        edges += "\n\t" + to_string(n_parent) + "->" + name + ";";
 
         if (not subtree->points.empty()){
             labels += "\t" + name + "[label=\"" + label + "\"];\n";
         }
 
-        subtree->append_dot_string(edges, labels, n_child);
+        subtree->append_dot_string(edges, labels, n);
 
         i++;
     }
@@ -192,6 +191,9 @@ void QuadTree::append_dot_string(string& edges, string& labels, uint64_t n){
 
 
 void QuadTree::write_as_dot(path output_dir){
+    output_dir = absolute(output_dir);
+    ofstream file = ofstream(output_dir / "quad_tree.dot");
+
     string dot_string = "digraph G {\n";
     string edges;
     string labels;
@@ -204,5 +206,36 @@ void QuadTree::write_as_dot(path output_dir){
     dot_string += edges;
     dot_string += "\n}\n";
 
-    cout << dot_string;
+    file << dot_string;
+}
+
+
+void QuadTree::append_bounds_string(string& bounds){
+    size_t i = 0;
+
+    if (not this->subtrees[0]) {
+        bounds += to_string(this->boundary.center.x) + "," + to_string(this->boundary.center.y) + "\t" +
+                  to_string(this->boundary.half_size) + "\n";
+    }
+
+    for (auto& subtree: this->subtrees){
+        if (not subtree){
+            continue;
+        }
+
+        subtree->append_bounds_string(bounds);
+
+        i++;
+    }
+}
+
+
+void QuadTree::write_bounds(path output_dir){
+    output_dir = absolute(output_dir);
+    ofstream file = ofstream(output_dir / "quad_tree_bounds.txt");
+    string bounds;
+
+    this->append_bounds_string(bounds);
+
+    file << bounds;
 }

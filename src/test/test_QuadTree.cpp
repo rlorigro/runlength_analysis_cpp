@@ -57,7 +57,8 @@ int main(){
     }
     cerr << "PASS\n";
 
-    tree.write_as_dot("a");
+    tree.write_as_dot("output/");
+    tree.write_bounds("output/");
 
     return 0;
 }

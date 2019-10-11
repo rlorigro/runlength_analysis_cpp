@@ -19,4 +19,6 @@ void evaluate_discrete_weibull(vector<double>& distribution, double scale, doubl
 void print_distribution(vector<double>& distribution, uint16_t width=100, char character='|');
 
 
+
+
 #endif //RUNLENGTH_ANALYSIS_DISCRETEWEIBULL_H

@@ -61,7 +61,9 @@ public:
     void redistribute_points();
     void find();
     void write_as_dot(path output_dir);
-    void append_dot_string(string& edges, string& labels, uint64_t n);
+    void append_dot_string(string& edges, string& labels, uint64_t& n);
+    void write_bounds(path output_dir);
+    void append_bounds_string(string& bounds);
 
 private:
     /// Attributes ///
