@@ -10,9 +10,11 @@
 #include <boost/tokenizer.hpp>
 
 using std::cout;
+using std::cerr;
 using std::ostream;
 using std::istream;
 using std::string;
+using std::to_string;
 using std::pair;
 using std::vector;
 using std::runtime_error;
@@ -96,6 +98,28 @@ string join(vector <string> s, char delimiter){
     }
 
     return joined_string;
+}
+
+
+void print_distribution(vector<double>& distribution, uint16_t width, char character){
+    ///
+    /// Make a text representation of a distribution. ASSUME POSITIVE VALUES ONLY!
+    ///
+
+    uint16_t n_characters;
+    string line;
+
+    size_t i = 0;
+    for (auto& y: distribution){
+        if (y < 0){
+            cerr << "WARNING: Miscellaneous::print_distribution() printing negative value as 0";
+            y = 0;
+        }
+        n_characters = uint16_t(y*width);
+        line = to_string(i+1) + ":\t" + to_string(y) + "\t" + string(n_characters, character);
+        cout << line << "\n";
+        i++;
+    }
 }
 
 

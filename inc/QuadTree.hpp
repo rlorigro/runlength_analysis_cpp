@@ -53,23 +53,19 @@ public:
     BoundingBox boundary;
 
     array<shared_ptr<QuadTree>,4> subtrees;
+    vector<QuadCoordinate> points;
 
     /// Methods ///
+    QuadTree();
     QuadTree(BoundingBox boundary);
     bool insert(QuadCoordinate coordinate);
     void subdivide();
     void redistribute_points();
-    void find();
     void write_as_dot(path output_dir);
     void append_dot_string(string& edges, string& labels, uint64_t& n);
     void write_bounds(path output_dir);
     void append_bounds_string(string& bounds);
-
-private:
-    /// Attributes ///
-    vector<QuadCoordinate> points;
-
-    /// Methods ///
+    void query_range(vector<QuadCoordinate>& results, BoundingBox bounds);
     uint8_t find_quadrant(QuadCoordinate c);
 };
 

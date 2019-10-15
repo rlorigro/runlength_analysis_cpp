@@ -33,21 +33,3 @@ void evaluate_discrete_weibull(vector<double>& distribution, double scale, doubl
 }
 
 
-void print_distribution(vector<double>& distribution, uint16_t width, char character){
-    ///
-    /// Make a text representation of a distribution
-    ///
-
-    uint16_t n_characters;
-    string line;
-
-    size_t i = 0;
-    for (auto& y: distribution){
-        n_characters = uint16_t(y*width);
-        line = to_string(i+1) + ":\t" + to_string(y) + "\t" + string(n_characters, character);
-        cout << line << "\n";
-        i++;
-    }
-}
-
-

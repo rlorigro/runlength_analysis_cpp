@@ -29,6 +29,10 @@ BoundingBox::BoundingBox(QuadCoordinate center, float half_size){
 }
 
 
+QuadTree::QuadTree(){
+    this->boundary = BoundingBox(QuadCoordinate(0,0), 0);
+}
+
 QuadTree::QuadTree(BoundingBox boundary){
     this->boundary = boundary;
 }
@@ -55,25 +59,27 @@ void QuadTree::subdivide(){
     float y_bottom = this->boundary.center.y - new_half_size;
     float y_top = this->boundary.center.y + new_half_size;
 
+    using tree_type = typeof(*this);
+
     // Top left
     QuadCoordinate top_left_center = QuadCoordinate(x_left, y_top);
     BoundingBox top_left_bounds = BoundingBox(top_left_center, new_half_size);
-    this->subtrees[QuadTree::TOP_LEFT] = make_shared<QuadTree>(QuadTree(top_left_bounds));
+    this->subtrees[QuadTree::TOP_LEFT] = make_shared<tree_type>(tree_type(top_left_bounds));
 
     // Top right
     QuadCoordinate top_right_center = QuadCoordinate(x_right, y_top);
     BoundingBox top_right_bounds = BoundingBox(top_right_center, new_half_size);
-    this->subtrees[QuadTree::TOP_RIGHT] = make_shared<QuadTree>(QuadTree(top_right_bounds));
+    this->subtrees[QuadTree::TOP_RIGHT] = make_shared<tree_type>(tree_type(top_right_bounds));
 
     // Bottom left
     QuadCoordinate bottom_left_center = QuadCoordinate(x_left, y_bottom);
     BoundingBox bottom_left_bounds = BoundingBox(bottom_left_center, new_half_size);
-    this->subtrees[QuadTree::BOTTOM_LEFT] = make_shared<QuadTree>(QuadTree(bottom_left_bounds));
+    this->subtrees[QuadTree::BOTTOM_LEFT] = make_shared<tree_type>(tree_type(bottom_left_bounds));
 
     // Bottom right
     QuadCoordinate bottom_right_center = QuadCoordinate(x_right, y_bottom);
     BoundingBox bottom_right_bounds = BoundingBox(bottom_right_center, new_half_size);
-    this->subtrees[QuadTree::BOTTOM_RIGHT] = make_shared<QuadTree>(QuadTree(bottom_right_bounds));
+    this->subtrees[QuadTree::BOTTOM_RIGHT] = make_shared<tree_type>(tree_type(bottom_right_bounds));
 
     this->redistribute_points();
 }
@@ -159,6 +165,43 @@ bool QuadTree::insert(QuadCoordinate c){
     }
 
     return success;
+}
+
+
+void QuadTree::query_range(vector<QuadCoordinate>& results, BoundingBox bounds){
+    //TODO: rewrite for non-square rectangles
+
+    // Find boundaries, for constructing corners
+    float x_left = this->boundary.center.x - this->boundary.half_size;
+    float x_right = this->boundary.center.x + this->boundary.half_size;
+    float y_bottom = this->boundary.center.y - this->boundary.half_size;
+    float y_top = this->boundary.center.y + this->boundary.half_size;
+
+    // Check if there is no intersection, terminate
+    // TODO: change this lazy implementation to be a decision tree
+    if (find_quadrant(QuadCoordinate(x_left,y_bottom)) == QuadTree::NOT_FOUND and
+        find_quadrant(QuadCoordinate(x_left,y_top)) == QuadTree::NOT_FOUND and
+        find_quadrant(QuadCoordinate(x_right,y_bottom)) == QuadTree::NOT_FOUND and
+        find_quadrant(QuadCoordinate(x_right,y_top)) == QuadTree::NOT_FOUND){
+        return;
+    }
+
+    // If there is an intersection and some of the points are in range, add them
+    QuadTree query_quad(bounds);
+    for (auto& point: this->points){
+        if (query_quad.find_quadrant(point) != QuadTree::NOT_FOUND){
+            results.push_back(point);
+        }
+    }
+
+    if (this->subtrees[0] == nullptr){
+        return;
+    }
+    else{
+        for (auto& subtree: this->subtrees){
+            subtree->query_range(results, bounds);
+        }
+    }
 }
 
 

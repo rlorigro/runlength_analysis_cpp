@@ -1,7 +1,8 @@
 #include <iostream>
 #include <experimental/filesystem>
 #include "RunnieReader.hpp"
-#include "QuadTree.hpp"
+#include "QuadLoss.hpp"
+#include "QuadCompressor.hpp"
 #include "boost/program_options.hpp"
 
 using std::cout;
@@ -23,21 +24,21 @@ void compress_runnie(path input_dir, path output_dir){
     RunnieReader reader = RunnieReader(input_dir);
     reader.index();
 
-    float x = 4;
-    float y = 7;
+    float x = 25;
+    float y = 25;
 
-    float size = 100;
+    float size = 50;
 
     QuadCoordinate center = QuadCoordinate(x, y);
     BoundingBox bounds = BoundingBox(center, size/2);
-    QuadTree tree = QuadTree(bounds);
+    QuadCompressor tree = QuadCompressor(bounds);
 
     RunnieSequence sequence;
     string read_name;
     double scale;
     double shape;
 
-    size_t cutoff = 1*1000*1000;
+    size_t cutoff = 10*1000*1000;
     size_t n_bases = 0;
     for (auto& index: reader.read_indexes){
         read_name = index.first;
@@ -57,11 +58,11 @@ void compress_runnie(path input_dir, path output_dir){
         }
     }
 
-
-
-
+    DiscreteWeibullLoss loss = DiscreteWeibullLoss(50);
+    tree.subdivide_most_lossy_quadrant(loss);
+//
 //    tree.write_as_dot(output_dir);
-    tree.write_bounds(output_dir);
+//    tree.write_bounds(output_dir);
 }
 
 
