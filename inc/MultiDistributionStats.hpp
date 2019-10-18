@@ -14,6 +14,7 @@ class MultiDistributionStats {
 public:
     /// Attributes ///
     vector <IterativeSummaryStats<double> > pointwise_stats;
+    uint64_t size = 0;
 
     /// Methods ///
     MultiDistributionStats();

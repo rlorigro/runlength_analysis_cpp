@@ -33,6 +33,12 @@ void DiscreteWeibullLoss::update(QuadCoordinate point){
 
 
 double DiscreteWeibullLoss::calculate_loss(){
-    return this->stats.calculate_loss();
+    if (this->stats.size == 0){
+        return 0;
+    }
+    else {
+//        return this->stats.calculate_loss();
+        return this->stats.get_weighted_variance();
+    }
 }
 

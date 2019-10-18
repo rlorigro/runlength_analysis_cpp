@@ -6,6 +6,8 @@ using std::ofstream;
 using std::make_shared;
 using std::runtime_error;
 using std::cout;
+using std::cerr;
+using std::tie;
 using std::to_string;
 using std::vector;
 
@@ -17,35 +19,6 @@ QuadCompressor::QuadCompressor(BoundingBox bounds){
 
 QuadCompressor::QuadCompressor(){
     this->boundary = BoundingBox(QuadCoordinate(0,0), 0);
-}
-
-
-void QuadCompressor::find_lossiest_leaf(double& max_loss, shared_ptr<QuadCompressor>& lossiest_leaf, QuadLoss& loss_calculator){
-    size_t i = 0;
-    double loss = 0;
-
-    // If this is a leaf, calculate loss, and update max_loss
-    if (not this->subtrees[0]) {
-        loss_calculator.reset();
-        update_loss_from_range(this->boundary, loss_calculator);
-        loss = loss_calculator.calculate_loss();
-
-        if (loss > max_loss){
-            max_loss = loss;
-            lossiest_leaf = make_shared<QuadCompressor>(*this);
-        }
-    }
-    else {
-        for (auto &subtree: this->subtrees) {
-            if (not subtree) {
-                continue;
-            }
-
-            subtree->find_lossiest_leaf(max_loss, lossiest_leaf, loss_calculator);
-
-            i++;
-        }
-    }
 }
 
 
@@ -68,7 +41,7 @@ void QuadCompressor::update_loss_from_range(BoundingBox& bounds, QuadLoss& loss_
     }
 
     // If there is an intersection and some of the points are in range, add them
-    QuadTree query_quad(bounds);
+    QuadCompressor query_quad(bounds);
     for (auto& point: this->points){
         if (query_quad.find_quadrant(point) != QuadTree::NOT_FOUND){
             loss_calculator.update(point);
@@ -76,7 +49,7 @@ void QuadCompressor::update_loss_from_range(BoundingBox& bounds, QuadLoss& loss_
     }
 
     // If there are children search them
-    if (this->subtrees[0] == nullptr){
+    if (this->subtrees[0] == nullptr) {
         return;
     }
     else{
@@ -87,19 +60,95 @@ void QuadCompressor::update_loss_from_range(BoundingBox& bounds, QuadLoss& loss_
 }
 
 
-void QuadCompressor::subdivide_most_lossy_quadrant(QuadLoss& loss_calculator){
+void QuadCompressor::find_lossiest_leaf(QuadTree& reference_tree,
+                                        map<double, map <double, pair <double,QuadTree*> > >& scores,
+                                        QuadLoss& loss_calculator){
+    size_t i = 0;
+    double loss = 0;
+    double x = reference_tree.boundary.center.x;
+    double y = reference_tree.boundary.center.y;
+
+    // If this is a leaf, calculate loss, and update max_loss
+    if (reference_tree.subtrees[0] == nullptr) {
+        bool score_exists = scores.count(x) != 0 and scores.at(x).count(y) != 0;
+
+        if (not score_exists) {
+            loss_calculator.reset();
+            this->update_loss_from_range(reference_tree.boundary, loss_calculator);
+            loss = loss_calculator.calculate_loss();
+            scores[x][y] = make_pair(loss, &reference_tree);
+        }
+    }
+    else {
+        for (auto& subtree: reference_tree.subtrees) {
+            this->find_lossiest_leaf(*subtree, scores, loss_calculator);
+            i++;
+        }
+    }
+}
+
+
+shared_ptr<QuadTree> QuadCompressor::generate_child(BoundingBox bounds){
+    return make_shared<QuadCompressor>(bounds);
+}
+
+
+void QuadCompressor::compress(uint64_t max_quadrants, QuadLoss& loss_calculator, path output_dir) {
+    // Initialize a separate tree to represent custom loss-defined quadrants
+    QuadCompressor reference_tree = QuadCompressor(this->boundary);
+
+    map<double, map <double, pair <double,QuadTree*> > > scores;
+    uint64_t n_quadrants = 1;
+    uint64_t i = 0;
+    while (n_quadrants < max_quadrants){
+        subdivide_lossiest_leaf(loss_calculator, reference_tree, scores);
+        reference_tree.write_as_dot(output_dir,to_string(i), true);
+        reference_tree.write_bounds(output_dir,to_string(i));
+        n_quadrants += 3;
+        i++;
+    }
+}
+
+
+void QuadCompressor::subdivide_lossiest_leaf(QuadLoss& loss_calculator,
+                                             QuadCompressor& reference_tree,
+                                             map<double, map <double, pair <double,QuadTree*> > >& scores){
     ///
     /// loss_calculator must have an "update()" and "calculate_loss()" function.
     ///
 
-    // Initialize a separate tree to represent custom loss-defined quadrants
-    QuadTree reference_tree = QuadTree(this->boundary);
-    reference_tree.subdivide();
-
+    QuadTree* lossiest_leaf = nullptr;
+    QuadTree* leaf;
     double max_loss = 0;
-    shared_ptr<QuadCompressor> lossiest_leaf;
+    double loss = 0;
+    double x_max = -1;
+    double y_max = -1;
 
-    find_lossiest_leaf(max_loss, lossiest_leaf, loss_calculator);
+    find_lossiest_leaf(reference_tree, scores, loss_calculator);
 
-    lossiest_leaf->subdivide();
+    for (auto& x_pair: scores){
+        for (auto& y_pair: x_pair.second){
+            tie(loss, leaf) = y_pair.second;
+
+            if (loss > max_loss){
+                max_loss = loss;
+                lossiest_leaf = leaf;
+                x_max = x_pair.first;
+                y_max = y_pair.first;
+                cout << x_max << " " << y_max << " " << loss << " " <<  lossiest_leaf << " MAX\n";
+            }
+        }
+    }
+
+    scores.at(x_max).erase(y_max);
+    if (scores.at(x_max).empty()){
+        scores.erase(x_max);
+    }
+
+    if (lossiest_leaf == nullptr) {
+        throw runtime_error("ERROR: lossiest leaf not found. More bins than nodes?");
+    }
+    else {
+        lossiest_leaf->subdivide();
+    }
 }

@@ -12,8 +12,8 @@ project(run_length_analysis VERSION 0.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_CXX_FLAGS "-fexceptions -fno-new-ttp-matching")
-add_definitions(-ggdb3 -O0 -Wall)      # Debugging + No optimization
-#add_definitions(-O3 -Wall)              # Much optimization
+#add_definitions(-ggdb3 -O0 -Wall)      # Debugging + No optimization
+add_definitions(-O3 -Wall)              # Much optimization
 
 # Definitions needed to eliminate runtime dependency
 # on the boost system library.
@@ -171,6 +171,7 @@ set(SOURCES
         src/QuadCompressor.cpp
         src/QuadLoss.cpp
         src/QuadTree.cpp
+        src/Quadrant.cpp
         src/Runlength.cpp
         src/ReferenceRunlength.cpp
         src/RunnieReader.cpp

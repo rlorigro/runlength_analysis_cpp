@@ -59,7 +59,7 @@ if __name__ == "__main__":
         "--input",
         type=str,
         required=False,
-        help="path of folder or file containing quadrant bounds"
+        help="path of file containing quadrant bounds"
     )
     args = parser.parse_args()
 

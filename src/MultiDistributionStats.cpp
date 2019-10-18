@@ -22,6 +22,8 @@ void MultiDistributionStats::update(vector<double>& distribution){
     for (size_t i=0; i<this->pointwise_stats.size(); i++){
         this->pointwise_stats[i].add(distribution[i]);
     }
+
+    this->size++;
 }
 
 

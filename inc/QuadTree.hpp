@@ -7,34 +7,14 @@
 #include <array>
 #include <string>
 #include <experimental/filesystem>
+#include "QuadLoss.hpp"
+#include "Quadrant.hpp"
 
 using std::vector;
 using std::array;
 using std::shared_ptr;
 using std::string;
 using std::experimental::filesystem::path;
-
-
-class QuadCoordinate{
-public:
-    float x;
-    float y;
-
-    QuadCoordinate();
-    QuadCoordinate(float x, float y);
-};
-
-
-class BoundingBox{
-public:
-    QuadCoordinate center;
-    float half_size;
-
-    BoundingBox();
-    BoundingBox(QuadCoordinate center, float half_size);
-    bool contains(QuadCoordinate coordinate);
-    bool intersects(BoundingBox boundary);
-};
 
 
 class QuadTree{
@@ -61,12 +41,14 @@ public:
     bool insert(QuadCoordinate coordinate);
     void subdivide();
     void redistribute_points();
-    void write_as_dot(path output_dir);
+    void write_as_dot(path output_dir="output/", string suffix="0", bool plot=false);
     void append_dot_string(string& edges, string& labels, uint64_t& n);
-    void write_bounds(path output_dir);
+    void write_bounds(path output_dir="output/", string suffix="0");
     void append_bounds_string(string& bounds);
-    void query_range(vector<QuadCoordinate>& results, BoundingBox bounds);
+    void query_range(vector<QuadCoordinate>& results, BoundingBox& bounds);
     uint8_t find_quadrant(QuadCoordinate c);
+    virtual shared_ptr<QuadTree> generate_child(BoundingBox bounds);
+    virtual void update_loss_from_range(BoundingBox& bounds, QuadLoss& loss_calculator);
 };
 
 

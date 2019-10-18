@@ -4,7 +4,7 @@
 
 #include "MultiDistributionStats.hpp"
 #include "DiscreteWeibull.hpp"
-#include "QuadTree.hpp"
+#include "Quadrant.hpp"
 
 
 class QuadLoss{
