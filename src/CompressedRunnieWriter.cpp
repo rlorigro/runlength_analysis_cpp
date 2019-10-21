@@ -29,6 +29,9 @@ ostream& operator<<(ostream& s, CompressedRunnieIndex& index) {
 }
 
 
+const vector<uint64_t> CompressedRunnieWriter::channel_sizes = {sizeof(uint8_t)};
+
+
 CompressedRunnieWriter::CompressedRunnieWriter(path file_path, path params_path) {
     this->sequence_file_path = file_path;
     this->index_file_path = file_path.string() + ".idx";
@@ -205,7 +208,7 @@ void CompressedRunnieWriter::write_indexes(){
 
     // Write channel metadata
     write_value_to_binary(this->sequence_file, this->n_channels);
-    write_value_to_binary(this->sequence_file, this->channel_size_1);
+    write_value_to_binary(this->sequence_file, this->channel_sizes.at(0));
 
     // Write the pointer to the beginning of the index table
     write_value_to_binary(this->sequence_file, indexes_start_position);

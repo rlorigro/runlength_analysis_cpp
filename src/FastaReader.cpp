@@ -88,7 +88,7 @@ void FastaReader::set_index(unordered_map<string,FastaIndex>& index){
 }
 
 
-void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name){
+void FastaReader::get_sequence(SequenceElement& element, string& sequence_name){
     element = {};
 
     if (this->read_indexes.empty()){
@@ -117,7 +117,7 @@ void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name
 }
 
 
-void FastaReader::fetch_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index){
+void FastaReader::get_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index){
     // Fill in the "name" field of the sequence element
     element.name = sequence_name;
 

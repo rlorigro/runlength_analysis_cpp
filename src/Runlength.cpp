@@ -97,7 +97,7 @@ void runlength_encode_fasta_sequence_to_file(path& fasta_path,
         uint64_t read_index = read_index_vector[thread_job_index].second.byte_index;
 
         // First of each element is read_name, second is its index
-        fasta_reader.fetch_sequence(sequence, read_name, read_index);
+        fasta_reader.get_sequence(sequence, read_name, read_index);
 
         // Convert to Run-length Encoded sequence element
         runlength_encode(runlength_sequence, sequence);
@@ -624,7 +624,7 @@ void parse_aligned_fasta(path bam_path,
         int i = 0;
 
         while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
-            fasta_reader.fetch_sequence(sequence, aligned_segment.read_name);
+            fasta_reader.get_sequence(sequence, aligned_segment.read_name);
             runlength_encode(runlength_sequence, sequence);
 
             // Iterate cigars that match the criteria (must be '=')

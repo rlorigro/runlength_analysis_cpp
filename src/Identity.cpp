@@ -65,7 +65,7 @@ void load_fasta_sequences_from_file(path& fasta_path,
         uint64_t read_index = read_index_vector[thread_job_index].second.byte_index;
 
         // First of each element is read_name, second is its index
-        fasta_reader.fetch_sequence(sequence, read_name, read_index);
+        fasta_reader.get_sequence(sequence, read_name, read_index);
 
         // Append the sequence to a map of names:sequence
         map_mutex.lock();

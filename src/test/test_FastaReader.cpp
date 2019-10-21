@@ -64,7 +64,7 @@ int main(){
 
     cout << "Testing third sequence: ";
     sequence_name = "test3";
-    fasta_reader.fetch_sequence(element, sequence_name);
+    fasta_reader.get_sequence(element, sequence_name);
 
     assert(element.name == "test3");
     assert(element.sequence == "GGGGTTTGGTGGGGTTTGGTGGGGTTTGGT");
@@ -73,7 +73,7 @@ int main(){
 
     cout << "Testing fourth sequence: ";
     sequence_name = "test4";
-    fasta_reader.fetch_sequence(element, sequence_name);
+    fasta_reader.get_sequence(element, sequence_name);
 
     assert(element.name == "test4");
     assert(element.sequence == "ACCAAACCCC");
@@ -82,7 +82,7 @@ int main(){
 
     cout << "Testing first sequence: ";
     sequence_name = "test1";
-    fasta_reader.fetch_sequence(element, sequence_name);
+    fasta_reader.get_sequence(element, sequence_name);
 
     assert(element.name == "test1");
     assert(element.sequence == "ACCAAACCCC");
@@ -91,7 +91,7 @@ int main(){
 
     cout << "Testing second sequence: ";
     sequence_name = "test2";
-    fasta_reader.fetch_sequence(element, sequence_name);
+    fasta_reader.get_sequence(element, sequence_name);
 
     assert(element.name == "test2");
     assert(element.sequence == "GGGGTTTGGT");

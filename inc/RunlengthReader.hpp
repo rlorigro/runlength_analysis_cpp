@@ -1,8 +1,9 @@
 
-#ifndef RUNLENGTH_ANALYSIS_COMPRESSEDRUNNIEREADER_HPP
-#define RUNLENGTH_ANALYSIS_COMPRESSEDRUNNIEREADER_HPP
+#ifndef RUNLENGTH_ANALYSIS_RUNLENGTHREADER_HPP
+#define RUNLENGTH_ANALYSIS_RUNLENGTHREADER_HPP
 
-#include "CompressedRunnieWriter.hpp"
+#include "RunlengthSequenceElement.hpp"
+#include "RunlengthIndex.hpp"
 #include "BinaryIO.hpp"
 #include <utility>
 #include <string>
@@ -22,34 +23,13 @@ using std::runtime_error;
 using std::unordered_map;
 
 
-//ostream& operator<<(ostream& s, CompressedRunnieIndex& index);
-
-
-class CompressedRunnieSequence {
-public:
-    /// Attributes ///
-    string sequence;
-    vector <uint8_t> encoding;
-
-    /// Methods ///
-    void print_encoding();
-};
-
-
-class NamedCompressedRunnieSequence: public CompressedRunnieSequence{
-public:
-    /// Attributes ///
-    string name;
-};
-
-
-class CompressedRunnieReader{
+class RunlengthReader{
 public:
 
     /// Methods ///
 
     // Initialize the class with a file path
-    CompressedRunnieReader(string file_path);
+    RunlengthReader(string file_path);
 
     // Fetch the name of a read based on its number (ordering in file, 0-based)
     const string& get_read_name(uint64_t read_number);
@@ -58,10 +38,7 @@ public:
     uint64_t get_length(uint64_t read_number);
 
     // Fetch the sequence of a read based on its number (ordering in file, 0-based)
-    void get_sequence(CompressedRunnieSequence& sequence, uint64_t read_number);
-
-    // Fetch sequence data, and the 'name' field is also filled in.
-    void get_sequence(NamedCompressedRunnieSequence& sequence, uint64_t read_number);
+    void get_sequence(RunlengthSequenceElement& sequence, uint64_t read_number);
 
     // Fetch the number of reads in the file
     size_t get_read_count();
@@ -89,11 +66,10 @@ private:
     void read_footer();
     void read_channel_metadata();
     void read_indexes();
-    void read_index_entry(CompressedRunnieIndex& index_element, off_t& byte_index);
+    void read_index_entry(RunlengthIndex& index_element, off_t& byte_index);
 
-    vector<CompressedRunnieIndex> indexes;
+    vector<RunlengthIndex> indexes;
     unordered_map<string,size_t> index_map;
-
 };
 
-#endif //RUNLENGTH_ANALYSIS_COMPRESSEDRUNNIEREADER_HPP
+#endif //RUNLENGTH_ANALYSIS_RUNLENGTHREADER_HPP

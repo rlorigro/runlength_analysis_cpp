@@ -137,7 +137,7 @@ void PileupGenerator::fetch_region(Region& region) {
     SequenceElement read_sequence;
     SequenceElement ref_sequence;
 
-    ref_fasta_reader.fetch_sequence(ref_sequence, region.name);
+    ref_fasta_reader.get_sequence(ref_sequence, region.name);
 
     string cigars;
     string ref_alignment;
@@ -160,7 +160,7 @@ void PileupGenerator::fetch_region(Region& region) {
     while (bam_reader.next_alignment(aligned_segment)) {
         cout << aligned_segment.to_string() << "\n";
 
-        reads_fasta_reader.fetch_sequence(read_sequence, aligned_segment.read_name);
+        reads_fasta_reader.get_sequence(read_sequence, aligned_segment.read_name);
         pileup_depth_index = find_depth_index(aligned_segment.ref_start_index);
 
         // Update the occupancy status of this row

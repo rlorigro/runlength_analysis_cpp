@@ -132,7 +132,7 @@ int main() {
     // Initialize FASTA reader and relevant containers
     FastaReader ref_fasta_reader = FastaReader(absolute_fasta_ref_path);
     SequenceElement ref_sequence;
-    ref_fasta_reader.fetch_sequence(ref_sequence, ref_name);
+    ref_fasta_reader.get_sequence(ref_sequence, ref_name);
 
     cout << cigar.to_string() << "\n";
 
@@ -142,7 +142,7 @@ int main() {
     string read_alignment_inferred;
 
     while (bam_reader.next_alignment(aligned_segment)) {
-        reads_fasta_reader.fetch_sequence(read_sequence, aligned_segment.read_name);
+        reads_fasta_reader.get_sequence(read_sequence, aligned_segment.read_name);
 
         cigars = "";
         ref_alignment = "";
@@ -197,7 +197,7 @@ int main() {
     bam_reader.initialize_region(ref_name, 0, 1337);
 
     while (bam_reader.next_alignment(aligned_segment)) {
-        reads_fasta_reader.fetch_sequence(read_sequence, aligned_segment.read_name);
+        reads_fasta_reader.get_sequence(read_sequence, aligned_segment.read_name);
 
         cigars = "";
         ref_alignment = "";

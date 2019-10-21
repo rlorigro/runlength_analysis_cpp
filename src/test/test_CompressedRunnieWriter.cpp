@@ -89,19 +89,19 @@ int main(){
 //    cout << "reader.indexes_start_position: " << reader.indexes_start_position << '\n';
 
     CompressedRunnieSequence compressed_sequence;
-    reader.get_sequence_data(compressed_sequence, 0);
+    reader.get_sequence(compressed_sequence, 0);
 
     cout << compressed_sequence.sequence << '\n';
     compressed_sequence.print_encoding();
 
-    reader.get_sequence_data(compressed_sequence, 1);
+    reader.get_sequence(compressed_sequence, 1);
 
     cout << compressed_sequence.sequence << '\n';
     compressed_sequence.print_encoding();
 
     cout << "TESTING NAMED COMPRESSED RUNNIE SEQUENCE:\n";
     NamedCompressedRunnieSequence named_compressed_sequence;
-    reader.get_sequence_data(named_compressed_sequence, 0);
+    reader.get_sequence(named_compressed_sequence, 0);
 
     cout << named_compressed_sequence.name << '\n';
     cout << named_compressed_sequence.sequence << '\n';

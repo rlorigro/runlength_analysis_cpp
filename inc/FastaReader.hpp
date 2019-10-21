@@ -27,6 +27,7 @@ public:
     uint64_t size();
 };
 
+
 void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object);
 
 class SequenceElement{
@@ -63,8 +64,8 @@ public:
     void set_index(unordered_map<string,FastaIndex>& read_indexes);
 
     // Fetch a sequence from file, and generate index first if necessary
-    void fetch_sequence(SequenceElement& element, string& sequence_name);
-    void fetch_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index);
+    void get_sequence(SequenceElement& element, string& sequence_name);
+    void get_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index);
 
 private:
     /// Attributes ///

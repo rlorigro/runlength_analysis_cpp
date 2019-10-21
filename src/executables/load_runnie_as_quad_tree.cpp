@@ -2,6 +2,7 @@
 #include <experimental/filesystem>
 #include "RunnieReader.hpp"
 #include "QuadTree.hpp"
+#include "Quadrant.hpp"
 #include "boost/program_options.hpp"
 
 using std::cout;

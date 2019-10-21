@@ -59,10 +59,11 @@ void compress_runnie(path input_dir, path output_dir){
     }
 
     DiscreteWeibullLoss loss = DiscreteWeibullLoss(50);
-    tree.subdivide_most_lossy_quadrant(loss);
-//
-//    tree.write_as_dot(output_dir);
-//    tree.write_bounds(output_dir);
+
+    vector<QuadCoordinate> results;
+    tree.query_range(results, bounds);
+
+    tree.compress(255, loss, output_dir);
 }
 
 
@@ -99,5 +100,3 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
-
-

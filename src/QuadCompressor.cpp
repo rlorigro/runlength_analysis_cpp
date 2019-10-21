@@ -101,8 +101,9 @@ void QuadCompressor::compress(uint64_t max_quadrants, QuadLoss& loss_calculator,
     uint64_t n_quadrants = 1;
     uint64_t i = 0;
     while (n_quadrants < max_quadrants){
+        cerr << n_quadrants << " quadrants calculated\n";
         subdivide_lossiest_leaf(loss_calculator, reference_tree, scores);
-        reference_tree.write_as_dot(output_dir,to_string(i), true);
+//        reference_tree.write_as_dot(output_dir,to_string(i), true);
         reference_tree.write_bounds(output_dir,to_string(i));
         n_quadrants += 3;
         i++;

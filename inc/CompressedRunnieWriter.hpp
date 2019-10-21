@@ -51,10 +51,10 @@ public:
     ofstream sequence_file;
 
     // How many accessory channels will be paired 1:1 with each nucleotide sequence
-    const uint64_t n_channels = 1;
+    static const uint64_t n_channels = 1;
 
     // What is the unit size of that channel
-    const uint64_t channel_size_1 = sizeof(uint8_t);
+    static const vector<uint64_t> channel_sizes;
 
     // Interval data structures used to initialize the interval map
     vector <pair <double,double> > scale_intervals;
