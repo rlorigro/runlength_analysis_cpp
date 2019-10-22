@@ -167,6 +167,7 @@ set(SOURCES
         src/Matrix.cpp
         src/Miscellaneous.cpp
         src/MultiDistributionStats.cpp
+        src/Pileup.cpp
         src/PileupGenerator.cpp
         src/QuadCompressor.cpp
         src/QuadLoss.cpp

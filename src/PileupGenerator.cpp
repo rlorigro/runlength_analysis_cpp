@@ -8,14 +8,9 @@ using std::ostream;
 using std::experimental::filesystem::path;
 
 
-PileupGenerator::PileupGenerator(path bam_path, path ref_fasta_path, path reads_fasta_path, uint16_t maximum_depth){
+PileupGenerator::PileupGenerator(path bam_path, uint16_t maximum_depth){
     this->bam_path = bam_path;
-    this->ref_fasta_path = ref_fasta_path;
-    this->reads_fasta_path = reads_fasta_path;
-
     this->bam_reader = BamReader(bam_path);
-    this->ref_fasta_reader = FastaReader(ref_fasta_path);
-    this->reads_fasta_reader = FastaReader(reads_fasta_path);
     this->maximum_depth = maximum_depth;
 }
 
@@ -64,23 +59,23 @@ void PileupGenerator::print_lowest_free_indexes(){
 }
 
 
-void PileupGenerator::print_matrix(){
+void PileupGenerator::print(Pileup& pileup){
     vector<string> pileup_strings;
 
-    cout << "Matrix of size " << this->pileup.size() << " " << this->pileup[0].size() << "\n";
+    cout << "Matrix of size " << pileup.pileup.size() << " " << pileup.pileup[0].size() << "\n";
 
-    for (size_t width_index = 0; width_index<this->pileup.size(); width_index++){
-        for (size_t depth_index = 0; depth_index < this->pileup[width_index].size(); depth_index++){
+    for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++){
+        for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++){
             if (depth_index>=pileup_strings.size()){
                 pileup_strings.push_back("");
             }
 
-            pileup_strings[depth_index] += this->pileup[width_index][depth_index];
+            pileup_strings[depth_index] += to_string(pileup.pileup[width_index][depth_index][0]);
 
             // If there are inserts in this column, append them to the strings
-            if (this->insert_columns.count(width_index) > 0){
-                for (auto& column: this->insert_columns.at(width_index)){
-                    pileup_strings[depth_index] += column[depth_index];
+            if (pileup.inserts.count(width_index) > 0){
+                for (auto& column: pileup.inserts.at(width_index)){
+                    pileup_strings[depth_index] += to_string(column[depth_index][0]);
                 }
             }
         }
@@ -92,52 +87,60 @@ void PileupGenerator::print_matrix(){
 }
 
 
-void PileupGenerator::parse_insert(int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, string& read_base){
+void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data){
     uint64_t insert_anchor_index = pileup_width_index + aligned_segment.reversal;
     uint64_t insert_index = aligned_segment.subcigar_index - 1;
 
     // If there is already another insert anchored at this ref position:
-    if (this->insert_columns.count(insert_anchor_index) > 0) {
+    if (pileup.inserts.count(insert_anchor_index) > 0) {
 
         // If this insert will fit within the width of the insert columns already present
-        if (size_t(insert_index) < this->insert_columns.at(insert_anchor_index).size()) {
+        if (size_t(insert_index) < pileup.inserts.at(insert_anchor_index).size()) {
             // Simply fill in the base
-            this->insert_columns.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_base;
+            pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
         } else {
             // Add another column and then fill in the base
-            this->insert_columns.at(insert_anchor_index).emplace_back(vector<string>(this->maximum_depth, "_"));
-            this->insert_columns.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_base;
+            pileup.inserts.at(insert_anchor_index).push_back(this->default_insert_column);      // copy value because value is stored as class member
+            pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
         }
     } else {
         // Add a new entry at this position, initialize with a vector, and then fill in the base
-        this->insert_columns.emplace(insert_anchor_index, vector<vector<string> >(1, vector<string>(this->maximum_depth, "_")));
-        this->insert_columns.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_base;
+        pileup.inserts.insert({insert_anchor_index, this->default_insert_pileup});        // copy value because value is stored as class member
+        pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
     }
 }
 
 
-void PileupGenerator::get_base(string& read_base, Cigar& cigar, Coordinate& coordinate, SequenceElement& read_sequence){
-    if (cigar.is_read_move()) {
-        read_base = read_sequence.sequence[coordinate.read_true_index];
-    }
-    else{
-        read_base = this->null_character;
-    }
-}
+//void PileupGenerator::get_base(string& read_base, Cigar& cigar, Coordinate& coordinate, SequenceElement& read_sequence){
+//    if (cigar.is_read_move()) {
+//        read_base = read_sequence.sequence[coordinate.read_true_index];
+//    }
+//    else{
+//        read_base = this->null_character;
+//    }
+//}
 
 
-void PileupGenerator::fetch_region(Region& region) {
+template <class T> void PileupGenerator::fetch_region(Region& region,
+        FastaReader& ref_reader,
+        T& sequence_reader) {
+
     // Initialize BAM reader and relevant containers
     bam_reader.initialize_region(region.name, region.start, region.stop);
     AlignedSegment aligned_segment;
     Coordinate coordinate;
     Cigar cigar;
 
-    // Initialize FASTA reader containers
-    SequenceElement read_sequence;
+    // Initialize reader containers
+    auto read_sequence = sequence_reader.generate_sequence_container();
+    Pileup pileup = sequence_reader.generate_pileup_container();
     SequenceElement ref_sequence;
 
-    ref_fasta_reader.get_sequence(ref_sequence, region.name);
+    this->default_data_vector = read_sequence.generate_default_data_vector();
+    this->default_insert_column = vector <vector <float> >(this->maximum_depth, this->default_data_vector);
+    this->default_insert_pileup = vector <vector <vector <float> > > (1, this->default_insert_column);
+
+    ref_reader.get_sequence(ref_sequence, region.name);
 
     string cigars;
     string ref_alignment;
@@ -147,20 +150,15 @@ void PileupGenerator::fetch_region(Region& region) {
     bool in_right_bound;
     int64_t pileup_width_index;
     int64_t pileup_depth_index;
-    string read_base;
-
-
+    vector<float> read_data;
 
     this->lowest_free_index_per_depth = {{0,0}};
-
     size_t region_size = region.stop - region.start;
-
-    this->pileup = vector <vector <string> >(region_size, vector <string>(maximum_depth, this->null_character));
 
     while (bam_reader.next_alignment(aligned_segment)) {
         cout << aligned_segment.to_string() << "\n";
 
-        reads_fasta_reader.get_sequence(read_sequence, aligned_segment.read_name);
+        sequence_reader.get_sequence(read_sequence, aligned_segment.read_name);
         pileup_depth_index = find_depth_index(aligned_segment.ref_start_index);
 
         // Update the occupancy status of this row
@@ -173,20 +171,22 @@ void PileupGenerator::fetch_region(Region& region) {
             if (in_left_bound and in_right_bound){
                 // Update the current width index
                 pileup_width_index = coordinate.ref_index - region.start;
-                this->get_base(read_base, cigar, coordinate, read_sequence);
+
+                //TODO: Replace with method from the SequenceElement that pushes values into a vector of length n_channels
+                read_sequence.get_read_data(read_data, cigar, coordinate, read_sequence);
 
                 if (cigar.is_ref_move()) {
                     // Update the pileup base
-                    this->pileup[pileup_width_index][pileup_depth_index] = read_base;
+                    pileup.pileup[pileup_width_index][pileup_depth_index] = read_data;
                 }
                 else{
                     // Do insert-related stuff
                     if (cigar.get_cigar_code_as_string() == "I"){
-                        this->parse_insert(pileup_width_index, pileup_depth_index, aligned_segment, read_base);
+                        this->parse_insert(pileup, pileup_width_index, pileup_depth_index, aligned_segment, read_data);
                     }
                 }
             }
         }
     }
-    this->print_matrix();
+    this->print(pileup);
 }

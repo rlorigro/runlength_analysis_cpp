@@ -1,5 +1,6 @@
 #ifndef RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
 #define RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
+#include "SequenceElement.hpp"
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,12 +30,6 @@ public:
 
 
 void get_vector_from_index_map(vector< pair <string,FastaIndex> >& items, unordered_map<string,FastaIndex>& map_object);
-
-class SequenceElement{
-public:
-    string name;
-    string sequence;
-};
 
 
 class FastaReader{
