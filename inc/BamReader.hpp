@@ -5,6 +5,7 @@
 #include "htslib/bgzf.h"
 #include "htslib/sam.h"
 #include "RunlengthSequenceElement.hpp"
+#include "SequenceElement.hpp"
 #include "AlignedSegment.hpp"
 #include "FastaReader.hpp"
 #include <experimental/filesystem>

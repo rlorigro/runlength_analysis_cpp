@@ -1,6 +1,7 @@
 #ifndef RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
 #define RUNLENGTH_ANALYSIS_CPP_FASTAREADER_H
 #include "SequenceElement.hpp"
+#include "Pileup.hpp"
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -61,6 +62,9 @@ public:
     // Fetch a sequence from file, and generate index first if necessary
     void get_sequence(SequenceElement& element, string& sequence_name);
     void get_sequence(SequenceElement& element, string& sequence_name, uint64_t fasta_byte_index);
+
+    // Create a copy of the appropriate sequence container for this reader
+    SequenceElement generate_sequence_container();
 
 private:
     /// Attributes ///

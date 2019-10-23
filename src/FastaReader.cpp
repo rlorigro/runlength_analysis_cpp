@@ -74,6 +74,10 @@ FastaReader::FastaReader(path file_path){
 }
 
 
+SequenceElement FastaReader::generate_sequence_container(){
+    return SequenceElement();
+}
+
 unordered_map<string,FastaIndex> FastaReader::get_index(){
     if (this->read_indexes.empty()){
         this->index();

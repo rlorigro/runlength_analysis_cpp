@@ -1,6 +1,6 @@
 
 #include "PileupGenerator.hpp"
-
+#include "FastaReader.hpp"
 
 int main(){
     path script_path = __FILE__;
@@ -18,10 +18,14 @@ int main(){
     path relative_fasta_ref_path = "/data/test/test_alignable_reference_non_RLE.fasta";
     path absolute_fasta_ref_path = project_directory / relative_fasta_ref_path;
 
-    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, absolute_fasta_ref_path, absolute_fasta_reads_path, 10);
+    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 10);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
-    pileup_generator.fetch_region(region);
+
+    FastaReader ref_reader = FastaReader(absolute_fasta_ref_path);
+    FastaReader sequence_reader = FastaReader(absolute_fasta_reads_path);
+
+    pileup_generator.fetch_region(region, ref_reader, sequence_reader);
 
     return 0;
 }

@@ -87,8 +87,37 @@ uint8_t base_to_index(char base){
 }
 
 
+float base_to_float(char base){
+    float index;
+
+    if (base == 'A'){
+        index = 0;
+    }
+    else if (base == 'C'){
+        index = 1;
+    }
+    else if (base == 'G'){
+        index = 2;
+    }
+    else if (base == 'T'){
+        index = 3;
+    }
+    else if (base == 'N'){
+        index = 4;
+    }
+    else{
+        throw runtime_error("ERROR: base_to_index encountered invalid base: " + string(1,base));
+    }
+
+    return index;
+}
+
 
 string index_to_base(uint8_t index){
     return index_to_base_map[index];
+}
+
+string float_to_base(float index){
+    return index_to_base_map[uint8_t(index)];
 }
 
