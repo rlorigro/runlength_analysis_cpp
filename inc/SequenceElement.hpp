@@ -22,6 +22,8 @@ public:
 
     // Create data to represent ambiguous sequence
     void generate_default_data_vector(vector<float>& read_data);
+
+//    SequenceElement();
 };
 
 

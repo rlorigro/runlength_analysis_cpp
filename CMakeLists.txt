@@ -11,7 +11,10 @@ project(run_length_analysis VERSION 0.0.0)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set (CMAKE_CXX_FLAGS "-fexceptions -fno-new-ttp-matching")
+
+#set(CMAKE_CXX_FLAGS "-fexceptions -fno-new-ttp-matching -fsanitize=address")
+set(CMAKE_CXX_FLAGS "-fexceptions -fno-new-ttp-matching")
+
 add_definitions(-ggdb3 -O0 -Wall)      # Debugging + No optimization
 #add_definitions(-O3 -Wall)              # Much optimization
 
@@ -174,6 +177,7 @@ set(SOURCES
         src/QuadTree.cpp
         src/Quadrant.cpp
         src/Runlength.cpp
+        src/RunlengthSequenceElement.cpp
         src/ReferenceRunlength.cpp
         src/RunnieReader.cpp
         src/RunlengthWriter.cpp

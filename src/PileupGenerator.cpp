@@ -3,9 +3,11 @@
 #include "Base.hpp"
 #include <iostream>
 #include <experimental/filesystem>
+#include <cmath>
 
 using std::cout;
 using std::ostream;
+using std::min;
 using std::experimental::filesystem::path;
 
 
@@ -14,6 +16,7 @@ PileupGenerator::PileupGenerator(path bam_path, uint16_t maximum_depth){
     this->bam_reader = BamReader(bam_path);
     this->maximum_depth = maximum_depth;
 }
+
 
 int64_t PileupGenerator::find_depth_index(int64_t start_index){
     ///
@@ -58,29 +61,56 @@ void PileupGenerator::print_lowest_free_indexes(){
 
 
 void PileupGenerator::print(Pileup& pileup){
-    vector<string> pileup_strings;
+//    vector<string> pileup_strings;
 
-//    cout << "Matrix of size " << pileup.pileup.size() << " " << pileup.pileup[0].size() << "\n";
+    vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
 
+    size_t i = 0;
+    string s_value;
+    float value;
     for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++){
         for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++){
-            if (depth_index>=pileup_strings.size()){
-                pileup_strings.push_back("");
-            }
 
-            pileup_strings[depth_index] += float_to_base(pileup.pileup[width_index][depth_index][0]);
-
-            // If there are inserts in this column, append them to the strings
-            if (pileup.inserts.count(width_index) > 0){
-                for (auto& column: pileup.inserts.at(width_index)){
-                    pileup_strings[depth_index] += float_to_base(column[depth_index][0]);
+            i = 0;
+            for (auto& pileup_strings: pileup_strings_per_channel) {
+                if (depth_index >= pileup_strings.size()) {
+                    pileup_strings.push_back("");
                 }
+
+                value = pileup.pileup[width_index][depth_index][i];
+                if (i == 0) {
+                    s_value = float_to_base(value);
+                }
+                else{
+                    s_value = to_string(min(int(9), int(value)));
+                }
+
+                pileup_strings[depth_index] += s_value;
+
+                // If there are inserts in this column, append them to the strings
+                if (pileup.inserts.count(width_index) > 0) {
+                    for (auto& column: pileup.inserts.at(width_index)) {
+                        value = column[depth_index][i];
+                        if (i == 0) {
+                            s_value = float_to_base(value);
+                        } else {
+                            s_value = to_string(min(int(9), int(value)));
+                        }
+
+                        pileup_strings[depth_index] += s_value;
+                    }
+                }
+                i++;
             }
         }
     }
 
-    for (auto& s: pileup_strings){
-        cout << s << "\n";
+
+    for (auto& pileup_strings: pileup_strings_per_channel){
+        for (auto& s: pileup_strings) {
+            cout << s << "\n";
+        }
+        cout << '\n';
     }
 }
 

@@ -25,17 +25,13 @@ public:
     BamReader bam_reader;
     uint16_t maximum_depth;
 
-    string null_character = "_";
-    float null_value = -1;
-
     /// Methods ///
     PileupGenerator(path bam_path, uint16_t maximum_depth=80);
     void print_lowest_free_indexes();
     void print(Pileup& pileup);
 
-    template <class T> void fetch_region(Region& region, FastaReader& ref_fasta_reader, T& sequence_reader);
+    template <class T> void fetch_region(Region& region, T& ref_fasta_reader, T& sequence_reader);
     int64_t find_depth_index(int64_t start_index);
-    void ensure_pileup_column_index_not_empty(Pileup& pileup, int64_t depth_index, int64_t width_index);
     void parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data);
 
 private:
@@ -47,7 +43,7 @@ private:
 
 
 template <class T> void PileupGenerator::fetch_region(Region& region,
-        FastaReader& ref_reader,
+        T& ref_reader,
         T& sequence_reader) {
 
     // Initialize BAM reader and relevant containers
@@ -60,7 +56,7 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
 
     // Initialize reader containers
     auto read_sequence = sequence_reader.generate_sequence_container();
-    SequenceElement ref_sequence;
+    auto ref_sequence = sequence_reader.generate_sequence_container();
 
     read_sequence.generate_default_data_vector(this->default_data_vector);
     this->default_insert_column = vector <vector <float> >(this->maximum_depth, this->default_data_vector);

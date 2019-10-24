@@ -40,11 +40,18 @@ public:
     // Fetch the sequence of a read based on its number (ordering in file, 0-based)
     void get_sequence(RunlengthSequenceElement& sequence, uint64_t read_number);
 
+    // Fetch the sequence of a read based on its number (ordering in file, 0-based)
+    void get_sequence(RunlengthSequenceElement& sequence, string& read_name);
+
     // Fetch the number of reads in the file
     size_t get_read_count();
 
     // Return the file path that this reader is reading from
     const string& get_file_name();
+
+    // Sometimes you just need to take a shortcut
+    RunlengthSequenceElement generate_sequence_container();
+
 
 private:
 

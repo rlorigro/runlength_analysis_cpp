@@ -38,6 +38,10 @@ uint64_t RunlengthReader::get_length(uint64_t read_number){
     return this->indexes.at(read_number).sequence_length;
 }
 
+RunlengthSequenceElement RunlengthReader::generate_sequence_container(){
+    return RunlengthSequenceElement();
+}
+
 
 const string& RunlengthReader::get_file_name(){
     return this->sequence_file_path;
@@ -46,6 +50,15 @@ const string& RunlengthReader::get_file_name(){
 
 void RunlengthReader::get_sequence(RunlengthSequenceElement& sequence, uint64_t read_number){
     sequence = {};
+    off_t byte_index = off_t(this->indexes.at(read_number).sequence_byte_index);
+    pread_string_from_binary(this->sequence_file_descriptor, sequence.sequence, this->indexes.at(read_number).sequence_length, byte_index);
+    pread_vector_from_binary(this->sequence_file_descriptor, sequence.lengths, this->indexes.at(read_number).sequence_length, byte_index);
+}
+
+
+void RunlengthReader::get_sequence(RunlengthSequenceElement& sequence, string& read_name){
+    sequence = {};
+    uint64_t read_number = this->index_map.at(read_name);
     off_t byte_index = off_t(this->indexes.at(read_number).sequence_byte_index);
     pread_string_from_binary(this->sequence_file_descriptor, sequence.sequence, this->indexes.at(read_number).sequence_length, byte_index);
     pread_vector_from_binary(this->sequence_file_descriptor, sequence.lengths, this->indexes.at(read_number).sequence_length, byte_index);

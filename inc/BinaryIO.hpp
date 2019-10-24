@@ -16,6 +16,7 @@ using std::ostream;
 using std::istream;
 using std::string;
 using std::cout;
+using std::cerr;
 using std::vector;
 using std::runtime_error;
 

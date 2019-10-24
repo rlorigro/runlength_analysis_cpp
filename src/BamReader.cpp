@@ -115,7 +115,7 @@ BamReader::BamReader() = default;
 BamReader::~BamReader() {
 //    hts_close(this->bam_file);
 //    bam_hdr_destroy(this->bam_header);
-    bam_destroy1(this->alignment);
+//    bam_destroy1(this->alignment);
 //    free(this->bam_index);
 }
 
