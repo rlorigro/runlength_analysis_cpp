@@ -147,7 +147,7 @@ void write_fasta_as_runnie(
 }
 
 
-void test_runlength_pileup(path project_directory) {
+void test_runnie_pileup(path project_directory) {
     // Get test FASTA reads path
     path relative_fasta_reads_path = "/data/test/test_alignable_sequences_non_RLE.fasta";
     path absolute_fasta_reads_path = project_directory / relative_fasta_reads_path;
@@ -216,7 +216,7 @@ void test_runlength_pileup(path project_directory) {
 }
 
 
-void test_runnie_pileup(path project_directory) {
+void test_runlength_pileup(path project_directory) {
     // Get test FASTA reads path
     path relative_fasta_reads_path = "/data/test/test_alignable_sequences_non_RLE.fasta";
     path absolute_fasta_reads_path = project_directory / relative_fasta_reads_path;
@@ -290,9 +290,7 @@ int main(){
     path project_directory = script_path.parent_path().parent_path().parent_path();
 
     test_standard_pileup(project_directory);
-
     test_runlength_pileup(project_directory);
-
     test_runnie_pileup(project_directory);
 
     return 0;
