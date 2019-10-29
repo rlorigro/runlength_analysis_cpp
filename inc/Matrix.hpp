@@ -18,12 +18,12 @@ using std::string;
 using std::to_string;
 
 
-typedef multi_array<double,4> runlength_matrix;
-typedef multi_array<double,2> reference_runlength_matrix;
+typedef multi_array<float,4> runlength_matrix;
+typedef multi_array<float,2> reference_runlength_matrix;
 
 void operator+=(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
-void operator+=(runlength_matrix& matrix_a, double increment);
+void operator+=(runlength_matrix& matrix_a, float increment);
 
 string reference_matrix_to_string(reference_runlength_matrix& matrix, size_t cutoff=0);
 
@@ -31,7 +31,7 @@ string matrix_to_string(runlength_matrix matrix, size_t cutoff=0);
 
 void increment_matrix(runlength_matrix& matrix_a, runlength_matrix& matrix_b);
 
-void increment_matrix(runlength_matrix& matrix_a, double increment);
+void increment_matrix(runlength_matrix& matrix_a, float increment);
 
 runlength_matrix sum_matrices(vector<runlength_matrix> matrices);
 
@@ -41,8 +41,8 @@ void update_runlength_matrix_with_weibull_probabilities(runlength_matrix& matrix
         bool& reversal,
         uint8_t& base_index,
         uint16_t& true_length,
-        double& scale,
-        double& shape);
+        float& scale,
+        float& shape);
 
 
 

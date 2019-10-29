@@ -13,20 +13,6 @@ using std::cout;
 using std::cerr;
 
 
-RunnieIndex::RunnieIndex(path file_path, uint64_t byte_index, uint64_t length){
-    this->file_path = file_path;
-    this->byte_index = byte_index;
-    this->length = length;
-}
-
-
-ostream& RunnieIndex::operator<<(ostream& s){
-    cout << this->file_path << " " << this->byte_index << " " << this->length;
-
-    return s;
-}
-
-
 RunnieReader::RunnieReader(path directory_path){
     this->directory_path = directory_path;
 }
@@ -123,7 +109,7 @@ void RunnieReader::index(){
 }
 
 
-void RunnieReader::parse_line(RunnieSequence& sequence, string& line){
+void RunnieReader::parse_line(RunnieSequenceElement& sequence, string& line){
     sequence.sequence += line[0];
 
     string scale_string;
@@ -158,7 +144,7 @@ void RunnieReader::parse_line(RunnieSequence& sequence, string& line){
 }
 
 
-void RunnieReader::fetch_sequence_bases(RunnieSequence& sequence, string& read_name){
+void RunnieReader::fetch_sequence_bases(RunnieSequenceElement& sequence, string& read_name){
     ///
     /// Dont read the whole file, just fetch the nucleotide bases for the sequence
     ///
@@ -199,7 +185,7 @@ void RunnieReader::fetch_sequence_bases(RunnieSequence& sequence, string& read_n
 
 
 
-void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
+void RunnieReader::fetch_sequence(RunnieSequenceElement& sequence, string& read_name){
     // Clear the container
     sequence = {};
 
@@ -241,8 +227,8 @@ void RunnieReader::fetch_sequence(RunnieSequence& sequence, string& read_name){
 }
 
 
-void RunnieReader::fetch_all_sequences(vector<RunnieSequence>& sequences){
-    RunnieSequence sequence;
+void RunnieReader::fetch_all_sequences(vector<RunnieSequenceElement>& sequences){
+    RunnieSequenceElement sequence;
     string read_name;
 
     for (auto& item: this->read_indexes){

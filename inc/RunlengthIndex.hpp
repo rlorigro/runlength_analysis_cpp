@@ -2,6 +2,12 @@
 #ifndef RUNLENGTH_ANALYSIS_RUNLENGTHINDEX_HPP
 #define RUNLENGTH_ANALYSIS_RUNLENGTHINDEX_HPP
 
+#include <experimental/filesystem>
+#include <string>
+#include <fstream>
+
+using std::ostream;
+using std::string;
 
 class RunlengthIndex {
 public:
@@ -13,5 +19,7 @@ public:
 
     /// Methods ///
 };
+
+ostream& operator<<(ostream& s, RunlengthIndex& index);
 
 #endif //RUNLENGTH_ANALYSIS_RUNLENGTHINDEX_HPP

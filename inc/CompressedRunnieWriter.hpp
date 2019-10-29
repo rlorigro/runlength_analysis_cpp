@@ -73,9 +73,9 @@ public:
     void build_recursive_interval_tree();
     uint8_t fetch_encoding(double scale, double shape);
 
-    void write_sequence(RunnieSequence& sequence);
-    void write_sequence_block(RunnieSequence& sequence);
-    void write_encoding_block(RunnieSequence& sequence);
+    void write_sequence(RunnieSequenceElement& sequence);
+    void write_sequence_block(RunnieSequenceElement& sequence);
+    void write_encoding_block(RunnieSequenceElement& sequence);
     void write_index(CompressedRunnieIndex& index);
     void write_indexes();
 };

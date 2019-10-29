@@ -39,7 +39,7 @@ void compress_runnie(path config_path, path input_dir, path output_dir){
 
     CompressedRunnieWriter writer = CompressedRunnieWriter(output_path, config_path);
 
-    RunnieSequence sequence;
+    RunnieSequenceElement sequence;
     string read_name;
 
     for (auto& index: reader.read_indexes){

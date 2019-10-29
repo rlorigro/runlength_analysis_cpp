@@ -149,7 +149,7 @@ void operator+=(runlength_matrix& matrix_a, double increment){
 }
 
 
-void increment_matrix(runlength_matrix& matrix_a, double increment){
+void increment_matrix(runlength_matrix& matrix_a, float increment){
     ///
     /// Increment 'matrix_a' element-wise with fixed value
     ///
@@ -230,8 +230,8 @@ void update_runlength_matrix_with_weibull_probabilities(runlength_matrix& matrix
         bool& reversal,
         uint8_t& base_index,
         uint16_t& true_length,
-        double& scale,
-        double& shape){
+        float& scale,
+        float& shape){
     ///
     /// Evaluate the Discrete Weibull Distribution for a given scale and shape, taking an ALLOCATED (!) vector which
     /// defines the range to evaluate over

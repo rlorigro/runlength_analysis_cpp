@@ -8,7 +8,7 @@ void write_file(path absolute_output_path, path absolute_config_path, vector <pa
     CompressedRunnieWriter writer = CompressedRunnieWriter(absolute_output_path, absolute_config_path);
 
    vector<string> bases = {"A","C","G","T"};
-   RunnieSequence sequence;
+   RunnieSequenceElement sequence;
 
    sequence.name = "centroids";
 

@@ -33,7 +33,7 @@ void compress_runnie(path input_dir, path output_dir){
     BoundingBox bounds = BoundingBox(center, size/2);
     QuadCompressor tree = QuadCompressor(bounds);
 
-    RunnieSequence sequence;
+    RunnieSequenceElement sequence;
     string read_name;
     double scale;
     double shape;

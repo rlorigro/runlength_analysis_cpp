@@ -2,6 +2,8 @@
 #ifndef RUNLENGTH_ANALYSIS_RUNNIE_HPP
 #define RUNLENGTH_ANALYSIS_RUNNIE_HPP
 
+#include "RunnieSequenceElement.hpp"
+#include "RunnieIndex.hpp"
 #include "Base.hpp"
 #include <unordered_map>
 #include <string>
@@ -16,30 +18,6 @@ using std::string;
 using std::ifstream;
 using std::ostream;
 using std::experimental::filesystem::path;
-
-
-class RunnieIndex {
-public:
-    path file_path;
-    uint64_t byte_index;
-    uint64_t length;
-
-    RunnieIndex(path file_path, uint64_t byte_index, uint64_t length);
-    ostream& operator<<(ostream& s);
-};
-
-
-class RunnieSequence{
-public:
-    /// Attributes ///
-    string name;
-    string sequence;
-    vector <double> scales;
-    vector <double> shapes;
-
-    /// Methods ///
-    RunnieSequence()=default;
-};
 
 
 class RunnieReader{
@@ -67,10 +45,10 @@ public:
                       uint64_t& current_header_byte_index);
 
     // Reading
-    void parse_line(RunnieSequence& sequence, string& line);
-    void fetch_sequence(RunnieSequence& sequence, string& read_name);
-    void fetch_sequence_bases(RunnieSequence& sequence, string& read_name);
-    void fetch_all_sequences(vector<RunnieSequence>& sequences);
+    void parse_line(RunnieSequenceElement& sequence, string& line);
+    void fetch_sequence(RunnieSequenceElement& sequence, string& read_name);
+    void fetch_sequence_bases(RunnieSequenceElement& sequence, string& read_name);
+    void fetch_all_sequences(vector<RunnieSequenceElement>& sequences);
 };
 
 

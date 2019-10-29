@@ -156,6 +156,8 @@ set(SOURCES
         src/BamReader.cpp
         src/Base.cpp
         src/BinaryIO.cpp
+        src/BinaryRunnieWriter.cpp
+        src/BinaryRunnieReader.cpp
         src/CompressedRunnieWriter.cpp
         src/CompressedRunnieReader.cpp
         src/CoverageReader.cpp
@@ -177,11 +179,14 @@ set(SOURCES
         src/QuadTree.cpp
         src/Quadrant.cpp
         src/Runlength.cpp
+        src/RunnieIndex.cpp
         src/RunlengthSequenceElement.cpp
+        src/RunnieSequenceElement.cpp
         src/ReferenceRunlength.cpp
         src/RunnieReader.cpp
         src/RunlengthWriter.cpp
         src/RunlengthReader.cpp
+        src/RunlengthIndex.cpp
         src/SequenceElement.cpp
         src/ShastaReader.cpp
         )
@@ -346,6 +351,11 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_RunlengthWriter)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_BinaryRunnieWriter)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

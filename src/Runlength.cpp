@@ -130,7 +130,7 @@ void write_runnie_sequence_to_fasta(path& runnie_directory,
         uint64_t thread_job_index = job_index.fetch_add(1);
 
         // Initialize containers
-        RunnieSequence runnie_sequence;
+        RunnieSequenceElement runnie_sequence;
 
         // Fetch Fasta sequence
         RunnieReader runnie_reader = RunnieReader(runnie_directory);
@@ -380,7 +380,7 @@ void parse_aligned_runnie(path bam_path,
 
     // Initialize MarginPolishReader and relevant containers
     RunnieReader runnie_reader = RunnieReader(runnie_directory);
-    RunnieSequence runnie_sequence;
+    RunnieSequenceElement runnie_sequence;
     runnie_reader.set_index(read_indexes);
 
     // Initialize BAM reader and relevant containers
@@ -404,8 +404,8 @@ void parse_aligned_runnie(path bam_path,
     string true_base;
     string observed_base;
     string consensus_base;
-    double scale;
-    double shape;
+    float scale;
+    float shape;
     uint16_t true_length = -1;
     uint8_t observed_base_index;
     vector<CoverageElement> coverage_data;

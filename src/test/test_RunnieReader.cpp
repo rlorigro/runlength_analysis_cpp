@@ -18,7 +18,7 @@ int main() {
 
     RunnieReader reader = RunnieReader(absolute_data_path);
 
-    vector<RunnieSequence> sequences;
+    vector<RunnieSequenceElement> sequences;
     reader.fetch_all_sequences(sequences);
 
     runlength_matrix matrix(boost::extents[2][2][6][5]);
@@ -56,7 +56,7 @@ int main() {
                             "6597b991-4bc1-4da3-913d-35482237e725",
                             "9cc73efa-837f-49c3-93fb-c8273be57181"};
 
-    RunnieSequence sequence;
+    RunnieSequenceElement sequence;
     for (auto& name: names){
         cout << "TESTING " + name + ":\n";
         reader.fetch_sequence_bases(sequence, name);

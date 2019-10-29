@@ -1,5 +1,5 @@
 
-#include "RunlengthWriter.hpp"
+#include "BinaryRunnieWriter.hpp"
 #include "BinaryIO.hpp"
 #include <experimental/filesystem>
 #include <bitset>
@@ -11,11 +11,10 @@ using std::getline;
 using std::bitset;
 using std::cerr;
 
+const vector<uint64_t> BinaryRunnieWriter::channel_sizes = {sizeof(uint16_t)};
 
-const vector<uint64_t> RunlengthWriter::channel_sizes = {sizeof(uint16_t)};
 
-
-RunlengthWriter::RunlengthWriter(path file_path) {
+BinaryRunnieWriter::BinaryRunnieWriter(path file_path) {
     this->sequence_file_path = file_path;
 
     // Ensure that the output directory exists
@@ -29,23 +28,31 @@ RunlengthWriter::RunlengthWriter(path file_path) {
 }
 
 
-void RunlengthWriter::write_sequence_block(RunlengthSequenceElement& sequence){
+void BinaryRunnieWriter::write_sequence_block(RunnieSequenceElement& sequence){
     // Write the sequence to the file
     write_string_to_binary(this->sequence_file, sequence.sequence);
 }
 
 
-void RunlengthWriter::write_length_block(RunlengthSequenceElement& sequence){
+void BinaryRunnieWriter::write_scales_block(RunnieSequenceElement& sequence){
     // Write the encodings to the file
-    for (auto& length: sequence.lengths){
+    for (auto& length: sequence.scales){
         write_value_to_binary(this->sequence_file, length);
     }
 }
 
 
-void RunlengthWriter::write_sequence(RunlengthSequenceElement& sequence){
+void BinaryRunnieWriter::write_shapes_block(RunnieSequenceElement& sequence){
+    // Write the encodings to the file
+    for (auto& length: sequence.shapes){
+        write_value_to_binary(this->sequence_file, length);
+    }
+}
+
+
+void BinaryRunnieWriter::write_sequence(RunnieSequenceElement& sequence){
     if (sequence.sequence.empty()){
-        throw runtime_error("ERROR: empty sequence provided to RunlengthWriter: " + sequence.name);
+        throw runtime_error("ERROR: empty sequence provided to BinaryRunnieWriter: " + sequence.name);
     }
 
     RunlengthIndex index;
@@ -60,14 +67,15 @@ void RunlengthWriter::write_sequence(RunlengthSequenceElement& sequence){
     index.name = sequence.name;
 
     this->write_sequence_block(sequence);
-    this->write_length_block(sequence);
+    this->write_scales_block(sequence);
+    this->write_shapes_block(sequence);
 
     // Append index object to vector
     this->indexes.push_back(index);
 }
 
 
-void RunlengthWriter::write_index(RunlengthIndex& index){
+void BinaryRunnieWriter::write_index(RunlengthIndex& index){
     // Where is the sequence
     write_value_to_binary(this->sequence_file, index.sequence_byte_index);
 
@@ -82,7 +90,7 @@ void RunlengthWriter::write_index(RunlengthIndex& index){
 }
 
 
-void RunlengthWriter::write_indexes(){
+void BinaryRunnieWriter::write_indexes(){
     // Store the current file byte index so the beginning of the INDEX table can be located later
     uint64_t indexes_start_position = this->sequence_file.tellp();
 
@@ -95,8 +103,8 @@ void RunlengthWriter::write_indexes(){
     uint64_t channel_metadata_start_position = this->sequence_file.tellp();
 
     // Write channel metadata
-    write_value_to_binary(this->sequence_file, RunlengthWriter::n_channels);
-    write_value_to_binary(this->sequence_file, RunlengthWriter::channel_sizes[RunlengthWriter::LENGTH]);
+    write_value_to_binary(this->sequence_file, BinaryRunnieWriter::n_channels);
+    write_value_to_binary(this->sequence_file, BinaryRunnieWriter::channel_sizes[BinaryRunnieWriter::LENGTH]);
 
     // Write the pointer to the beginning of the index table
     write_value_to_binary(this->sequence_file, indexes_start_position);

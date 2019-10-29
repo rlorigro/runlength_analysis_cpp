@@ -138,13 +138,13 @@ void CompressedRunnieWriter::load_parameters(){
 }
 
 
-void CompressedRunnieWriter::write_sequence_block(RunnieSequence& sequence){
+void CompressedRunnieWriter::write_sequence_block(RunnieSequenceElement& sequence){
     // Write the sequence to the file
     write_string_to_binary(this->sequence_file, sequence.sequence);
 }
 
 
-void CompressedRunnieWriter::write_encoding_block(RunnieSequence& sequence){
+void CompressedRunnieWriter::write_encoding_block(RunnieSequenceElement& sequence){
     uint8_t encoding = -1;
 
     // Write the encodings to the file
@@ -155,7 +155,7 @@ void CompressedRunnieWriter::write_encoding_block(RunnieSequence& sequence){
 }
 
 
-void CompressedRunnieWriter::write_sequence(RunnieSequence& sequence){
+void CompressedRunnieWriter::write_sequence(RunnieSequenceElement& sequence){
     if (sequence.sequence.empty()){
         throw runtime_error("ERROR: empty sequence provided to CompressedRunnieWriter: " + sequence.name);
     }
