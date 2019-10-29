@@ -121,3 +121,6 @@ string float_to_base(float index){
     return index_to_base_map[uint8_t(index)];
 }
 
+bool is_gap(uint8_t index){
+    return (index > 3);
+}
