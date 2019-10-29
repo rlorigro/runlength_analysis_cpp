@@ -105,7 +105,6 @@ void PileupGenerator::print(Pileup& pileup){
         }
     }
 
-
     for (auto& pileup_strings: pileup_strings_per_channel){
         for (auto& s: pileup_strings) {
             cout << s << "\n";

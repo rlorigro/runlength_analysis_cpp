@@ -26,4 +26,6 @@ bool is_valid_base(string base);
 
 bool is_valid_base(char base);
 
+bool is_gap(uint8_t index);
+
 #endif //RUNLENGTH_ANALYSIS_BASE_HPP
