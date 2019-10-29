@@ -16,41 +16,89 @@ int main(){
     vector <vector <float> > coverage;
     vector <float> consensus;
 
+    cout << "TEST\n";
     coverage = {
             {0, 1, 2},
             {0, 1, 2},
             {0, 1, 2},
+            {3, 1, 2},
+            {3, 1, 3},
+    };
+
+    consensus = consensus_caller(coverage);
+
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
+
+    cout << "TEST\n";
+    coverage = {
             {0, 1, 2},
+            {0, 1, 2},
+            {3, 1, 2},
+            {3, 1, 3},
+            {3, 1, 3},
+    };
+
+    consensus = consensus_caller(coverage);
+
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
+
+    cout << "TEST\n";
+    coverage = {
+            {0, 1, 2},
+            {0, 1, 2},
+            {0, 1, 3},
+            {0, 1, 3},
             {0, 1, 3},
     };
 
     consensus = consensus_caller(coverage);
 
-    cout << consensus[0] << " " << consensus[1] << '\n';
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
-    coverage = {
-            {0, 1, 2},
-            {0, 1, 2},
-            {0, 1, 2},
-            {0, 1, 3},
-            {0, 1, 3},
-    };
-
-    consensus = consensus_caller(coverage);
-
-    cout << consensus[0] << " " << consensus[1] << '\n';
-
+    cout << "TEST\n";
     coverage = {
             {0, 1, 2},
             {0, 1, 2},
             {0, 1, 3},
-            {0, 1, 3},
-            {0, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
     };
 
     consensus = consensus_caller(coverage);
 
-    cout << consensus[0] << " " << consensus[1] << '\n';
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
+
+    cout << "TEST\n";
+    coverage = {
+            {0, 1, 2},
+            {0, 1, 2},
+            {0, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+    };
+
+    consensus = consensus_caller(coverage);
+
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
+
+    cout << "TEST\n";
+    coverage = {
+            {0, 1, 2},
+            {0, 1, 2},
+            {0, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+            {3, 1, 3},
+    };
+
+    consensus = consensus_caller(coverage);
+
+    cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
     return 0;
 }

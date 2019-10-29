@@ -111,7 +111,7 @@ SimpleBayesianConsensusCaller::SimpleBayesianConsensusCaller(
 
 
 
-void SimpleBayesianConsensusCaller::printProbabilityMatrices(char separator){
+void SimpleBayesianConsensusCaller::printProbabilityMatrices(char separator) const{
     const uint32_t length = uint(probabilityMatrices[0].size());
     uint32_t nBases = 4;
 
@@ -135,7 +135,7 @@ void SimpleBayesianConsensusCaller::printProbabilityMatrices(char separator){
 }
 
 
-void SimpleBayesianConsensusCaller::printPriors(char separator){
+void SimpleBayesianConsensusCaller::printPriors(char separator) const{
     const uint32_t length = uint(priors[0].size());
     uint32_t nBases = 2;
 
@@ -238,11 +238,14 @@ void SimpleBayesianConsensusCaller::loadConfiguration(ifstream& matrixFile){
 }
 
 
-void SimpleBayesianConsensusCaller::printLogLikelihoodVector(vector<double>& logLikelihoods){
-    int i = 0;
+void SimpleBayesianConsensusCaller::printLogLikelihoodVector(vector<double>& logLikelihoods, size_t cutoff) const{
+    size_t i = 0;
     for (auto& item: logLikelihoods){
         cout << i << " " << pow(10, item) << '\n';
         i++;
+        if (i == cutoff){
+            break;
+        }
     }
 }
 
@@ -331,7 +334,7 @@ uint16_t SimpleBayesianConsensusCaller::predictRunlength(
         logSum = priors[priorIndex][y];
 
         for (uint16_t strand = 0; strand <= factoredRepeats.size() - 1; strand++){
-            for (auto& item: factoredRepeats[strand]){
+            for (auto& item: factoredRepeats[strand]) {
                 x = item.first;
                 c = item.second;
 
