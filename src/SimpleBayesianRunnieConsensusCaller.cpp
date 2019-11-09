@@ -10,7 +10,9 @@
 #include <array>
 #include <cmath>
 #include <map>
-#include "SimpleBayesianConsensusCaller.hpp"
+#include "SimpleBayesianRunnieConsensusCaller.hpp"
+#include "DiscreteWeibull.hpp"
+#include "Miscellaneous.hpp"
 #include "Base.hpp"
 
 using std::runtime_error;
@@ -18,12 +20,13 @@ using std::to_string;
 using std::cout;
 using std::endl;
 using std::max;
+using std::log10;
 using Separator = boost::char_separator<char>;
 using Tokenizer = boost::tokenizer<Separator>;
 
 
 // Helper function
-void SimpleBayesianConsensusCaller::splitAsDouble(string s, string& separators, vector<double>& tokens){
+void SimpleBayesianRunnieConsensusCaller::splitAsDouble(string s, string& separators, vector<double>& tokens){
     Separator separator(separators.c_str());
     Tokenizer tok{s, separator};
 
@@ -34,7 +37,7 @@ void SimpleBayesianConsensusCaller::splitAsDouble(string s, string& separators, 
 
 
 // Helper function
-void SimpleBayesianConsensusCaller::splitAsString(string s, string& separators, vector<string>& tokens){
+void SimpleBayesianRunnieConsensusCaller::splitAsString(string s, string& separators, vector<string>& tokens){
     Separator separator(separators.c_str());
     Tokenizer tok{s, separator};
 
@@ -44,7 +47,7 @@ void SimpleBayesianConsensusCaller::splitAsString(string s, string& separators, 
 }
 
 
-void SimpleBayesianConsensusCaller::validateMatrixDimensions(){
+void SimpleBayesianRunnieConsensusCaller::validateMatrixDimensions(){
     size_t ySize = 0;
     size_t xSize = 0;
 
@@ -88,7 +91,7 @@ void SimpleBayesianConsensusCaller::validateMatrixDimensions(){
 // - A name identifying one of the built-in configurations.
 // - A path to a configuration file.
 
-SimpleBayesianConsensusCaller::SimpleBayesianConsensusCaller(
+SimpleBayesianRunnieConsensusCaller::SimpleBayesianRunnieConsensusCaller(
     path& config_path){
     ignoreNonConsensusBaseRepeats = true;
     predictGapRunlengths = false;
@@ -98,9 +101,6 @@ SimpleBayesianConsensusCaller::SimpleBayesianConsensusCaller(
     // interpret the constructor string as a path to
     // a configuration file.
     ifstream config_file(config_path);
-    if (not config_file.good()){
-        throw runtime_error("ERROR: could not read config file: " + config_path.string());
-    }
     loadConfiguration(config_file);
 
     validateMatrixDimensions();
@@ -114,7 +114,7 @@ SimpleBayesianConsensusCaller::SimpleBayesianConsensusCaller(
 
 
 
-void SimpleBayesianConsensusCaller::printProbabilityMatrices(char separator) const{
+void SimpleBayesianRunnieConsensusCaller::printProbabilityMatrices(char separator) const{
     const uint32_t length = uint(probabilityMatrices[0].size());
     uint32_t nBases = 4;
 
@@ -138,7 +138,7 @@ void SimpleBayesianConsensusCaller::printProbabilityMatrices(char separator) con
 }
 
 
-void SimpleBayesianConsensusCaller::printPriors(char separator) const{
+void SimpleBayesianRunnieConsensusCaller::printPriors(char separator) const{
     const uint32_t length = uint(priors[0].size());
     uint32_t nBases = 2;
 
@@ -158,14 +158,14 @@ void SimpleBayesianConsensusCaller::printPriors(char separator) const{
 }
 
 
-void SimpleBayesianConsensusCaller::parseName(ifstream& matrixFile, string& line){
+void SimpleBayesianRunnieConsensusCaller::parseName(ifstream& matrixFile, string& line){
     // Expect only one line to follow
     getline(matrixFile, line);
     configurationName = line;
 }
 
 
-void SimpleBayesianConsensusCaller::parsePrior(ifstream& matrixFile, string& line, vector<string>& tokens){
+void SimpleBayesianRunnieConsensusCaller::parsePrior(ifstream& matrixFile, string& line, vector<string>& tokens){
     // Expect only one line to follow
     getline(matrixFile, line);
 
@@ -186,7 +186,7 @@ void SimpleBayesianConsensusCaller::parsePrior(ifstream& matrixFile, string& lin
 }
 
 
-void SimpleBayesianConsensusCaller::parseLikelihood(ifstream& matrixFile, string& line, vector<string>& tokens){
+void SimpleBayesianRunnieConsensusCaller::parseLikelihood(ifstream& matrixFile, string& line, vector<string>& tokens){
     char base;
     uint32_t baseIndex = 0;
     string separators = ",";
@@ -213,7 +213,7 @@ void SimpleBayesianConsensusCaller::parseLikelihood(ifstream& matrixFile, string
 }
 
 
-void SimpleBayesianConsensusCaller::loadConfiguration(ifstream& matrixFile){
+void SimpleBayesianRunnieConsensusCaller::loadConfiguration(ifstream& matrixFile){
     string line;
     string separators = " ";
 
@@ -241,7 +241,7 @@ void SimpleBayesianConsensusCaller::loadConfiguration(ifstream& matrixFile){
 }
 
 
-void SimpleBayesianConsensusCaller::printLogLikelihoodVector(vector<double>& logLikelihoods, size_t cutoff) const{
+void SimpleBayesianRunnieConsensusCaller::printLogLikelihoodVector(vector<double>& logLikelihoods, size_t cutoff) const{
     size_t i = 0;
     for (auto& item: logLikelihoods){
         cout << i << " " << pow(10, item) << '\n';
@@ -253,65 +253,31 @@ void SimpleBayesianConsensusCaller::printLogLikelihoodVector(vector<double>& log
 }
 
 
-void SimpleBayesianConsensusCaller::normalizeLikelihoods(vector<double>& x, double xMax) const{
+void SimpleBayesianRunnieConsensusCaller::normalizeLikelihoods(vector<double>& x, double xMax) const{
     for (uint32_t i=0; i<x.size(); i++){
         x[i] = x[i]-xMax;
     }
 }
 
 
-void SimpleBayesianConsensusCaller::factorRepeats(
-    array<std::map<uint16_t,uint16_t>,2>& factoredRepeats,
-    const vector <vector <float> >& pileup_column) const{
-
-    // Store counts for each unique observation
-    for (auto& observation: pileup_column ){
-        // If NOT a gap, always increment
-        if (not is_gap(observation[BASE])) {
-            factoredRepeats[uint16_t(observation[REVERSAL])][uint16_t(observation[LENGTH])]++;
-        // If IS a gap only increment if "countGapsAsZeros" is true
-        }else if (countGapsAsZeros){
-            factoredRepeats[uint16_t(observation[REVERSAL])][0]++;
-        }
-    }
-}
-
-
-void SimpleBayesianConsensusCaller::factorRepeats(
-    array<std::map<uint16_t,uint16_t>,2>& factoredRepeats,
-    const vector <vector <float> >& pileup_column,
-    uint8_t consensus_base_index) const{
-
-    // Store counts for each unique observation
-    for (auto& observation: pileup_column){
-        // Ignore non consensus repeat values
-        if (observation[BASE] == consensus_base_index){
-            // If NOT a gap, always increment
-            if (not is_gap(observation[BASE])) {
-                factoredRepeats[uint16_t(observation[REVERSAL])][uint16_t(observation[LENGTH])]++;
-            // If IS a gap only increment if "countGapsAsZeros" is true
-            }else if (countGapsAsZeros){
-                factoredRepeats[uint16_t(observation[REVERSAL])][0]++;
-            }
-        }
-    }
-}
-
-
-uint16_t SimpleBayesianConsensusCaller::predictRunlength(
+uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
         const vector <vector <float> >& pileup_column,
         uint8_t consensus_base_index,
         vector<double>& logLikelihoodY) const{
-    array <std::map <uint16_t,uint16_t>, 2> factoredRepeats;    // Repeats grouped by strand and length
 
-    size_t priorIndex = -1;   // Used to determine which prior probability vector to access (AT=0 or GC=1)
-    uint16_t x;               // Element of X = {x_0, x_1, ..., x_i} observed repeats
-    uint16_t c;               // Number of times x_i was observed
-    uint16_t y;               // Element of Y = {y_0, y_1, ..., y_j} true repeat between 0 and j=max_runlength
-    double logSum;            // Product (in logspace) of P(x_i|y_j) for each i
+    vector<double> x(this->maxOutputRunlength+1);         // The distribution emitted by the basecaller for each pair of discrete weibull parameters
+    size_t priorIndex = -1;         // Used to determine which prior probability vector to access (AT=0 or GC=1)
+    uint8_t base_index;             // Base of the observation
+    uint8_t forward_base_index;     // Base of the observation
+    double scale;                   // The weibull parameter
+    double shape;                   // The weibull parameter
+    uint16_t y;                     // Element of Y = {y_0, y_1, ..., y_j} true repeat between 0 and j=max_runlength
+    double logSum;                  // Product (in logspace) of P(x_i|y_j) for each i
+    double log_likelihood_k;         // The kth log likelihoood in the weibull distribution of length k
+    double integral_likelihood;    // Sum of P(x_i_k|y_j) for each k in 0-50 in the weibull distribution
 
-    double yMaxLikelihood = -INF;     // Probability of most probable true repeat length
-    uint16_t yMax = 0;                 // Most probable repeat length
+    double yMaxLikelihood = -INF;   // Probability of most probable true repeat length
+    uint16_t yMax = 0;              // Most probable repeat length
 
     // Determine which index to use for this->priors
     if (index_to_base(consensus_base_index) == "A" || index_to_base(consensus_base_index) == "T"){
@@ -321,14 +287,8 @@ uint16_t SimpleBayesianConsensusCaller::predictRunlength(
         priorIndex = 1;
     }
 
-    // Count the number of times each unique repeat was observed, to reduce redundancy in calculating log likelihoods/
-    // Depending on class boolean "ignoreNonConsensusBaseRepeats" filter out observations
-    if (ignoreNonConsensusBaseRepeats) {
-        factorRepeats(factoredRepeats, pileup_column, consensus_base_index);
-    }
-    else {
-        factorRepeats(factoredRepeats, pileup_column);
-    }
+//    vector<double> avg_distribution(this->maxOutputRunlength+1);
+//    string debug_string;
 
     // Iterate all possible Y from 0 to j to calculate p(Y_j|X) where X is all observations 0 to i,
     // assuming i and j are less than maxRunlength
@@ -336,23 +296,45 @@ uint16_t SimpleBayesianConsensusCaller::predictRunlength(
         // Initialize logSum for this Y value using empirically determined priors
         logSum = priors[priorIndex][y];
 
-        for (uint16_t strand = 0; strand <= factoredRepeats.size() - 1; strand++){
-            for (auto& item: factoredRepeats[strand]) {
-                x = item.first;
-                c = item.second;
+        for (auto& observation: pileup_column) {
+            base_index = uint8_t(observation[BASE]);
 
-//                if (y==0){
-//                    cout << x << " " << c << '\n';
-//                }
+            if (observation[REVERSAL] > 0){
+                forward_base_index = 3 - base_index;
+            }
+            else{
+                forward_base_index = base_index;
+            }
 
-                // In the case that observed runlength is too large for the matrix, cap it at maxRunlength
-                if (x > maxInputRunlength){
-                    x = maxInputRunlength;
+            if (ignoreNonConsensusBaseRepeats and (forward_base_index != consensus_base_index)){
+                continue;
+            }
+
+            scale = observation[SCALE];
+            shape = observation[SHAPE];
+
+//            cout << scale << " " << shape << '\n';
+
+            evaluate_discrete_weibull(x, scale, shape);
+
+            integral_likelihood = -INF;
+
+            // Increment log likelihood for this y_j
+            for (size_t x_index=0; x_index < this->probabilityMatrices[consensus_base_index][y].size(); x_index++) {
+//                avg_distribution[x_index] += x[x_index];
+
+                if (x[x_index] == 0){
+                    continue;
                 }
 
-                // Increment log likelihood for this y_j
-                logSum += double(c)*probabilityMatrices[consensus_base_index][y][x];
+                log_likelihood_k = log10(x[x_index]) + probabilityMatrices[consensus_base_index][y][x_index];
+                integral_likelihood = log10_sum_exp(integral_likelihood, log_likelihood_k);
+
+//                cout << x_index << " " << y << " " << x.size() << " " << probabilityMatrices.size() << " " << probabilityMatrices[y].size() << '\n';
+//                debug_string += index_to_base(forward_base_index) + " " + to_string(logSum) + " " + to_string(y) + " " + to_string(x_index) + " " +  to_string(x[x_index]) + " " + to_string(log10(x[x_index])) + " " + to_string(probabilityMatrices[consensus_base_index][y][x_index]) + '\n';
             }
+
+            logSum += integral_likelihood;
         }
 
         logLikelihoodY[y] = logSum;
@@ -366,13 +348,19 @@ uint16_t SimpleBayesianConsensusCaller::predictRunlength(
 
     normalizeLikelihoods(logLikelihoodY, yMaxLikelihood);
 
-//    printLogLikelihoodVector(logLikelihoodY);
+//    print_distribution(avg_distribution);
+//    printLogLikelihoodVector(logLikelihoodY, 15);
+//    cout << yMax << "\n\n";
+//
+//    if (yMax > 1){
+//        cout << debug_string;
+//    }
 
     return max(uint16_t(1), yMax);   // Don't allow zeroes...
 }
 
 
-uint8_t SimpleBayesianConsensusCaller::predictConsensusBase(const vector <vector <float> >& pileup_column) const{
+uint8_t SimpleBayesianRunnieConsensusCaller::predictConsensusBase(const vector <vector <float> >& pileup_column) const{
     vector<uint32_t> baseCounts(5,0);
     uint32_t maxBaseCount = 0;
     uint8_t maxBase = 4;   // Default to gap in case coverage is empty (is this possible?)
@@ -406,7 +394,7 @@ uint8_t SimpleBayesianConsensusCaller::predictConsensusBase(const vector <vector
 }
 
 
-void SimpleBayesianConsensusCaller::operator()(const vector <vector <float> >& coverage, vector <float>& consensus) const{
+void SimpleBayesianRunnieConsensusCaller::operator()(const vector <vector <float> >& coverage, vector <float>& consensus) const{
     consensus = {};
     uint8_t consensusBase;
     uint16_t consensusRepeat;

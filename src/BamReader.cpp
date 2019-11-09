@@ -51,7 +51,7 @@ double CigarStats::calculate_identity() {
 }
 
 
-string CigarStats::to_string(){
+string CigarStats::to_string(bool verbose){
     string s;
 
     s += "n_matches:\t" + std::to_string(this->n_matches) + "\n";
@@ -59,10 +59,12 @@ string CigarStats::to_string(){
     s += "n_inserts:\t" + std::to_string(this->n_inserts) + "\n";
     s += "n_deletes:\t" + std::to_string(this->n_deletes) + "\n";
 
-    for (auto& [cigar_code, lengths]: this->cigar_lengths){
-        s += ">\"" + Cigar::cigar_name_key.at(cigar_code) + "\"\n";
-        for (auto& [length, count]: lengths){
-            s += std::to_string(length) + '\t' + std::to_string(count) + '\n';
+    if (verbose) {
+        for (auto&[cigar_code, lengths]: this->cigar_lengths) {
+            s += ">\"" + Cigar::cigar_name_key.at(cigar_code) + "\"\n";
+            for (auto&[length, count]: lengths) {
+                s += std::to_string(length) + '\t' + std::to_string(count) + '\n';
+            }
         }
     }
 
@@ -104,7 +106,7 @@ Region::Region() = default;
 
 
 string Region::to_string(){
-    string s = this->name + ":" + std::to_string(this->start) + "-" + std::to_string(this->stop);
+    string s = this->name + "_" + std::to_string(this->start) + "-" + std::to_string(this->stop);
     return s;
 }
 

@@ -52,6 +52,7 @@ public:
     // Sometimes you just need to take a shortcut
     RunnieSequenceElement generate_sequence_container();
 
+    vector<RunlengthIndex> indexes;
 
 private:
 
@@ -75,7 +76,6 @@ private:
     void read_indexes();
     void read_index_entry(RunlengthIndex& index_element, off_t& byte_index);
 
-    vector<RunlengthIndex> indexes;
     unordered_map<string,size_t> index_map;
 };
 

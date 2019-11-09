@@ -26,14 +26,17 @@ void test_standard_pileup(path project_directory){
     path relative_fasta_ref_path = "/data/test/test_alignable_reference_non_RLE.fasta";
     path absolute_fasta_ref_path = project_directory / relative_fasta_ref_path;
 
-    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 10);
+    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 20);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
 
     FastaReader ref_reader = FastaReader(absolute_fasta_ref_path);
     FastaReader sequence_reader = FastaReader(absolute_fasta_reads_path);
 
-    pileup_generator.fetch_region(region, ref_reader, sequence_reader);
+    Pileup pileup;
+
+    pileup_generator.fetch_region(region, ref_reader, sequence_reader, pileup);
+    pileup_generator.print(pileup);
 
 }
 
@@ -202,7 +205,7 @@ void test_runnie_pileup(path project_directory) {
 
     path absolute_bam_path = absolute(bam_path);
 
-    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 10);
+    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 20);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
 
@@ -212,7 +215,10 @@ void test_runnie_pileup(path project_directory) {
     BinaryRunnieReader reads_runnie_reader(absolute_runlength_reads_path);
     BinaryRunnieReader ref_runnie_reader(absolute_runlength_ref_path);
 
-    pileup_generator.fetch_region(region, ref_runnie_reader, reads_runnie_reader);
+    Pileup pileup;
+
+    pileup_generator.fetch_region(region, ref_runnie_reader, reads_runnie_reader, pileup);
+    pileup_generator.print(pileup);
 }
 
 
@@ -271,7 +277,7 @@ void test_runlength_pileup(path project_directory) {
 
     path absolute_bam_path = absolute(bam_path);
 
-    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 10);
+    PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 20);
 
     Region region = Region("synthetic_ref_0", 0, 1337);
 
@@ -281,7 +287,10 @@ void test_runlength_pileup(path project_directory) {
     RunlengthReader reads_runlength_reader(absolute_runlength_reads_path);
     RunlengthReader ref_runlength_reader(absolute_runlength_ref_path);
 
-    pileup_generator.fetch_region(region, ref_runlength_reader, reads_runlength_reader);
+    Pileup pileup;
+
+    pileup_generator.fetch_region(region, ref_runlength_reader, reads_runlength_reader, pileup);
+    pileup_generator.print(pileup);
 }
 
 

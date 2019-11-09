@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <stdexcept>
+#include <cmath>
 #include "boost/program_options.hpp"
 #include <boost/tokenizer.hpp>
 
@@ -18,6 +19,9 @@ using std::to_string;
 using std::pair;
 using std::vector;
 using std::runtime_error;
+using std::pow;
+using std::max;
+using std::log10;
 using boost::program_options::options_description;
 using boost::program_options::value;
 using boost::program_options::variables_map;
@@ -101,13 +105,33 @@ string join(vector <string> s, char delimiter){
 }
 
 
+double log10_sum_exp(double x1, double x2){
+    ///
+    /// Do a safe addition in non-log space using log values. Avoids doing multiplication in log space.
+    /// sum = a + log(sum(exp(x_i-a))) for all i
+    ///     where a = max(x_i) for all i
+
+    double a = max(x1, x2);
+    double sum;
+
+    sum = a + log10(pow(10, x1-a) + pow(10, x2-a));
+
+    return sum;
+}
+
+
 void print_distribution(vector<double>& distribution, uint16_t width, char character){
     ///
-    /// Make a text representation of a distribution. ASSUME POSITIVE VALUES ONLY!
+    /// Make a text representation of a distribution. ASSUME POSITIVE 0-1 VALUES ONLY!
     ///
 
     uint16_t n_characters;
     string line;
+
+    double sum = 0;
+    for (auto& y: distribution){
+        sum += y;
+    }
 
     size_t i = 0;
     for (auto& y: distribution){
@@ -115,7 +139,7 @@ void print_distribution(vector<double>& distribution, uint16_t width, char chara
             cerr << "WARNING: Miscellaneous::print_distribution() printing negative value as 0";
             y = 0;
         }
-        n_characters = uint16_t(y*width);
+        n_characters = uint16_t((y/sum)*width);
         line = to_string(i+1) + ":\t" + to_string(y) + "\t" + string(n_characters, character);
         cout << line << "\n";
         i++;

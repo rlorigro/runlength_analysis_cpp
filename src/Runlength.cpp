@@ -450,7 +450,6 @@ void parse_aligned_runnie(path bam_path,
                     }
 
                     update_runlength_matrix_with_weibull_probabilities(runlength_matrix, aligned_segment.reversal, observed_base_index, true_length, scale, shape);
-//                    cout << matrix_to_string(runlength_matrix, 4) << " " << aligned_segment.reversal << " " << observed_base << " " << int(observed_base_index) << " " << true_length << " " << scale << " " << shape << "\n";
                 }
             }
 

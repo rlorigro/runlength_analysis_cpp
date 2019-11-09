@@ -74,4 +74,29 @@ template<class T> void runlength_encode(RunlengthSequenceElement& runlength_sequ
 }
 
 
+template<class T> void runlength_decode(RunlengthSequenceElement& runlength_sequence, T& sequence){
+    sequence = {};
+
+    // First just copy the name
+    runlength_sequence.name = sequence.name;
+
+    // Iterate each run and append/update base/length for their corresponding vectors
+    for (size_t i=0; i<runlength_sequence.sequence.size(); i++){
+        sequence.sequence += string(runlength_sequence.lengths[i], runlength_sequence.sequence[i]);
+    }
+}
+
+template<class T> void runlength_decode(RunlengthSequenceElement& runlength_sequence, T& sequence, size_t start, size_t stop){
+    sequence = {};
+
+    // First just copy the name
+    runlength_sequence.name = sequence.name;
+
+    // Iterate each run and append/update base/length for their corresponding vectors
+    for (size_t i=start; i<stop; i++){
+        sequence.sequence += string(runlength_sequence.lengths[i], runlength_sequence.sequence[i]);
+    }
+}
+
+
 #endif //RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP

@@ -1,10 +1,10 @@
 
-#ifndef RUNLENGTH_ANALYSIS_SIMPLEBAYESIANCONSENSUSCALLER_HPP
-#define RUNLENGTH_ANALYSIS_SIMPLEBAYESIANCONSENSUSCALLER_HPP
+#ifndef RUNLENGTH_ANALYSIS_SIMPLEBAYESIANRUNNIECONSENSUSCALLER_HPP
+#define RUNLENGTH_ANALYSIS_SIMPLEBAYESIANRUNNIECONSENSUSCALLER_HPP
 
 /*******************************************************************************
 
-A SimpleBayesianConsensusCaller uses a simple Bayesian approach
+A SimpleBayesianRunnieConsensusCaller uses a simple Bayesian approach
 to compute the "best" base and repeat count at a position of an alignment.
 
 Based on initial work by Ryan Lorig-Roach at UCSC, the method works as follows.
@@ -48,17 +48,18 @@ const double INF = std::numeric_limits<double>::infinity();;
 
 
 // Given a set of observations (repeat, strand, base), predict the true repeat count
-class SimpleBayesianConsensusCaller{
+class SimpleBayesianRunnieConsensusCaller{
 public:
     // For accessing data in vector
     static const size_t BASE = 0;
     static const size_t REVERSAL = 1;
-    static const size_t LENGTH = 2;
+    static const size_t SCALE = 2;
+    static const size_t SHAPE = 3;
 
     // The constructor string can be either:
     // - A name identifying one of the built-in configurations.
     // - A path to a configuration file.
-    SimpleBayesianConsensusCaller(path& config_path);
+    SimpleBayesianRunnieConsensusCaller(path& config_path);
 
     // Given a coverage object, return the most likely run length, and the normalized log likelihood vector for all run
     // lengths as a pair
@@ -117,10 +118,6 @@ private:
     // For a given vector of likelihoods over each Y value, normalize by the maximum
     void normalizeLikelihoods(vector<double>& x, double xMax) const;
 
-    // Count the number of times each unique repeat was observed, to reduce redundancy in calculating log likelihoods
-    void factorRepeats(array<std::map<uint16_t, uint16_t>, 2>& factoredRepeats, const vector <vector <float> >&coverage) const;
-    void factorRepeats(array<std::map<uint16_t, uint16_t>, 2>& factoredRepeats, const vector <vector <float> >&coverage, uint8_t consensus_base) const;
-
     // For debugging or exporting
     void printPriors(char separator) const;
     void printProbabilityMatrices(char separator=',') const;
@@ -128,4 +125,4 @@ private:
 };
 
 
-#endif //RUNLENGTH_ANALYSIS_SIMPLEBAYESIANCONSENSUSCALLER_HPP
+#endif //RUNLENGTH_ANALYSIS_SIMPLEBAYESIANRUNNIECONSENSUSCALLER_HPP

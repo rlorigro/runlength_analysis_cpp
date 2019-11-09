@@ -29,6 +29,8 @@ void split_as_double(vector<double>& tokens, string& s, string& separators);
 
 void parse_comma_separated_pair_as_doubles(pair<double,double>& p, string& s);
 
+double log10_sum_exp(double x1, double x2);
+
 string join(vector <string> s, char delimiter);
 
 variables_map parse_arguments(int argc, char* argv[], options_description options);

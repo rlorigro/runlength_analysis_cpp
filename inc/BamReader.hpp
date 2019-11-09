@@ -54,7 +54,7 @@ public:
     map <uint8_t, map <uint64_t, uint64_t> > cigar_lengths;
 
     CigarStats();
-    string to_string();
+    string to_string(bool verbose=false);
     double calculate_identity();
     void update_lengths(Cigar& cigar);
 };

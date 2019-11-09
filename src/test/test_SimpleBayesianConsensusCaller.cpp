@@ -25,7 +25,7 @@ int main(){
             {3, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
@@ -38,7 +38,7 @@ int main(){
             {3, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
@@ -51,7 +51,7 @@ int main(){
             {0, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
@@ -65,7 +65,7 @@ int main(){
             {3, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
@@ -80,7 +80,7 @@ int main(){
             {3, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 
@@ -96,7 +96,7 @@ int main(){
             {3, 1, 3},
     };
 
-    consensus = consensus_caller(coverage);
+    consensus_caller(coverage, consensus);
 
     cout << "CONSENSUS: " << consensus[0] << " " << consensus[1] << '\n';
 

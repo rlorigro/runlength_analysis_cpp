@@ -197,17 +197,17 @@ void parse_alignments(path bam_path,
                         if (cigar.length < 50){     //TODO un-hardcode this <--
                             cigar_stats.n_deletes += cigar.length;
                         }
-                        else {
-                            cout << region.name << '\t' << coordinate.ref_index << "\tD\t" << cigar.length << '\n';
-                        }
+//                        else {
+//                            cout << region.name << '\t' << coordinate.ref_index << "\tD\t" << cigar.length << '\n';
+//                        }
                     }
                     else if (cigar.code == insert_code){
                         if (cigar.length < 50){     //TODO un-hardcode this <--
                             cigar_stats.n_inserts += cigar.length;
                         }
-                        else {
-                            cout << region.name << '\t' << coordinate.ref_index << "\tI\t" << cigar.length << '\n';
-                        }
+//                        else {
+//                            cout << region.name << '\t' << coordinate.ref_index << "\tI\t" << cigar.length << '\n';
+//                        }
                     }
                     else{
                         throw runtime_error("ERROR: unexpected cigar operation: \n" + cigar.to_string());
@@ -280,15 +280,10 @@ CigarStats get_fasta_cigar_stats(path bam_path,
 void measure_identity_from_fasta(path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
-        uint16_t max_threads){
+        uint16_t max_threads,
+        uint64_t chunk_size){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
-
-    // How big (bp) should the regions be for iterating the BAM? Regardless of size,
-    // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
-    // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
-    // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 100;
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);
@@ -344,15 +339,10 @@ void measure_identity_from_fasta(path reads_fasta_path,
 
 void measure_identity_from_bam(path bam_path,
         path reference_fasta_path,
-        uint16_t max_threads){
+        uint16_t max_threads,
+        uint64_t chunk_size){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
-
-    // How big (bp) should the regions be for iterating the BAM? Regardless of size,
-    // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
-    // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
-    // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 10*1000*1000;
 
     // Initialize readers
     FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);

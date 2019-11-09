@@ -204,7 +204,8 @@ void FastaReader::read_next_header(SequenceElement& element){
     // Verify that header starts with header symbol '>', and trim the symbol from the line. Also trim trailing space.
     if (element.name[0] == this->header_symbol){
         trim_left_if(element.name, &is_caret);
-        trim_right(element.name);
+//        trim_right(element.name);
+        element.name = element.name.substr(0,element.name.find_first_of(' '));
     }
     else{
         throw runtime_error("Unrecognized FASTA header character on line: " + to_string(this->line_index));

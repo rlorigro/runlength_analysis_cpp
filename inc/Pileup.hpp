@@ -20,14 +20,19 @@ using std::experimental::filesystem::path;
 class Pileup{
 public:
     /// Attributes ///
+    static const size_t BASE = 0;
+    static const size_t REVERSAL = 1;
+    constexpr static const float EMPTY = 6.0;
     constexpr static const float INSERT_CODE = 5.0;
     constexpr static const float DELETE_CODE = 4.0;
 
+    size_t n_alignments = 0;
     size_t n_channels;
     unordered_map <int64_t, vector <vector <vector <float> > > > inserts;
     vector <vector <vector <float> > > pileup;
 
     /// Methods ///
+    Pileup();
     Pileup(size_t n_channels, size_t region_size, size_t maximum_depth, vector<float>& default_read_data);
 };
 

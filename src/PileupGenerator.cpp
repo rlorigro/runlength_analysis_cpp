@@ -61,13 +61,15 @@ void PileupGenerator::print_lowest_free_indexes(){
 
 
 void PileupGenerator::print(Pileup& pileup){
-//    vector<string> pileup_strings;
-
     vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
 
     size_t i = 0;
     string s_value;
     float value;
+
+    cout << "n_columns: " << pileup.pileup.size() << '\n';
+    cout << "n_alignments: " << pileup.n_alignments << '\n';
+
     for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++){
         for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++){
 
@@ -137,3 +139,38 @@ void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, i
     }
 }
 
+
+void PileupGenerator::backfill_insert_columns(Pileup& pileup){
+    float left_base;
+    float right_base;
+    bool left_is_base;
+    bool right_is_base;
+
+    for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++) {
+        if (pileup.inserts.count(width_index) > 0) {
+            for (auto &column: pileup.inserts.at(width_index)) {
+                for (size_t depth_index = 0; depth_index < column.size(); depth_index++) {
+                    // Don't overwrite existing insert data
+                    if (is_valid_base_index(column[depth_index][Pileup::BASE])){
+                        continue;
+                    }
+
+                    left_base = pileup.pileup[width_index][depth_index][Pileup::BASE];
+                    left_is_base = is_valid_base_index(left_base);
+
+                    right_is_base = true;
+                    if (width_index + 1 < pileup.pileup.size()) {
+                        right_base = pileup.pileup[width_index+1][depth_index][Pileup::BASE];
+                        right_is_base = is_valid_base_index(right_base);
+                    }
+
+                    // Fill in the insert values with insert codes and reversal codes if it is flanked by read data
+                    if (left_is_base and right_is_base){
+                        column[depth_index][Pileup::BASE] = Pileup::INSERT_CODE;
+                        column[depth_index][Pileup::REVERSAL] = pileup.pileup[width_index][depth_index][Pileup::REVERSAL];
+                    }
+                }
+            }
+        }
+    }
+}
