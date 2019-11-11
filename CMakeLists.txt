@@ -155,6 +155,7 @@ set(SOURCES
         src/AlignedSegment.cpp
         src/BamReader.cpp
         src/Base.cpp
+        src/BedReader.cpp
         src/BinaryIO.cpp
         src/BinaryRunnieWriter.cpp
         src/BinaryRunnieReader.cpp
@@ -183,6 +184,7 @@ set(SOURCES
         src/RunlengthSequenceElement.cpp
         src/RunnieSequenceElement.cpp
         src/ReferenceRunlength.cpp
+        src/Region.cpp
         src/RunnieReader.cpp
         src/RunlengthWriter.cpp
         src/RunlengthReader.cpp
@@ -393,6 +395,11 @@ set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTA
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX test_logsumexp)
+add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX test_BedReader)
 add_executable(${FILENAME_PREFIX} src/test/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

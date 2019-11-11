@@ -4,6 +4,7 @@
 #include "RunnieReader.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
+#include "BedReader.hpp"
 #include "BamReader.hpp"
 #include "Runlength.hpp"
 #include "Matrix.hpp"
@@ -824,7 +825,8 @@ template <typename T> void measure_runlength_distribution_from_coverage_data(pat
                                                        path reference_fasta_path,
                                                        path output_directory,
                                                        uint16_t max_runlength,
-                                                       uint16_t max_threads){
+                                                       uint16_t max_threads,
+                                                       path bed_path){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
 
@@ -889,9 +891,25 @@ template <typename T> void measure_runlength_distribution_from_coverage_data(pat
 
     //TODO: cut off 50bp overlaps on MarginPolish TSVs?
 
-    // Chunk alignment regions
+
+    // If a BED file was provided, only iterate the regions of the BAM that may be found in the reference provided.
+    // Otherwise, iterate the entire BAM.
     vector<Region> regions;
-    chunk_sequences_into_regions(regions, ref_runlength_sequences, chunk_size);
+    if (bed_path.empty()){
+        // Chunk alignment regions
+        chunk_sequences_into_regions(regions, ref_runlength_sequences, chunk_size);
+    }
+    else{
+        // Load the BED regions, and then find the union of the regions in BED and reference FASTA
+        set<string> names;
+        for (auto& item: ref_runlength_sequences){
+            names.insert(item.first);
+        }
+
+        BedReader bed_reader(bed_path);
+        bed_reader.read_regions(regions);
+        bed_reader.subset_by_regions_name(regions, names);
+    }
 
     cerr << "Iterating alignments...\n" << std::flush;
 
@@ -1094,13 +1112,15 @@ void measure_runlength_distribution_from_marginpolish(path input_directory,
                                                        path reference_fasta_path,
                                                        path output_directory,
                                                        uint16_t max_runlength,
-                                                       uint16_t max_threads) {
+                                                       uint16_t max_threads,
+                                                       path bed_path) {
 
     measure_runlength_distribution_from_coverage_data<MarginPolishReader>(input_directory,
             reference_fasta_path,
             output_directory,
             max_runlength,
-            max_threads);
+            max_threads,
+            bed_path);
 }
 
 
@@ -1108,11 +1128,13 @@ void measure_runlength_distribution_from_shasta(path input_directory,
                                                        path reference_fasta_path,
                                                        path output_directory,
                                                        uint16_t max_runlength,
-                                                       uint16_t max_threads) {
+                                                       uint16_t max_threads,
+                                                       path bed_path) {
 
     measure_runlength_distribution_from_coverage_data<ShastaReader>(input_directory,
             reference_fasta_path,
             output_directory,
             max_runlength,
-            max_threads);
+            max_threads,
+            bed_path);
 }

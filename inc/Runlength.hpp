@@ -22,13 +22,16 @@ void measure_runlength_distribution_from_marginpolish(path input_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
-        uint16_t max_threads);
+        uint16_t max_threads,
+        path bed_path=path());
+
 
 void measure_runlength_distribution_from_shasta(path input_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
-        uint16_t max_threads);
+        uint16_t max_threads,
+        path bed_path=path());
 
 
 void measure_runlength_distribution_from_fasta(path reads_fasta_path,

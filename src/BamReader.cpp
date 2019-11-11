@@ -1,3 +1,4 @@
+#include "Region.hpp"
 #include "BamReader.hpp"
 #include "htslib/hts.h"
 #include "htslib/sam.h"
@@ -92,22 +93,6 @@ void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_si
         regions.emplace_back(read_name, start, stop);
         l += chunk_size;
     }
-}
-
-
-Region::Region(string name, uint64_t start, uint64_t stop){
-    this->name = name;
-    this->start = start;
-    this->stop = stop;
-}
-
-
-Region::Region() = default;
-
-
-string Region::to_string(){
-    string s = this->name + "_" + std::to_string(this->start) + "-" + std::to_string(this->stop);
-    return s;
 }
 
 

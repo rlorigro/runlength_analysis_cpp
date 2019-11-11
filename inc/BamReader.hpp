@@ -8,6 +8,7 @@
 #include "SequenceElement.hpp"
 #include "AlignedSegment.hpp"
 #include "FastaReader.hpp"
+#include "Region.hpp"
 #include <experimental/filesystem>
 #include <unordered_map>
 #include <map>
@@ -62,18 +63,6 @@ public:
 
 void operator+=(CigarStats& cigar_stats_a, CigarStats& cigar_stats_b);
 
-
-// For occasional convenience
-class Region {
-public:
-    string name;
-    uint64_t start;
-    uint64_t stop;
-
-    Region(string name, uint64_t start, uint64_t stop);
-    Region();
-    string to_string();
-};
 
 
 class BamReader{

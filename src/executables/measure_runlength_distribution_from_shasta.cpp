@@ -10,6 +10,7 @@ using boost::program_options::value;
 
 int main(int argc, char* argv[]){
     path ref_fasta_path;
+    path bed_path;
     path input_dir;
     path output_dir;
     uint16_t max_threads;
@@ -30,6 +31,11 @@ int main(int argc, char* argv[]){
         value<path>(&output_dir)->
         default_value("output/"),
         "Destination directory. File will be named based on input file name")
+
+        ("bed",
+        value<path>(&bed_path)->
+        default_value(path()),
+        "File path of BED file contain regions to subset ")
 
         ("max_threads",
         value<uint16_t>(&max_threads)->
@@ -56,7 +62,8 @@ int main(int argc, char* argv[]){
             ref_fasta_path,
             output_dir,
             max_runlength,
-            max_threads);
+            max_threads,
+            bed_path);
 
     return 0;
 }

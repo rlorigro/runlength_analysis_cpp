@@ -1,0 +1,39 @@
+#ifndef RUNLENGTH_ANALYSIS_BEDREADER_H
+#define RUNLENGTH_ANALYSIS_BEDREADER_H
+
+#include "Region.hpp"
+#include <experimental/filesystem>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <set>
+
+using std::experimental::filesystem::path;
+using std::ifstream;
+using std::string;
+using std::vector;
+using std::set;
+
+
+class BedReader {
+public:
+    /// Attributes ///
+    path bed_path;
+
+    /// Methods ///
+    BedReader(path bed_path);
+    void read_regions(vector<Region>& regions);
+    bool next_line(Region& region);
+    void subset_by_regions_name(vector<Region>& regions, set<string> names);
+
+private:
+
+    /// Attributes ///
+    ifstream bed_file;
+    static const size_t NAME = 0;
+    static const size_t START = 1;
+    static const size_t STOP = 2;
+};
+
+
+#endif //RUNLENGTH_ANALYSIS_BEDREADER_H
