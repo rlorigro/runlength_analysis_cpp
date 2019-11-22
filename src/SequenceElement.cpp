@@ -5,6 +5,12 @@
 
 //SequenceElement::SequenceElement()=default;
 
+void SequenceElement::get_ref_data(vector<float>& ref_data, int64_t index){
+    ref_data = {};
+    ref_data.emplace_back(base_to_float(this->sequence[index]));
+    ref_data.emplace_back(float(0));
+}
+
 
 void SequenceElement::get_read_data(vector<float>& read_data, Cigar& cigar, Coordinate& coordinate, AlignedSegment& alignment){
     read_data = {};

@@ -26,6 +26,8 @@ string float_to_base(float index);
 
 char float_to_base_char(float index);
 
+char complement_base(char base);
+
 bool is_valid_base(string base);
 
 bool is_valid_base(char base);

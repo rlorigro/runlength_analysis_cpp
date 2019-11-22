@@ -29,6 +29,8 @@ using std::cerr;
 using std::ifstream;
 using std::ofstream;
 using std::cout;
+using std::min;
+using std::max;
 using boost::program_options::options_description;
 using boost::program_options::variables_map;
 using boost::program_options::value;
@@ -152,7 +154,7 @@ void append_consensus_sequence(string& consensus_sequence, vector<float>& consen
 }
 
 
-void predict_consensus(Pileup& pileup, SimpleBayesianRunnieConsensusCaller& consensus_caller, Region& region, ofstream& output_file, mutex& file_write_mutex){
+void predict_consensus(Pileup& pileup, Pileup& ref_pileup, SimpleBayesianRunnieConsensusCaller& consensus_caller, Region& region, ofstream& output_file, mutex& file_write_mutex){
     vector<float> consensus;
     string consensus_sequence;
 
@@ -161,9 +163,24 @@ void predict_consensus(Pileup& pileup, SimpleBayesianRunnieConsensusCaller& cons
         consensus_caller(pileup.pileup[width_index], consensus);
         append_consensus_sequence(consensus_sequence, consensus);
 
+        if (consensus[0] != ref_pileup.pileup[width_index][0][Pileup::BASE]){
+            cout << "BASE ERROR\n";
+            cout << consensus[0] << " " << ref_pileup.pileup[width_index][0][Pileup::BASE] << '\n';
+        }
+        if (consensus[1] != ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1]){
+            cout << "LENGTH ERROR\n";
+            cout << consensus[1] << " " << ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1] << '\n';
+
+            size_t min_index = max(size_t(width_index-5), size_t(0));
+            size_t max_index = min(size_t(width_index+5), size_t(pileup.pileup.size())-1);
+            PileupGenerator::print(ref_pileup, min_index, max_index);
+            PileupGenerator::print(pileup, min_index, max_index);
+        }
+
         // Call insert columns if they exist
         if (pileup.inserts.count(width_index) > 0) {
             for (auto &column: pileup.inserts.at(width_index)) {
+                // Inserts are always wrong if called as anything other than (gap,0)
                 consensus_caller(column, consensus);
                 append_consensus_sequence(consensus_sequence, consensus);
             }
@@ -197,12 +214,14 @@ void predict_chunk_consensus(path& bam_path,
     SimpleBayesianRunnieConsensusCaller consensus_caller(config_path);
 
     Pileup pileup;
+    Pileup ref_pileup;
 
     while (job_index < regions.size()) {
         uint64_t thread_job_index = job_index.fetch_add(1);
 
-        pileup_generator.fetch_region(regions[thread_job_index], ref_runlength_reader, reads_runnie_reader, pileup);
-        predict_consensus(pileup, consensus_caller, regions[thread_job_index], output_file, file_write_mutex);
+        pileup_generator.fetch_region(regions[thread_job_index], reads_runnie_reader, pileup);
+        pileup_generator.generate_reference_pileup(pileup, ref_pileup, regions[thread_job_index], ref_runlength_reader);
+        predict_consensus(pileup, ref_pileup, consensus_caller, regions[thread_job_index], output_file, file_write_mutex);
     }
 }
 
@@ -222,11 +241,11 @@ void get_consensus(path bam_path,
     RunlengthReader ref_runlength_reader(runlength_ref_path);
     BinaryRunnieReader reads_runnie_reader(runnie_reads_path);
 
-    vector<Region> regions;
-    uint64_t chunk_size = 100*1000;
-    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
+//    vector<Region> regions;
+//    uint64_t chunk_size = 100*1000;
+//    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
 
-//    vector<Region> regions = {Region("hg38_dna", 2*1000*1000, 2*1000*1000+100*1000)}; //TODO: UNDO THIS TEST
+    vector<Region> regions = {Region("hg38_dna", 2*1000*1000, 2*1000*1000+50*1000)}; //TODO: UNDO THIS TEST
 
     vector<thread> threads;
     atomic<size_t> job_index = 0;

@@ -287,8 +287,8 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
         priorIndex = 1;
     }
 
-//    vector<double> avg_distribution(this->maxOutputRunlength+1);
-//    string debug_string;
+    vector<double> avg_distribution(this->maxOutputRunlength+1);
+    string debug_string;
 
     // Iterate all possible Y from 0 to j to calculate p(Y_j|X) where X is all observations 0 to i,
     // assuming i and j are less than maxRunlength
@@ -313,7 +313,9 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
             scale = observation[SCALE];
             shape = observation[SHAPE];
 
-//            cout << scale << " " << shape << '\n';
+            if (y==0) {
+                cout << int(base_index) << " " << int(consensus_base_index) << " " << scale << " " << shape << '\n';
+            }
 
             evaluate_discrete_weibull(x, scale, shape);
 
@@ -321,7 +323,9 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
 
             // Increment log likelihood for this y_j
             for (size_t x_index=0; x_index < this->probabilityMatrices[consensus_base_index][y].size(); x_index++) {
-//                avg_distribution[x_index] += x[x_index];
+                if (y==0) {
+                    avg_distribution[x_index] += x[x_index];
+                }
 
                 if (x[x_index] == 0){
                     continue;
@@ -348,10 +352,12 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
 
     normalizeLikelihoods(logLikelihoodY, yMaxLikelihood);
 
-//    print_distribution(avg_distribution);
-//    printLogLikelihoodVector(logLikelihoodY, 15);
-//    cout << yMax << "\n\n";
-//
+//    if (yMax == 1) {
+    print_distribution(avg_distribution);
+    printLogLikelihoodVector(logLikelihoodY, 15);
+    cout << yMax << "\n\n";
+//    }
+
 //    if (yMax > 1){
 //        cout << debug_string;
 //    }
@@ -417,7 +423,6 @@ void SimpleBayesianRunnieConsensusCaller::operator()(const vector <vector <float
         }
     }
 
-//    cout << int(consensusBase) << " " << consensusRepeat << " " << float(consensusRepeat) << '\n';
     consensus.emplace_back(float(consensusBase));
     consensus.emplace_back(float(consensusRepeat));
 }

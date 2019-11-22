@@ -60,7 +60,10 @@ void PileupGenerator::print_lowest_free_indexes(){
 }
 
 
-void PileupGenerator::print(Pileup& pileup){
+void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
+    if (max_index == 0) {
+        max_index = pileup.pileup.size();
+    }
     vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
 
     size_t i = 0;
@@ -70,7 +73,7 @@ void PileupGenerator::print(Pileup& pileup){
     cout << "n_columns: " << pileup.pileup.size() << '\n';
     cout << "n_alignments: " << pileup.n_alignments << '\n';
 
-    for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++){
+    for (size_t width_index = min_index; width_index<max_index; width_index++){
         for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++){
 
             i = 0;
@@ -116,9 +119,12 @@ void PileupGenerator::print(Pileup& pileup){
 }
 
 
-void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data){
-    uint64_t insert_anchor_index = pileup_width_index + aligned_segment.reversal;
-    uint64_t insert_index = aligned_segment.subcigar_index - 1;
+void PileupGenerator::update_insert_column(
+        Pileup& pileup,
+        int64_t pileup_depth_index,
+        uint64_t insert_anchor_index,
+        uint64_t insert_index,
+        vector<float>& read_data){
 
     // If there is already another insert anchored at this ref position:
     if (pileup.inserts.count(insert_anchor_index) > 0) {
@@ -137,14 +143,26 @@ void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, i
         pileup.inserts.insert({insert_anchor_index, this->default_insert_pileup});        // copy value because value is stored as class member
         pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
     }
+
+}
+
+void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data){
+    uint64_t insert_anchor_index = pileup_width_index + aligned_segment.reversal;
+    uint64_t insert_index = aligned_segment.subcigar_index - 1;
+
+    this->update_insert_column(pileup,
+            pileup_depth_index,
+            insert_anchor_index,
+            insert_index,
+            read_data);
 }
 
 
 void PileupGenerator::backfill_insert_columns(Pileup& pileup){
     float left_base;
     float right_base;
-    bool left_is_base;
-    bool right_is_base;
+    bool left_not_empty;
+    bool right_not_empty;
 
     for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++) {
         if (pileup.inserts.count(width_index) > 0) {
@@ -156,16 +174,16 @@ void PileupGenerator::backfill_insert_columns(Pileup& pileup){
                     }
 
                     left_base = pileup.pileup[width_index][depth_index][Pileup::BASE];
-                    left_is_base = is_valid_base_index(left_base);
+                    left_not_empty = (left_base != Pileup::EMPTY);
 
-                    right_is_base = true;
+                    right_not_empty = true;
                     if (width_index + 1 < pileup.pileup.size()) {
                         right_base = pileup.pileup[width_index+1][depth_index][Pileup::BASE];
-                        right_is_base = is_valid_base_index(right_base);
+                        right_not_empty = (right_base != Pileup::EMPTY);
                     }
 
                     // Fill in the insert values with insert codes and reversal codes if it is flanked by read data
-                    if (left_is_base and right_is_base){
+                    if (left_not_empty and right_not_empty){
                         column[depth_index][Pileup::BASE] = Pileup::INSERT_CODE;
                         column[depth_index][Pileup::REVERSAL] = pileup.pileup[width_index][depth_index][Pileup::REVERSAL];
                     }

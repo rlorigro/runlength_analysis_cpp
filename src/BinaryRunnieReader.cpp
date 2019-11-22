@@ -59,8 +59,18 @@ void BinaryRunnieReader::get_sequence(RunnieSequenceElement& sequence, uint64_t 
 
 void BinaryRunnieReader::get_sequence(RunnieSequenceElement& sequence, string& read_name){
     sequence = {};
-    uint64_t read_number = this->index_map.at(read_name);
-    off_t byte_index = off_t(this->indexes.at(read_number).sequence_byte_index);
+    uint64_t read_number;
+    off_t byte_index;
+
+    try {
+        read_number = this->index_map.at(read_name);
+    }catch(std::out_of_range) {
+        cerr << "\nERROR: " << read_name << " not found in index for file " << this->sequence_file_path << '\n';
+        exit(1);
+    }
+
+    byte_index = off_t(this->indexes.at(read_number).sequence_byte_index);
+
     pread_string_from_binary(this->sequence_file_descriptor, sequence.sequence, this->indexes.at(read_number).sequence_length, byte_index);
     pread_vector_from_binary(this->sequence_file_descriptor, sequence.scales, this->indexes.at(read_number).sequence_length, byte_index);
     pread_vector_from_binary(this->sequence_file_descriptor, sequence.shapes, this->indexes.at(read_number).sequence_length, byte_index);

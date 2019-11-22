@@ -6,6 +6,21 @@
 //SequenceElement::SequenceElement()=default;
 
 
+void RunlengthSequenceElement::get_ref_data(vector<float>& ref_data, int64_t index){
+    ref_data = {};
+
+//    cout << "\nREF:\n" << this->sequence << '\n';
+//    cout << "\nINDEX:\n" << index << '\n';
+//    cout << "\nLENGTH:\n" << this->sequence.size() << '\n';
+//    cout << "\nBASE:\n" << string(1,this->sequence[index]) << '\n';
+
+    float base = base_to_float(this->sequence[index]);
+    ref_data.emplace_back(base);
+    ref_data.emplace_back(float(0));
+    ref_data.emplace_back(float(this->lengths[index]));
+}
+
+
 void RunlengthSequenceElement::get_read_data(vector<float>& read_data, Cigar& cigar, Coordinate& coordinate, AlignedSegment& alignment){
     read_data = {};
 

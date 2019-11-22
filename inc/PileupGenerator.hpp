@@ -29,11 +29,19 @@ public:
     /// Methods ///
     PileupGenerator(path bam_path, uint16_t maximum_depth=80);
     void print_lowest_free_indexes();
-    void print(Pileup& pileup);
+    static void print(Pileup& pileup, size_t min_index=0, size_t max_index=0);
 
-    template <class T1, class T2> void fetch_region(Region& region, T1& ref_fasta_reader, T2& sequence_reader, Pileup& pileup);
+    template <class T> void fetch_region(Region& region, T& sequence_reader, Pileup& pileup);
     int64_t find_depth_index(int64_t start_index);
     void parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data);
+    void update_insert_column(
+        Pileup& pileup,
+        int64_t pileup_depth_index,
+        uint64_t insert_anchor_index,
+        uint64_t insert_index,
+        vector<float>& read_data);
+
+    template <class T> void generate_reference_pileup(Pileup& pileup, Pileup& ref_pileup, Region& region, T& ref_reader);
 
 private:
     /// Attributes ///
@@ -47,9 +55,8 @@ private:
 };
 
 
-template <class T1, class T2> void PileupGenerator::fetch_region(Region& region,
-        T1& ref_reader,
-        T2& sequence_reader,
+template <class T> void PileupGenerator::fetch_region(Region& region,
+        T& sequence_reader,
         Pileup& pileup) {
 
     // Initialize BAM reader and relevant containers
@@ -62,13 +69,10 @@ template <class T1, class T2> void PileupGenerator::fetch_region(Region& region,
 
     // Initialize reader containers
     auto read_sequence = sequence_reader.generate_sequence_container();
-    auto ref_sequence = sequence_reader.generate_sequence_container();
 
     read_sequence.generate_default_data_vector(this->default_data_vector);
     this->default_insert_column = vector <vector <float> >(this->maximum_depth, this->default_data_vector);
     this->default_insert_pileup = vector <vector <vector <float> > > (1, this->default_insert_column);
-
-//    ref_reader.get_sequence(ref_sequence, region.name);
 
     string cigars;
     string ref_alignment;
@@ -83,17 +87,12 @@ template <class T1, class T2> void PileupGenerator::fetch_region(Region& region,
     this->lowest_free_index_per_depth = {{0,0}};
     pileup = Pileup(read_sequence.n_channels+2, region_size, this->maximum_depth, this->default_data_vector);
 
-//    cout << "size: " << pileup.pileup.size() << " " << pileup.pileup[0].size() << '\n';
-
     while (bam_reader.next_alignment(aligned_segment)) {
         pileup.n_alignments++;
         cerr << "\33[2K\rParsed: "<< aligned_segment.to_string() << "\n";
 
         sequence_reader.get_sequence(read_sequence, aligned_segment.read_name);
         pileup_depth_index = find_depth_index(aligned_segment.ref_start_index - region.start);
-
-//        cout << "---" << aligned_segment.ref_start_index << " " << aligned_segment.ref_start_index - region.start << " " << pileup_depth_index << '\n';
-//        print_lowest_free_indexes();
 
         // Update the occupancy status of this row
         this->lowest_free_index_per_depth[0].second = aligned_segment.infer_reference_stop_position_from_alignment() - region.start;
@@ -124,5 +123,49 @@ template <class T1, class T2> void PileupGenerator::fetch_region(Region& region,
 
     this->backfill_insert_columns(pileup);
 }
+
+
+template <class T> void PileupGenerator::generate_reference_pileup(Pileup& pileup, Pileup& ref_pileup, Region& region, T& ref_reader){
+    ///
+    /// Separately generate a "pileup" object which contains the reference sequence and placeholders wherever there were
+    /// inserts in the (completed) read pileup
+    ///
+    vector<float> data;
+    int64_t ref_index;
+    size_t depth = 1;
+
+    auto ref_sequence = ref_reader.generate_sequence_container();
+    ref_reader.get_sequence(ref_sequence, region.name);
+
+    ref_sequence.generate_default_data_vector(this->default_data_vector);
+    this->default_insert_column = vector <vector <float> >(depth, this->default_data_vector);
+    this->default_insert_pileup = vector <vector <vector <float> > > (1, this->default_insert_column);
+
+    size_t region_size = region.stop - region.start + 1;
+    ref_pileup = Pileup(ref_sequence.n_channels+2, region_size, depth, this->default_data_vector);
+
+    // For every position in the pileup, place a single pileup element in the reference pileup
+    for (size_t width_index = 0; width_index<pileup.pileup.size()-1; width_index++){
+        ref_index = region.start + width_index;
+        ref_sequence.get_ref_data(data, ref_index);
+        ref_pileup.pileup[width_index][depth-1] = data;
+
+        // If there is an insert in the read pileup, add a placeholder insert in the ref pileup
+        if (pileup.inserts.count(width_index) > 0) {
+            ref_sequence.generate_default_data_vector(data);
+            data[Pileup::BASE] = Pileup::INSERT_CODE;
+
+            // Add an insert element to the ref for every insert column in the read pileup
+            for (uint64_t i=0; i<pileup.inserts.at(width_index).size(); i++) {
+                this->update_insert_column(ref_pileup,
+                        depth-1,
+                        width_index,
+                        i,
+                        data);
+            }
+        }
+    }
+}
+
 
 #endif //RUNLENGTH_ANALYSIS_PILEUPGENERATOR_HPP

@@ -1,6 +1,26 @@
 #include "Base.hpp"
 #include "Pileup.hpp"
 
+
+char complement_base(char base){
+    if (base == 'A'){
+        return 'T';
+    }
+    else if (base == 'C'){
+        return 'G';
+    }
+    else if (base == 'G'){
+        return 'C';
+    }
+    else if (base == 'T'){
+        return 'A';
+    }
+    else{
+        throw runtime_error("ERROR: invalid base has no complement: " + string(1, base));
+    }
+}
+
+
 bool is_valid_base(string base){
     bool valid = false;
 

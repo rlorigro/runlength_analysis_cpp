@@ -199,7 +199,7 @@ void predict_chunk_consensus(path& bam_path,
     while (job_index < regions.size()) {
         uint64_t thread_job_index = job_index.fetch_add(1);
 
-        pileup_generator.fetch_region(regions[thread_job_index], ref_runlength_reader, reads_runlength_reader, pileup);
+        pileup_generator.fetch_region(regions[thread_job_index], reads_runlength_reader, pileup);
         predict_consensus(pileup, consensus_caller, regions[thread_job_index], output_file, file_write_mutex);
     }
 }
@@ -220,9 +220,11 @@ void get_consensus(path bam_path,
     RunlengthReader ref_runlength_reader(runlength_ref_path);
     RunlengthReader reads_runlength_reader(runlength_reads_path);
 
-    vector<Region> regions;
-    uint64_t chunk_size = 100*1000;
-    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
+//    vector<Region> regions;
+//    uint64_t chunk_size = 100*1000;
+//    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
+
+    vector<Region> regions = {Region("hg38_dna", 2*1000*1000, 2*1000*1000+50*1000)}; //TODO: UNDO THIS TEST
 
     vector<thread> threads;
     atomic<size_t> job_index = 0;

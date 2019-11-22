@@ -35,7 +35,7 @@ void test_standard_pileup(path project_directory){
 
     Pileup pileup;
 
-    pileup_generator.fetch_region(region, ref_reader, sequence_reader, pileup);
+    pileup_generator.fetch_region(region, sequence_reader, pileup);
     pileup_generator.print(pileup);
 
 }
@@ -207,7 +207,7 @@ void test_runnie_pileup(path project_directory) {
 
     PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 20);
 
-    Region region = Region("synthetic_ref_0", 0, 1337);
+    Region region = Region("synthetic_ref_0", 0, 1268);
 
     ifstream check(absolute_runlength_reads_path);
     cerr << check.good() << '\n';
@@ -217,7 +217,7 @@ void test_runnie_pileup(path project_directory) {
 
     Pileup pileup;
 
-    pileup_generator.fetch_region(region, ref_runnie_reader, reads_runnie_reader, pileup);
+    pileup_generator.fetch_region(region, reads_runnie_reader, pileup);
     pileup_generator.print(pileup);
 }
 
@@ -279,7 +279,8 @@ void test_runlength_pileup(path project_directory) {
 
     PileupGenerator pileup_generator = PileupGenerator(absolute_bam_path, 20);
 
-    Region region = Region("synthetic_ref_0", 0, 1337);
+    string ref_name = "synthetic_ref_0";
+    Region region = Region(ref_name, 0, 1268);
 
     ifstream check(absolute_runlength_reads_path);
     cerr << check.good() << '\n';
@@ -288,8 +289,11 @@ void test_runlength_pileup(path project_directory) {
     RunlengthReader ref_runlength_reader(absolute_runlength_ref_path);
 
     Pileup pileup;
+    Pileup ref_pileup;
 
-    pileup_generator.fetch_region(region, ref_runlength_reader, reads_runlength_reader, pileup);
+    pileup_generator.fetch_region(region, reads_runlength_reader, pileup);
+    pileup_generator.generate_reference_pileup(pileup, ref_pileup, region, ref_runlength_reader);
+    pileup_generator.print(ref_pileup);
     pileup_generator.print(pileup);
 }
 

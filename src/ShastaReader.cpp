@@ -1,8 +1,11 @@
+#include <cmath>
 #include "ShastaReader.hpp"
 
 
-ShastaReader::ShastaReader(path directory_path){
+ShastaReader::ShastaReader(path directory_path, bool store_length_consensus, bool store_coverage_data){
     this->directory_path = directory_path;
+    this->store_length_consensus = store_length_consensus;
+    this->store_coverage_data = store_coverage_data;
 }
 
 
@@ -78,18 +81,28 @@ void ShastaReader::fetch_read(CoverageSegment& segment, string& read_name) {
 size_t ShastaReader::parse_consensus(CoverageSegment& shasta_segment, string& line){
     size_t n_commas = 0;
     size_t i = 0;
+    string length_string;
 
     while (n_commas < 3) {
         if (line[i] == ','){
             n_commas++;
         }
-        else{
-            if (n_commas == 1){
+        else if (n_commas == 1){
                 shasta_segment.sequence += line[i];
-            }
+        }
+        else if (this->store_length_consensus and n_commas == 2){
+                length_string += line[i];
         }
         i++;
     }
+
+    // Only keep the consensus length data if specified by class attribute
+    if (this->store_length_consensus) {
+        uint16_t consensus_length = stoi(length_string);
+        shasta_segment.lengths.emplace_back(consensus_length);
+//        cout << line << '\n' << consensus_length << '\n';
+    }
+
 
     return i-1;
 }
@@ -115,6 +128,7 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
     string weight_string;
     string length_string;
     bool space_found = false;
+    float n_coverage = 0;
 
     vector<CoverageElement> pileup;
 
@@ -127,6 +141,7 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
                 length = uint16_t(stoi(length_string));
                 weight = stof(weight_string);
                 pileup.emplace_back(base, length, reversal, weight);
+                n_coverage += weight;
             }
             c = 0;
             length_string = "";
@@ -154,7 +169,15 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
         }
         c++;
     }
-    segment.coverage_data.push_back(move(pileup));
+
+    // Either store all the specific coverage data, or just count the n-fold coverage at this position
+    if (this->store_coverage_data) {
+        segment.coverage_data.push_back(move(pileup));
+    }
+    else{
+        segment.n_coverage.emplace_back(uint16_t(round(n_coverage)));
+//        cout << n_coverage << '\n';
+    }
 }
 
 

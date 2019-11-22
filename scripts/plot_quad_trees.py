@@ -191,7 +191,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input",
         type=str,
-        required=False,
+        required=True,
         help="Path of DIRECTORY containing quadrant bounds with prefix 'quad_tree_` and suffix '.txt'"
     )
     args = parser.parse_args()

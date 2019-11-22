@@ -149,35 +149,6 @@ void write_runnie_sequence_to_fasta(path& runnie_directory,
 }
 
 
-template <typename T> void write_segment_consensus_sequence_to_fasta(path& parent_directory,
-                                               unordered_map<string,path>& read_paths,
-                                               vector<string> read_names,
-                                               mutex& file_write_mutex,
-                                               FastaWriter& fasta_writer,
-                                               atomic<uint64_t>& job_index){
-
-    while (job_index < read_names.size()) {
-        uint64_t thread_job_index = job_index.fetch_add(1);
-
-        // Initialize containers
-        CoverageSegment segment;
-
-        // Fetch Fasta sequence
-        T reader = T(parent_directory);
-        reader.set_index(read_paths);
-        reader.fetch_consensus_sequence(segment, read_names[thread_job_index]);
-
-        // Write RLE sequence to file (no lengths written)
-        file_write_mutex.lock();
-        fasta_writer.write(segment);
-        file_write_mutex.unlock();
-
-        // Print status update to stdout
-        cerr << "\33[2K\rParsed: " << segment.name << flush;
-    }
-}
-
-
 path runlength_encode_fasta_file(path input_file_path,
                                  unordered_map <string, RunlengthSequenceElement>& runlength_sequences,
                                  path output_dir,
@@ -275,63 +246,6 @@ path write_all_runnie_sequences_to_fasta(RunnieReader& runnie_reader,
                                         ref(runnie_directory),
                                         ref(read_names),
                                         ref(read_indexes),
-                                        ref(file_write_mutex),
-                                        ref(read_fasta_writer),
-                                        ref(job_index)));
-        } catch (const exception &e) {
-            cerr << e.what() << "\n";
-            exit(1);
-        }
-    }
-
-    // Wait for threads to finish
-    for (auto& t: threads){
-        t.join();
-    }
-    cerr << "\n" << flush;
-
-    return output_fasta_path;
-}
-
-
-template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_reader,
-        vector<string>& read_names,
-        unordered_map<string,path>& read_paths,
-        path input_directory,
-        path output_directory,
-        uint16_t max_threads){
-
-    // Generate output file path
-    path output_fasta_filename = absolute(input_directory);
-
-    if (output_fasta_filename.stem() == ".") {
-        output_fasta_filename = output_fasta_filename.parent_path().stem().string() + ".fasta";
-    }
-    else{
-        output_fasta_filename = output_fasta_filename.stem().string() + ".fasta";
-    }
-
-    path output_fasta_path = output_directory / output_fasta_filename;
-
-    cerr << "WRITING TO: " << output_fasta_filename <<'\n';
-
-    // Initialize Fasta Writer
-    FastaWriter read_fasta_writer = FastaWriter(output_fasta_path);
-
-    // Thread-related variables
-    vector<thread> threads;
-    mutex file_write_mutex;
-
-    atomic<uint64_t> job_index = 0;
-
-    // Launch threads
-    for (uint64_t i=0; i<max_threads; i++){
-        try {
-            // Call thread safe function to read and write to file
-            threads.emplace_back(thread(write_segment_consensus_sequence_to_fasta<T>,
-                                        ref(input_directory),
-                                        ref(read_paths),
-                                        ref(read_names),
                                         ref(file_write_mutex),
                                         ref(read_fasta_writer),
                                         ref(job_index)));

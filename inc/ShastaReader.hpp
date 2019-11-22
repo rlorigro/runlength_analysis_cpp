@@ -30,9 +30,11 @@ public:
     /// Attributes ///
     path directory_path;
     unordered_map<string,path> file_paths;
+    bool store_length_consensus;
+    bool store_coverage_data;
 
     /// Methods ///
-    ShastaReader(path directory_path);
+    ShastaReader(path directory_path, bool store_length_consensus=false, bool store_coverage_data=true);
 
     // Read all the file paths in directory and store in a map of names:path where `name` is derived from the filename
     void index();

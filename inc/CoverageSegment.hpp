@@ -3,6 +3,7 @@
 #define RUNLENGTH_ANALYSIS_COVERAGESEGMENT_HPP
 
 
+#include "RunlengthSequenceElement.hpp"
 #include "CoverageElement.hpp"
 #include "Base.hpp"
 #include <string>
@@ -20,6 +21,8 @@ public:
     string name;
     vector <vector <CoverageElement> > coverage_data;
     string sequence;
+    vector<uint16_t> lengths;
+    vector<uint16_t> n_coverage;
 
     /// Methods ///
     void print();
