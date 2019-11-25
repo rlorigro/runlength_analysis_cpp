@@ -2,9 +2,11 @@
 #define RUNLENGTH_ANALYSIS_IDENTITY_HPP
 
 #include <iostream>
+#include <string>
 #include <experimental/filesystem>
 
 using std::cout;
+using std::string;
 using std::experimental::filesystem::path;
 
 

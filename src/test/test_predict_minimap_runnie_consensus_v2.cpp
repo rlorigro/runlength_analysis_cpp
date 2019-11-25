@@ -321,6 +321,7 @@ void test(path fasta_ref_path, path runnie_reads_directory, path output_director
             output_file_path,
             fasta_ref_path,
             output_directory,
+            "asm20",
             max_threads);
 }
 
