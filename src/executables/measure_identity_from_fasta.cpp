@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
         value<path>(&reads_fasta_path),
         "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
 
-        ("sequences",
+        ("minimap_preset",
         value<string>(&minimap_preset),
         "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
 
@@ -56,10 +56,10 @@ int main(int argc, char* argv[]){
     }
 
     measure_identity_from_fasta(reads_fasta_path,
-        ref_fasta_path,
-        minimap_preset,
-        output_dir,
-        max_threads);
+                                ref_fasta_path,
+                                output_dir,
+                                minimap_preset,
+                                max_threads);
 
     return 0;
 }
