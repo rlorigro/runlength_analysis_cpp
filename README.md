@@ -23,7 +23,6 @@ Figure that out
 
 #### Finally:
 ```
-sudo apt-get install cmake 
 mkdir build
 cd build
 cmake ..
