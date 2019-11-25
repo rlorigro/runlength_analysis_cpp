@@ -3,7 +3,7 @@ This library was built to replace rlorigro/runlength_analysis. Given raw sequenc
 
 ## Installation
 
-#### Download repo:
+#### Download repo and run library installation script:
 ```
 git clone https://github.com/rlorigro/runlength_analysis_cpp.git
 cd runlength_analysis_cpp/
