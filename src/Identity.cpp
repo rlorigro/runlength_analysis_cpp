@@ -280,6 +280,7 @@ CigarStats get_fasta_cigar_stats(path bam_path,
 void measure_identity_from_fasta(path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
+        string minimap_preset,
         uint16_t max_threads,
         uint64_t chunk_size){
 
@@ -299,7 +300,7 @@ void measure_identity_from_fasta(path reads_fasta_path,
     bool index = true;
     bool delete_intermediates = false;  //TODO: switch to true
     uint16_t k = 15;
-    string minimap_preset = "asm20";    //TODO: make command line argument?
+//    string minimap_preset = "asm20";    //TODO: make command line argument?
     bool explicit_mismatch = true;
 
     // Align reads to the reference

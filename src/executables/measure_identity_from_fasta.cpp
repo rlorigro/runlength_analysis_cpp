@@ -1,9 +1,11 @@
 #include "Identity.hpp"
 #include "boost/program_options.hpp"
 #include <iostream>
+#include <string>
 #include <experimental/filesystem>
 
 using std::cout;
+using std::string;
 using boost::program_options::options_description;
 using boost::program_options::variables_map;
 using boost::program_options::value;
@@ -14,6 +16,7 @@ int main(int argc, char* argv[]){
     path ref_fasta_path;
     path reads_fasta_path;
     path output_dir;
+    string minimap_preset;
     uint16_t max_threads;
 
     options_description options("Arguments");
@@ -25,6 +28,10 @@ int main(int argc, char* argv[]){
 
         ("sequences",
         value<path>(&reads_fasta_path),
+        "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
+
+        ("sequences",
+        value<string>(&minimap_preset),
         "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
 
         ("output_dir",
@@ -50,6 +57,7 @@ int main(int argc, char* argv[]){
 
     measure_identity_from_fasta(reads_fasta_path,
         ref_fasta_path,
+        minimap_preset,
         output_dir,
         max_threads);
 
