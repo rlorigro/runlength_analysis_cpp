@@ -26,5 +26,5 @@ Figure that out
 mkdir build
 cd build
 cmake ..
-make -j 8
+make -j [n_threads]
 ```
