@@ -43,15 +43,27 @@ path minimap_align(path ref_sequence_path,
 
     cerr << "REDIRECTING TO: " << output_filename.string() << "\n";
 
-    // Set up arguments in a readable, modular format
-    vector <string> arguments = {"minimap2",
-                                 "-a",
-                                 "-t", to_string(max_threads),
-                                 "-x", minimap_preset,
-                                 "-k", to_string(k),
-                                 ref_sequence_path.string(),
-                                 read_sequence_path.string(),
-                                 ">", output_path.string()};
+    vector<string> arguments;
+    if (not minimap_preset.empty()) {
+        // Set up arguments in a readable, modular format
+        arguments = {"minimap2",
+                                    "-a",
+                                    "-t", to_string(max_threads),
+                                    "-x", minimap_preset,
+                                    "-k", to_string(k),
+                                    ref_sequence_path.string(),
+                                    read_sequence_path.string(),
+                                    ">", output_path.string()};
+    }
+    else{
+        arguments = {"minimap2",
+                                    "-a",
+                                    "-t", to_string(max_threads),
+                                    "-k", to_string(k),
+                                    ref_sequence_path.string(),
+                                    read_sequence_path.string(),
+                                    ">", output_path.string()};
+    }
 
     if (explicit_mismatch){
         arguments.insert(arguments.begin() + 1, "--eqx");
