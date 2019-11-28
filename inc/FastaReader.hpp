@@ -66,6 +66,9 @@ public:
     // Create a copy of the appropriate sequence container for this reader
     SequenceElement generate_sequence_container();
 
+    // Use htslib to make an .fai
+    void build_fasta_index();
+
 private:
     /// Attributes ///
     ifstream fasta_file;
@@ -77,9 +80,6 @@ private:
     // Assuming the read position of the ifstream is at a sequence, parse the sequence line(s),
     // which precede the next header
     void read_next_sequence(SequenceElement& element);
-
-    // Use htslib to make an .fai
-    void build_fasta_index();
 
     // Read fai
     void read_fasta_index();
