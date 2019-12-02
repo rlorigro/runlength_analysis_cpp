@@ -2,14 +2,19 @@
 #include "FastaReader.hpp"
 #include "Miscellaneous.hpp"
 #include <algorithm>
+#include <random>
 #include <experimental/filesystem>
 #include <boost/program_options.hpp>
 #include "boost/algorithm/string.hpp"
 
+using std::cerr;
 using std::make_heap;
 using std::push_heap;
 using std::pop_heap;
 using std::sort_heap;
+using std::random_device;
+using std::mt19937;
+using std::shuffle;
 using std::experimental::filesystem::path;
 using std::experimental::filesystem::create_directories;
 using boost::program_options::options_description;
@@ -25,10 +30,11 @@ bool is_tab(char c){
 }
 
 
-void read_lengths_from_fasta_index(path index_path, vector<uint32_t>& lengths){
+void read_lengths_from_fasta_index(path index_path, vector<uint32_t>& lengths, uint32_t min_length=0){
     ifstream index_file = ifstream(index_path);
     vector <string> elements;
     string line;
+    uint32_t length;
 
     // Check if file is readable or exists
     if (!index_file.good()){
@@ -40,22 +46,33 @@ void read_lengths_from_fasta_index(path index_path, vector<uint32_t>& lengths){
         split(elements, line, is_tab);
 
         // Each index element is a pair of sequence name (column 0), byte position (column 2), and sequence length (column 1)
-        lengths.emplace_back(stoul(elements[1]));
+        length = stoul(elements[1]);
+
+        if (length > min_length){
+            lengths.emplace_back(length);
+        }
     }
 }
 
 
-void measure_read_length_stats_from_fasta(string comma_separated_paths, path output_dir, uint16_t max_threads) {
+void measure_read_length_stats_from_fasta(string comma_separated_paths, path output_dir, uint32_t min_length, uint64_t max_cumulative_length, uint16_t max_threads) {
     vector<string> paths;
     vector<uint32_t> lengths;
+    vector<uint32_t> lengths_subset;
     string separators = ",";
     split_as_string(paths, comma_separated_paths, separators);
+    uint64_t cumulative_length;
 
     create_directories(output_dir);
     path output_path = output_dir / "read_lengths.txt";
+    output_path = absolute(output_path);
     ofstream out_file(output_path);
 
+    cerr << "WRITING: " << output_path << '\n';
+
     for (auto& path: paths) {
+        cumulative_length = 0;
+        lengths_subset = {};
         lengths = {};
 
         out_file << '>' << path << '\n';
@@ -64,12 +81,26 @@ void measure_read_length_stats_from_fasta(string comma_separated_paths, path out
         reader.build_fasta_index();
 
         read_lengths_from_fasta_index(reader.index_path, lengths);
-        make_heap(lengths.begin(), lengths.end());
-        sort_heap(lengths.begin(), lengths.end());
 
-        for (size_t i=0; i<lengths.size(); i++){
-            out_file << lengths[i];
-            if (i < lengths.size()-1){
+        random_device device;
+        mt19937 random_generator(device());
+        shuffle(lengths.begin(), lengths.end(), random_generator);
+
+        for (auto &length: lengths) {
+            if (cumulative_length < max_cumulative_length) {
+                lengths_subset.emplace_back(length);
+                cumulative_length += length;
+            } else {
+                break;
+            }
+        }
+
+        make_heap(lengths_subset.begin(), lengths_subset.end());
+        sort_heap(lengths_subset.begin(), lengths_subset.end());
+
+        for (size_t i=0; i<lengths_subset.size(); i++) {
+            out_file << lengths_subset[i];
+            if (i < lengths_subset.size() - 1) {
                 out_file << ',';
             }
         }
@@ -82,6 +113,8 @@ int main(int argc, char* argv[]){
     string fasta_paths;
     path output_dir;
     uint16_t max_threads;
+    uint32_t min_length;
+    uint64_t max_cumulative_length;
 
     options_description options("Arguments");
 
@@ -98,7 +131,17 @@ int main(int argc, char* argv[]){
             ("max_threads",
              value<uint16_t>(&max_threads)->
                      default_value(1),
-             "Maximum number of threads to launch");
+             "Maximum number of threads to launch")
+
+            ("min_length",
+             value<uint32_t>(&min_length)->
+                     default_value(1),
+             "Minimum length of read to record")
+
+             ("max_cumulative_length",
+             value<uint64_t>(&max_cumulative_length)->
+                     default_value(std::numeric_limits<uint64_t>::max()),
+             "Minimum length of read to record");
 
     // Store options in a map and apply values to each corresponding variable
     variables_map vm;
@@ -113,6 +156,8 @@ int main(int argc, char* argv[]){
 
     measure_read_length_stats_from_fasta(fasta_paths,
             output_dir,
+            min_length,
+            max_cumulative_length,
             max_threads);
 
     return 0;
