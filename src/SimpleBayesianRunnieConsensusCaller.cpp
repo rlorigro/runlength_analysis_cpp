@@ -299,14 +299,15 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
         for (auto& observation: pileup_column) {
             base_index = uint8_t(observation[BASE]);
 
-            if (observation[REVERSAL] > 0){
-                forward_base_index = 3 - base_index;
-            }
-            else{
-                forward_base_index = base_index;
-            }
+//            if (observation[REVERSAL] > 0){
+//                forward_base_index = 3 - base_index;
+//            }
+//            else{
+//                forward_base_index = base_index;
+//            }
 
-            if (ignoreNonConsensusBaseRepeats and (forward_base_index != consensus_base_index)){
+            if (ignoreNonConsensusBaseRepeats and (base_index != consensus_base_index)){
+//                cout << observation[REVERSAL] << " " << int(base_index) << " " << int(consensus_base_index) << '\n';
                 continue;
             }
 

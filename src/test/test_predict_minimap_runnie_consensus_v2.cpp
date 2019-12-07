@@ -170,9 +170,18 @@ void predict_consensus(Pileup& pileup, Pileup& ref_pileup, SimpleBayesianRunnieC
         if (consensus[1] != ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1]){
             cout << "LENGTH ERROR\n";
             cout << consensus[1] << " " << ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1] << '\n';
+            cout << region.name << ": " << region.start + width_index << '\n';
 
-            size_t min_index = max(size_t(width_index-5), size_t(0));
-            size_t max_index = min(size_t(width_index+5), size_t(pileup.pileup.size())-1);
+            size_t min_index;
+            size_t max_index;
+
+            min_index = max(size_t(width_index-1), size_t(0));
+            max_index = min(size_t(width_index+1), size_t(pileup.pileup.size())-1);
+            PileupGenerator::print(ref_pileup, min_index, max_index);
+            PileupGenerator::print(pileup, min_index, max_index);
+
+            min_index = max(size_t(width_index-10), size_t(0));
+            max_index = min(size_t(width_index+10), size_t(pileup.pileup.size())-1);
             PileupGenerator::print(ref_pileup, min_index, max_index);
             PileupGenerator::print(pileup, min_index, max_index);
         }

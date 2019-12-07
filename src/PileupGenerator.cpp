@@ -60,6 +60,87 @@ void PileupGenerator::print_lowest_free_indexes(){
 }
 
 
+void PileupGenerator::extract_runlength_sequences(vector<RunlengthSequenceElement>& pileup_sequences, Pileup& pileup, size_t min_index, size_t max_index) {
+    pileup_sequences = vector<RunlengthSequenceElement>(pileup.pileup[0].size());
+    vector<float> value;
+    uint16_t length;
+    string base;
+
+    for (size_t width_index = min_index; width_index<max_index; width_index++) {
+        for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++) {
+            value = pileup.pileup[width_index][depth_index];
+
+            // WARNING: this is not a template safe method, not all pileups have length on channel 2
+            length = value[2];
+            base = index_to_base(value[0]);
+
+            if (value[2] > 0) {
+                pileup_sequences[depth_index].lengths.emplace_back(length);
+                pileup_sequences[depth_index].sequence += base;
+            }
+
+            if (pileup.inserts.count(width_index) > 0) {
+                for (auto& column: pileup.inserts.at(width_index)) {
+                    value = column[depth_index];
+
+                    // WARNING: this is not a template safe method, not all pileups have length on channel 2
+                    length = value[2];
+                    base = index_to_base(value[0]);
+
+                    if (value[2] > 0) {
+                        pileup_sequences[depth_index].lengths.emplace_back(length);
+                        pileup_sequences[depth_index].sequence += base;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void PileupGenerator::fetch_sequence_indexes_from_region(Region& region,
+        vector <tuple <string,int64_t,int64_t> >& read_indexes) {
+
+    // Initialize BAM reader and relevant containers
+    this->bam_reader.initialize_region(region.name, region.start, region.stop);
+    AlignedSegment aligned_segment;
+    Coordinate coordinate;
+    Cigar cigar;
+
+    string cigars;
+    string ref_alignment;
+    string read_alignment;
+    string read_alignment_inferred;
+    bool in_left_bound;
+    bool in_right_bound;
+
+    size_t read_true_index_start;
+    size_t read_true_index_stop;
+
+    while (this->bam_reader.next_alignment(aligned_segment)) {
+        cerr << "\33[2K\rParsed: "<< aligned_segment.to_string() << "\n";
+
+        int i = 0;
+        while (aligned_segment.next_coordinate(coordinate, cigar)) {
+            in_left_bound = (coordinate.ref_index >= int64_t(region.start));
+            in_right_bound = (coordinate.ref_index <= int64_t(region.stop));
+
+            if (in_left_bound and in_right_bound){
+                if (i==0){
+                    read_true_index_start = coordinate.read_true_index;
+                }
+                else{
+                    read_true_index_stop = coordinate.read_true_index;
+                }
+                i++;
+            }
+        }
+
+        read_indexes.emplace_back(aligned_segment.read_name, read_true_index_start, read_true_index_stop);
+    }
+}
+
+
 void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
     if (max_index == 0) {
         max_index = pileup.pileup.size();
@@ -130,25 +211,39 @@ void PileupGenerator::update_insert_column(
     if (pileup.inserts.count(insert_anchor_index) > 0) {
 
         // If this insert will fit within the width of the insert columns already present
-        if (size_t(insert_index) < pileup.inserts.at(insert_anchor_index).size()) {
-            // Simply fill in the base
-            pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
-        } else {
+        while (size_t(insert_index) > pileup.inserts.at(insert_anchor_index).size() - 1) {
             // Add another column and then fill in the base
             pileup.inserts.at(insert_anchor_index).push_back(this->default_insert_column);      // copy value because value is stored as class member
-            pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
         }
+
+        // Fill in the base
+        pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
+
     } else {
         // Add a new entry at this position, initialize with a vector, and then fill in the base
         pileup.inserts.insert({insert_anchor_index, this->default_insert_pileup});        // copy value because value is stored as class member
+
+        // If this insert will fit within the width of the insert columns already present
+        while (size_t(insert_index) > pileup.inserts.at(insert_anchor_index).size() - 1) {
+            // Add another column and then fill in the base
+            pileup.inserts.at(insert_anchor_index).push_back(this->default_insert_column);      // copy value because value is stored as class member
+        }
+
         pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
     }
 
 }
 
-void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data){
-    uint64_t insert_anchor_index = pileup_width_index + aligned_segment.reversal;
-    uint64_t insert_index = aligned_segment.subcigar_index - 1;
+void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, uint64_t cigar_length, AlignedSegment& aligned_segment, vector<float>& read_data){
+    uint64_t insert_anchor_index = pileup_width_index + aligned_segment.reversal - 1;
+
+    uint64_t insert_index;
+    if (aligned_segment.reversal) {
+        insert_index = cigar_length - (aligned_segment.subcigar_index-1) - 1;
+    }
+    else{
+        insert_index = aligned_segment.subcigar_index - 1;
+    }
 
     this->update_insert_column(pileup,
             pileup_depth_index,

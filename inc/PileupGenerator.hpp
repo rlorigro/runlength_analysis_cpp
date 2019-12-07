@@ -15,6 +15,7 @@ using std::cout;
 using std::cerr;
 using std::ostream;
 using std::deque;
+using std::tuple;
 using std::unordered_map;
 using std::experimental::filesystem::path;
 
@@ -30,10 +31,15 @@ public:
     PileupGenerator(path bam_path, uint16_t maximum_depth=80);
     void print_lowest_free_indexes();
     static void print(Pileup& pileup, size_t min_index=0, size_t max_index=0);
+    static void extract_runlength_sequences(vector<RunlengthSequenceElement>& pileup_sequences,
+            Pileup& pileup,
+            size_t min_index,
+            size_t max_index);
 
     template <class T> void fetch_region(Region& region, T& sequence_reader, Pileup& pileup);
+    void fetch_sequence_indexes_from_region(Region& region, vector <tuple <string,int64_t,int64_t> >& read_indexes);
     int64_t find_depth_index(int64_t start_index);
-    void parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, AlignedSegment& aligned_segment, vector<float>& read_data);
+    void parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, uint64_t cigar_length, AlignedSegment& aligned_segment, vector<float>& read_data);
     void update_insert_column(
         Pileup& pileup,
         int64_t pileup_depth_index,
@@ -114,14 +120,12 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
                 else{
                     // Do insert-related stuff
                     if (cigar.get_cigar_code_as_string() == "I"){
-                        this->parse_insert(pileup, pileup_width_index, pileup_depth_index, aligned_segment, read_data);
+                        this->parse_insert(pileup, pileup_width_index, pileup_depth_index, cigar.length, aligned_segment, read_data);
                     }
                 }
             }
         }
     }
-
-    this->backfill_insert_columns(pileup);
 }
 
 
