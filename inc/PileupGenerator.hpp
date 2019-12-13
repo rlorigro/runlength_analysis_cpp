@@ -30,7 +30,14 @@ public:
     /// Methods ///
     PileupGenerator(path bam_path, uint16_t maximum_depth=80);
     void print_lowest_free_indexes();
+
+    static void to_strings(vector<vector<string>>& pileup_strings_per_channel,
+            Pileup& pileup,
+            size_t min_index,
+            size_t max_index);
+
     static void print(Pileup& pileup, size_t min_index=0, size_t max_index=0);
+
     static void extract_runlength_sequences(vector<RunlengthSequenceElement>& pileup_sequences,
             Pileup& pileup,
             size_t min_index,

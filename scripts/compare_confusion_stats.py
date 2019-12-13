@@ -91,73 +91,82 @@ def read_percent_error(summary_file_path):
     return base_error_x, base_error_y, length_error_x, length_error_y
 
 
-def main(input_path):
+def main(input_paths):
     fig, axes = pyplot.subplots(nrows=3)
 
-    length_match_coverage_x, length_match_coverage_y, length_mismatch_coverage_x, length_mismatch_coverage_y = read_length_coverage(
-        input_path)
+    length_colors = [(0.122, 0.498, 0.584), (0.122-0.12, 0.498+0.25, 0.584)]
+    base_colors = [(0.945, 0.71, 0.176), (0.945-0.12, 0.71+0.25, 0.176)]
 
-    base_match_coverage_x, base_match_coverage_y, base_mismatch_coverage_x, base_mismatch_coverage_y = read_base_coverage(
-        input_path)
+    for input_index,input_path in enumerate(input_paths):
+        print(input_index, input_path)
+        length_match_coverage_x, length_match_coverage_y, length_mismatch_coverage_x, length_mismatch_coverage_y = read_length_coverage(
+            input_path)
 
-    base_error_x, base_error_y, length_error_x, length_error_y = read_percent_error(input_path)
+        base_match_coverage_x, base_match_coverage_y, base_mismatch_coverage_x, base_mismatch_coverage_y = read_base_coverage(
+            input_path)
 
-    length_color = (0.122, 0.498, 0.584)
-    base_color = (0.945, 0.71, 0.176)
+        base_error_x, base_error_y, length_error_x, length_error_y = read_percent_error(input_path)
 
-    # Find sum of matches + mismatches to get total coverage
-    total_coverage_y = list()
-    for i in range(len(length_match_coverage_y)):
-        total_coverage_y.append(length_match_coverage_y[i] + length_mismatch_coverage_y[i])
+        # Find sum of matches + mismatches to get total coverage
+        total_coverage_y = list()
+        for i in range(len(length_match_coverage_y)):
+            total_coverage_y.append(length_match_coverage_y[i] + length_mismatch_coverage_y[i])
 
-    # The lower y bound for "fill" function is just a line along y=0
-    zeros = [0 for i in range(len(length_match_coverage_x))]
+        # The lower y bound for "fill" function is just a line along y=0
+        zeros = [0 for i in range(len(length_match_coverage_x))]
 
-    # Make custom legend objects
-    custom_lines = [Line2D([0], [0], color=length_color, lw=4),
-                    Line2D([0], [0], color=base_color, lw=4)]
+        # Make custom legend objects
+        custom_lines = [Line2D([0], [0], color=length_colors[input_index], lw=4),
+                        Line2D([0], [0], color=base_colors[input_index], lw=4)]
 
-    axes[2].legend(custom_lines, ["Length", "Base"])
-    axes[1].legend(custom_lines, ["Length", "Base"])
+        axes[2].legend(custom_lines, ["Length", "Base"])
+        axes[1].legend(custom_lines, ["Length", "Base"])
 
-    axes[0].plot(length_match_coverage_x, total_coverage_y)
-    axes[0].fill_between(length_match_coverage_x, y1=zeros, y2=length_match_coverage_y, color=length_color, alpha=0.3)
+        axes[0].plot(length_match_coverage_x, total_coverage_y, color=length_colors[input_index])
+        axes[0].fill_between(length_match_coverage_x, y1=zeros, y2=length_match_coverage_y, color=length_colors[input_index], alpha=0.3)
 
-    axes[0].set_ylabel("Total Coverage")
+        axes[0].set_ylabel("Total Coverage")
 
-    axes[1].plot(length_mismatch_coverage_x, length_mismatch_coverage_y)
-    axes[1].fill_between(length_match_coverage_x, y1=zeros, y2=length_mismatch_coverage_y, color=length_color, alpha=0.3)
+        axes[1].plot(length_mismatch_coverage_x, length_mismatch_coverage_y, color=length_colors[input_index])
+        axes[1].fill_between(length_match_coverage_x, y1=zeros, y2=length_mismatch_coverage_y, color=length_colors[input_index], alpha=0.3)
 
-    axes[1].plot(base_mismatch_coverage_x, base_mismatch_coverage_y)
-    axes[1].fill_between(base_mismatch_coverage_x, y1=zeros, y2=base_mismatch_coverage_y, color=base_color, alpha=0.3)
+        axes[1].plot(base_mismatch_coverage_x, base_mismatch_coverage_y, color=base_colors[input_index])
+        axes[1].fill_between(base_mismatch_coverage_x, y1=zeros, y2=base_mismatch_coverage_y, color=base_colors[input_index], alpha=0.3)
 
-    axes[1].set_ylabel("Mismatches")
+        axes[1].set_ylabel("Mismatches")
 
-    axes[2].fill_between(length_error_x, y1=zeros, y2=length_error_y, color=length_color, alpha=0.3)
-    axes[2].fill_between(base_error_x, y1=zeros, y2=base_error_y, color=base_color, alpha=0.3)
-    axes[2].plot(length_error_x, length_error_y)
-    axes[2].plot(base_error_x, base_error_y)
+        axes[2].fill_between(length_error_x, y1=zeros, y2=length_error_y, color=length_colors[input_index], alpha=0.3)
+        axes[2].fill_between(base_error_x, y1=zeros, y2=base_error_y, color=base_colors[input_index], alpha=0.3)
+        axes[2].plot(length_error_x, length_error_y, color=length_colors[input_index])
+        axes[2].plot(base_error_x, base_error_y, color=base_colors[input_index])
 
-    axes[2].set_ylabel("P(Error)")
+        axes[2].set_ylabel("P(Error)")
 
-    axes[2].set_xlabel("Coverage")
+        axes[2].set_xlabel("Coverage")
 
-    for axis in axes:
-        axis.set_xlim([0,100])
+        for axis in axes:
+            axis.set_xlim([0,100])
 
     pyplot.show()
     pyplot.close()
 
 
+def comma_separated_set(s):
+    tokens = s.strip().split(",")
+    s = set(tokens)
+    return s
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.register("type", "comma_separated_set", comma_separated_set)
 
     parser.add_argument(
         "--input",
-        type=str,
+        type="comma_separated_set",
         required=True,
         help="path of file containing quadrant bounds"
     )
     args = parser.parse_args()
 
-    main(input_path=args.input)
+    main(input_paths=args.input)

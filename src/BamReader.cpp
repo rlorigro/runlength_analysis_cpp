@@ -60,6 +60,21 @@ string CigarStats::to_string(bool verbose){
     s += "n_inserts:\t" + std::to_string(this->n_inserts) + "\n";
     s += "n_deletes:\t" + std::to_string(this->n_deletes) + "\n";
 
+    double sum = this->n_matches + this->n_mismatches + this->n_inserts + this->n_deletes;
+    double mismatch_rate = this->n_mismatches / sum;
+    double insert_rate = this->n_inserts / sum;
+    double delete_rate = this->n_deletes / sum;
+    double indel_rate = double(this->n_inserts + this->n_deletes) / sum;
+
+    s += "mismatch_rate:\t" + std::to_string(mismatch_rate) + "\n";
+    s += "insert_rate:\t" + std::to_string(insert_rate) + "\n";
+    s += "delete_rate:\t" + std::to_string(delete_rate) + "\n";
+    s += "indel_rate:\t" + std::to_string(indel_rate) + "\n";
+    s += "mismatches per 100kb:\t" + std::to_string(mismatch_rate*100000) + "\n";
+    s += "inserts per 100kb:\t" + std::to_string(insert_rate*100000) + "\n";
+    s += "deletes per 100kb:\t" + std::to_string(delete_rate*100000) + "\n";
+    s += "indels per 100kb:\t" + std::to_string(indel_rate*100000) + "\n";
+
     if (verbose) {
         for (auto&[cigar_code, lengths]: this->cigar_lengths) {
             s += ">\"" + Cigar::cigar_name_key.at(cigar_code) + "\"\n";

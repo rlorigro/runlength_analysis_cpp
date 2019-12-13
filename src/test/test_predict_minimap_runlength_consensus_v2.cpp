@@ -163,60 +163,64 @@ void predict_consensus(PileupGenerator& pileup_generator,
         mutex& file_write_mutex){
 
     vector<float> consensus;
+    vector<float> bimodal_consensus;
     string consensus_sequence;
+
+    path bimodal_config_path = "/home/ryan/code/runlength_analysis_cpp/config/SimpleBayesianConsensusCaller-5-bimodal.csv";
+    SimpleBayesianConsensusCaller bimodal_consensus_caller(bimodal_config_path);
+    uint64_t n_cases = 0;
 
     for (size_t width_index = 0; width_index<pileup.pileup.size(); width_index++) {
         // Call standard alignment columns
         consensus_caller(pileup.pileup[width_index], consensus);
         append_consensus_sequence(consensus_sequence, consensus);
 
-        if (consensus[0] != ref_pileup.pileup[width_index][0][Pileup::BASE]){
-            cout << "BASE ERROR\n";
-            cout << consensus[0] << " " << ref_pileup.pileup[width_index][0][Pileup::BASE] << '\n';
-        }
+//        if (consensus[0] != ref_pileup.pileup[width_index][0][Pileup::BASE]){
+//            cout << "BASE ERROR\n";
+//            cout << consensus[0] << " " << ref_pileup.pileup[width_index][0][Pileup::BASE] << '\n';
+//        }
         if ((consensus[1] != ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1]) and (consensus[1] != 0)){
-            cout << "LENGTH ERROR\n";
-            cout << index_to_base(consensus[0]) << '\n';
-            cout << consensus[1] << " " << ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1] << '\n';
-            cout << region.name << ": " << region.start + width_index << '\n';
+            bimodal_consensus_caller(pileup.pileup[width_index], bimodal_consensus);
+
+            if ((bimodal_consensus[1] == consensus[1]) or (ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1] > 10)) {
+                continue;
+            }
+            n_cases++;
+
+            path output_dir = "./output/";
+            create_directories(output_dir);
+            ofstream pileup_file(output_dir.string() + "pileup_" + to_string(region.start) + "_" + to_string(n_cases) + ".txt");
+            ofstream sequence_file(output_dir.string() + "sequence_" + to_string(region.start) + "_" + to_string(n_cases) + ".fasta");
+            ofstream ref_file(output_dir.string() + "ref_" + to_string(region.start) + "_" + to_string(n_cases) + ".fasta");
+
+            pileup_file << "LENGTH ERROR\n";
+            pileup_file << index_to_base(consensus[0]) << '\n';
+            pileup_file << consensus[1] << " " << ref_pileup.pileup[width_index][0][Pileup::REVERSAL+1] << '\n';
+            pileup_file << region.name << ": " << region.start + width_index << '\n';
 
             size_t min_index;
             size_t max_index;
-
             min_index = max(size_t(width_index-10), size_t(0));
             max_index = min(size_t(width_index+10), size_t(pileup.pileup.size())-1);
-            PileupGenerator::print(ref_pileup, min_index, max_index);
-            PileupGenerator::print(pileup, min_index, max_index);
+            vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
 
-//            vector<RunlengthSequenceElement> read_sequences;
-//            vector<RunlengthSequenceElement> ref_sequences;
-//            PileupGenerator::extract_runlength_sequences(read_sequences, pileup, min_index, max_index);
-//            PileupGenerator::extract_runlength_sequences(ref_sequences, ref_pileup, min_index, max_index);
-//
-//            SequenceElement sequence;
-//
-//            cout << ">ref\n";
-//            for (auto& runlength_sequence: ref_sequences){
-//                if (not runlength_sequence.sequence.empty()){
-//                    runlength_decode(runlength_sequence, sequence);
-//                    cout << sequence.sequence << '\n';
-//                }
-//            }
-//            cout << "\n\n";
-//
-//            int i;
-//
-//            i = 0;
-//            for (auto& runlength_sequence: read_sequences){
-//                if (not runlength_sequence.sequence.empty()){
-//                    runlength_decode(runlength_sequence, sequence);
-//                    cout << ">seq_" << i << '\n';
-//                    cout << sequence.sequence << '\n';
-//                    i++;
-//                }
-//            }
+            PileupGenerator::to_strings(pileup_strings_per_channel, ref_pileup, min_index, max_index);
+            for (auto& pileup_strings: pileup_strings_per_channel){
+                for (auto& s: pileup_strings) {
+                    pileup_file << s << "\n";
+                }
+                pileup_file << '\n';
+            }
+            pileup_file << '\n';
 
-            cout << '\n';
+            PileupGenerator::to_strings(pileup_strings_per_channel, pileup, min_index, max_index);
+            for (auto& pileup_strings: pileup_strings_per_channel){
+                for (auto& s: pileup_strings) {
+                    pileup_file << s << "\n";
+                }
+                pileup_file << '\n';
+            }
+            pileup_file << '\n';
 
             int i = 0;
             SequenceElement sequence;
@@ -232,15 +236,12 @@ void predict_consensus(PileupGenerator& pileup_generator,
 
                 reads_runlength_reader.get_sequence(runlength_sequence, name);
 
-//                cout << name << " " << start << " " << stop << '\n';
-//                cout << runlength_sequence.name << " " << runlength_sequence.sequence.size() << " " << runlength_sequence.lengths.size() <<  '\n';
-
                 runlength_sequence.sequence = runlength_sequence.sequence.substr(start, stop-start);
                 runlength_sequence.lengths = std::vector<uint16_t>(runlength_sequence.lengths.begin() + start, runlength_sequence.lengths.begin() + stop);
 
                 runlength_decode(runlength_sequence, sequence);
-                cout << ">seq_" << i << '\n';
-                cout << sequence.sequence << '\n';
+                sequence_file << ">seq_" << i << '\n';
+                sequence_file << sequence.sequence << '\n';
                 i++;
             }
 
@@ -248,8 +249,8 @@ void predict_consensus(PileupGenerator& pileup_generator,
             runlength_sequence.sequence = runlength_sequence.sequence.substr(test_region.start, test_region.stop-test_region.start);
             runlength_sequence.lengths = std::vector<uint16_t>(runlength_sequence.lengths.begin() + test_region.start, runlength_sequence.lengths.begin() + test_region.stop);
             runlength_decode(runlength_sequence, sequence);
-            cout << ">ref\n";
-            cout << sequence.sequence << '\n';
+            ref_file << ">ref\n";
+            ref_file << sequence.sequence << '\n';
 
         }
 
@@ -317,11 +318,12 @@ void get_consensus(path bam_path,
     RunlengthReader ref_runlength_reader(runlength_ref_path);
     RunlengthReader reads_runlength_reader(runlength_reads_path);
 
-//    vector<Region> regions;
-//    uint64_t chunk_size = 100*1000;
-//    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
+    vector<Region> regions;
+    uint64_t chunk_size = 100*1000;
+    chunk_sequences_into_regions(regions, ref_runlength_reader.indexes, chunk_size);
 
-    vector<Region> regions = {Region("hg38_dna", 2*1000*1000, 2*1000*1000+50*1000)}; //TODO: UNDO THIS TEST
+//    vector<Region> regions = {Region("hg38_dna", 2*1000*1000, 2*1000*1000+400*1000)}; //TODO: UNDO THIS TEST
+//    vector<Region> regions = {Region("CM010818.1", 74000000, 74000000+400*1000)}; //TODO: UNDO THIS TEST
 
     vector<thread> threads;
     atomic<size_t> job_index = 0;

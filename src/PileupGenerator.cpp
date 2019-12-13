@@ -141,11 +141,10 @@ void PileupGenerator::fetch_sequence_indexes_from_region(Region& region,
 }
 
 
-void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
+void PileupGenerator::to_strings(vector<vector<string>>& pileup_strings_per_channel, Pileup& pileup, size_t min_index, size_t max_index) {
     if (max_index == 0) {
         max_index = pileup.pileup.size();
     }
-    vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
 
     size_t i = 0;
     string s_value;
@@ -154,11 +153,11 @@ void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
     cout << "n_columns: " << pileup.pileup.size() << '\n';
     cout << "n_alignments: " << pileup.n_alignments << '\n';
 
-    for (size_t width_index = min_index; width_index<max_index; width_index++){
-        for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++){
+    for (size_t width_index = min_index; width_index < max_index; width_index++) {
+        for (size_t depth_index = 0; depth_index < pileup.pileup[width_index].size(); depth_index++) {
 
             i = 0;
-            for (auto& pileup_strings: pileup_strings_per_channel) {
+            for (auto &pileup_strings: pileup_strings_per_channel) {
                 if (depth_index >= pileup_strings.size()) {
                     pileup_strings.push_back("");
                 }
@@ -166,8 +165,7 @@ void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
                 value = pileup.pileup[width_index][depth_index][i];
                 if (i == 0) {
                     s_value = float_to_base(value);
-                }
-                else{
+                } else {
                     s_value = to_string(min(int(9), int(value)));
                 }
 
@@ -175,7 +173,7 @@ void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
 
                 // If there are inserts in this column, append them to the strings
                 if (pileup.inserts.count(width_index) > 0) {
-                    for (auto& column: pileup.inserts.at(width_index)) {
+                    for (auto &column: pileup.inserts.at(width_index)) {
                         value = column[depth_index][i];
                         if (i == 0) {
                             s_value = float_to_base(value);
@@ -190,6 +188,12 @@ void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
             }
         }
     }
+}
+
+
+void PileupGenerator::print(Pileup& pileup, size_t min_index, size_t max_index){
+    vector<vector<string>> pileup_strings_per_channel(pileup.pileup[0][0].size());
+    PileupGenerator::to_strings(pileup_strings_per_channel, pileup, min_index, max_index);
 
     for (auto& pileup_strings: pileup_strings_per_channel){
         for (auto& s: pileup_strings) {
