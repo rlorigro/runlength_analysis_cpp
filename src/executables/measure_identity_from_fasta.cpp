@@ -28,11 +28,11 @@ int main(int argc, char* argv[]){
 
         ("sequences",
         value<path>(&reads_fasta_path),
-        "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
+        "File path of FASTA file containing QUERY sequences to be Run-length encoded")
 
         ("minimap_preset",
         value<string>(&minimap_preset),
-        "File path of reference FASTA file containing QUERY sequences to be Run-length encoded")
+        "Minimap preset to be used, e.g. asm20, map-ont")
 
         ("output_dir",
         value<path>(&output_dir)->

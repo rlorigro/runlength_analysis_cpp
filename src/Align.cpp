@@ -21,10 +21,10 @@ using std::experimental::filesystem::create_directories;
 path minimap_align(path ref_sequence_path,
                    path read_sequence_path,
                    path output_dir,
-                   uint16_t k,
                    string minimap_preset,
                    bool explicit_mismatch,
-                   uint16_t max_threads){
+                   uint16_t max_threads,
+                   uint16_t k){
 
     // Find filename prefixes to be combined to generate predictable output filename
     string ref_filename_prefix;
@@ -51,6 +51,15 @@ path minimap_align(path ref_sequence_path,
                                     "-t", to_string(max_threads),
                                     "-x", minimap_preset,
                                     "-k", to_string(k),
+                                    ref_sequence_path.string(),
+                                    read_sequence_path.string(),
+                                    ">", output_path.string()};
+    }
+    else if (k==0){
+        arguments = {"minimap2",
+                                    "-a",
+                                    "-t", to_string(max_threads),
+                                    "-x", minimap_preset,
                                     ref_sequence_path.string(),
                                     read_sequence_path.string(),
                                     ">", output_path.string()};
@@ -143,7 +152,7 @@ path align(path ref_sequence_path,
     path output_path;
 
     // Perform the initial call to aligner
-    sam_output_path = minimap_align(ref_sequence_path, read_sequence_path, output_dir, k, minimap_preset, explicit_mismatch, max_threads);
+    sam_output_path = minimap_align(ref_sequence_path, read_sequence_path, output_dir, minimap_preset, explicit_mismatch, max_threads, k);
     output_path = sam_output_path;
 
     if (sort) {

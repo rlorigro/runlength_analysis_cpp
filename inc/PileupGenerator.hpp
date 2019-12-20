@@ -115,6 +115,7 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
             in_right_bound = (coordinate.ref_index <= int64_t(region.stop));
 
             if (in_left_bound and in_right_bound){
+
                 // Update the current width index
                 pileup_width_index = coordinate.ref_index - region.start;
 
@@ -123,6 +124,14 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
                 if (cigar.is_ref_move()) {
                     // Update the pileup base
                     pileup.pileup[pileup_width_index][pileup_depth_index] = read_data;
+
+                    // For convenience, update the max_observed_depth variable in the pileup object
+                    if (size_t(pileup_depth_index + 1) > pileup.max_observed_depth){
+                        pileup.max_observed_depth = pileup_depth_index + 1;
+                    }
+
+                    // Also track the coverage at every position in pileup
+                    pileup.coverage_per_position[pileup_width_index]++;
                 }
                 else{
                     // Do insert-related stuff

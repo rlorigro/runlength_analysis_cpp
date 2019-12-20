@@ -300,7 +300,6 @@ void measure_identity_from_fasta(path reads_fasta_path,
     bool index = true;
     bool delete_intermediates = false;  //TODO: switch to true
     uint16_t k = 19;
-//    string minimap_preset = "asm20";    //TODO: make command line argument?
     bool explicit_mismatch = true;
 
     // Align reads to the reference

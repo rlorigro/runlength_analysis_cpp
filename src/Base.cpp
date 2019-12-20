@@ -149,6 +149,10 @@ bool is_valid_base_index(float index){
     return (index >= 0) and (index <=3);
 }
 
+bool is_valid_base_index(uint8_t index){
+    return (index >= 0) and (index <=3);
+}
+
 bool is_gap(uint8_t index){
     return (index > 3);
 }

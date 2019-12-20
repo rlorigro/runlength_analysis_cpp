@@ -21,7 +21,7 @@ path align(path ref_sequence_path,
            bool sort = true,
            bool index = true,
            bool delete_intermediates = true,
-           uint16_t k = 15,                     // Seed or kmer size (overrides any preset)
+           uint16_t k = 0,                     // Seed or kmer size (overrides any preset)
            string minimap_preset = "map-ont",   // Which preset to use (affects many params)
            bool explicit_mismatch = true,
            uint16_t max_threads = 1);
@@ -31,10 +31,10 @@ path align(path ref_sequence_path,
 path minimap_align(path ref_sequence_path,
                    path read_sequence_path,
                    path output_dir,
-                   uint16_t k,                  // Seed or kmer size (overrides any preset)
                    string minimap_preset,       // Which preset to use (affects many params)
                    bool explicit_mismatch,
-                   uint16_t max_threads);
+                   uint16_t max_threads,
+                   uint16_t k=0);                  // Seed or kmer size (overrides any preset), if 0, no override
 
 
 // Call to samtools sort. Returns the path of the sorted BAM file.

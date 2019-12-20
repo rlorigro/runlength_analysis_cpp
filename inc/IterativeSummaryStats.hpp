@@ -2,28 +2,51 @@
 #ifndef RUNLENGTH_ANALYSIS_ITERATIVESUMMARYSTATS_HPP
 #define RUNLENGTH_ANALYSIS_ITERATIVESUMMARYSTATS_HPP
 
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 
+using std::cout;
+using std::isnan;
 using std::runtime_error;
 
 
 template <class T> class IterativeSummaryStats {
-private:
+public:
     /// Attributes ///
     T k;
     T n;
     T sum;
     T sum_of_squares;
 
-public:
     /// Methods ///
     IterativeSummaryStats();
     void add(T x);
     void remove(T x);
     double get_mean();
     double get_variance();
+    T size();
+    bool empty();
 };
+
+
+template <class T> void operator+=(IterativeSummaryStats<T>& a, IterativeSummaryStats<T>& b){
+    /// Might break the add and remove functions?? cant be bothered to test this...
+    a.n += b.n;
+    a.sum += b.sum;
+    a.sum_of_squares += b.sum_of_squares;
+}
+
+
+template <class T> T IterativeSummaryStats<T>::size(){
+    return this->n;
+}
+
+
+template <class T> bool IterativeSummaryStats<T>::empty(){
+    return (this->n == 0);
+}
+
 
 template <class T> IterativeSummaryStats<T>::IterativeSummaryStats(){
     this->k = 0;
@@ -31,6 +54,7 @@ template <class T> IterativeSummaryStats<T>::IterativeSummaryStats(){
     this->sum = 0;
     this->sum_of_squares = 0;
 }
+
 
 template <class T> void IterativeSummaryStats<T>::add(T x){
     if (this->n == 0){
@@ -42,6 +66,7 @@ template <class T> void IterativeSummaryStats<T>::add(T x){
     this->n++;
 }
 
+
 template <class T> void IterativeSummaryStats<T>::remove(T x){
     if (this->n == 0){
         throw runtime_error("ERROR: cannot remove a value from empty IterativeSummaryStats object");
@@ -52,6 +77,7 @@ template <class T> void IterativeSummaryStats<T>::remove(T x){
     this->n--;
 }
 
+
 template <class T> double IterativeSummaryStats<T>::get_mean() {
     ///
     /// K + Ex / n
@@ -61,11 +87,21 @@ template <class T> double IterativeSummaryStats<T>::get_mean() {
     return mean;
 }
 
+
 template <class T> double IterativeSummaryStats<T>::get_variance() {
     ///
     /// (Ex2 - (Ex*Ex)/n) / (n-1)
     ///
-    double variance = (this->sum_of_squares - double(this->sum*this->sum)/this->n) / (this->n-1);
+
+
+    double variance;
+
+    if (this->n > 1){
+        variance = (this->sum_of_squares - double(this->sum * this->sum) / this->n) / (this->n - 1);
+    }
+    else{
+        variance = 0;
+    }
 
     return variance;
 }
