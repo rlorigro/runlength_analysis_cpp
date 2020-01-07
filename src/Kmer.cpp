@@ -1,11 +1,9 @@
 
 #include "Kmer.hpp"
 #include "Base.hpp"
-//#include <bitset>
 
 using std::runtime_error;
 using std::to_string;
-//using std::bitset;
 
 
 KmerStats::KmerStats()=default;
@@ -14,6 +12,40 @@ KmerStats::KmerStats()=default;
 KmerStats::KmerStats(uint8_t k){
     this->qualities.resize(pow(4,k));
     this->k = k;
+}
+
+
+KmerConfusionStats::KmerConfusionStats()=default;
+
+KmerConfusionStats::KmerConfusionStats(uint8_t k){
+    this->k = k;
+}
+
+
+void operator+=(KmerConfusionStats& a, KmerConfusionStats& b){
+    for (auto& [ref_kmer_index, submap]: b.confusion){
+        for (auto& [read_kmer_index, frequency]: submap) {
+            a.confusion[ref_kmer_index][read_kmer_index] += frequency;
+        }
+    }
+}
+
+
+string KmerConfusionStats::to_string(){
+    string s;
+    for (auto& [ref_kmer_index, submap]: this->confusion){
+        double sum = 0;
+
+        for (auto& [read_kmer_index, frequency]: submap) {
+            sum += frequency;
+        }
+
+        for (auto& [read_kmer_index, frequency]: submap) {
+            s += kmer_index_to_string(ref_kmer_index, k) + "," + kmer_index_to_string(read_kmer_index, k) + "," + std::to_string(double(frequency)/sum) + "," + std::to_string(uint64_t(sum)) + "\n";
+        }
+    }
+
+    return s;
 }
 
 
@@ -26,8 +58,9 @@ string KmerStats::to_string(){
             string kmer_string = kmer_index_to_string(middle_kmer_index, k);
             string mean_string = std::to_string(stat.get_mean());
             string variance_string = std::to_string(stat.get_variance());
+            string n_string = std::to_string(stat.n);
 
-            s += kmer_string + " " + mean_string  + " " + variance_string + '\n';
+            s += std::to_string(stat.n) + "," + kmer_string + "," + mean_string  + "," + variance_string + "," + n_string + '\n';
         }
         middle_kmer_index++;
     }

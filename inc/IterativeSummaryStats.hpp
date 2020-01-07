@@ -5,10 +5,12 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 using std::cout;
 using std::isnan;
 using std::runtime_error;
+using std::vector;
 
 
 template <class T> class IterativeSummaryStats {
@@ -64,6 +66,10 @@ template <class T> void IterativeSummaryStats<T>::add(T x){
     this->sum += x - this->k;
     this->sum_of_squares += (x - this->k)*(x - this->k);
     this->n++;
+
+    if (this->sum < 0){
+        cout << "";
+    }
 }
 
 
@@ -105,5 +111,43 @@ template <class T> double IterativeSummaryStats<T>::get_variance() {
 
     return variance;
 }
+
+
+template <class T> double pool_variances(vector <IterativeSummaryStats <T> >& stats){
+    double numerator = 0;
+    double denominator = 0;
+    double variance;
+
+    for (auto& s: stats){
+        if (s.n == 0){
+            continue;
+        }
+        numerator += (s.n - 1)*s.get_variance();
+        denominator += s.n - 1;
+    }
+
+    if (denominator == 0){
+        variance = 0;
+    }
+    else{
+        variance = numerator/denominator;
+    }
+
+    return variance;
+}
+
+
+template <class T> double pool_means(vector <IterativeSummaryStats <T> >& stats){
+    double numerator = 0;
+    double denominator = 0;
+
+    for (auto& s: stats){
+        numerator += s.get_mean()*s.n;
+        denominator += s.n;
+    }
+
+    return numerator/denominator;
+}
+
 
 #endif //RUNLENGTH_ANALYSIS_ITERATIVESUMMARYSTATS_HPP

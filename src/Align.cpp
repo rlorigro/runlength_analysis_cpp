@@ -43,37 +43,24 @@ path minimap_align(path ref_sequence_path,
 
     cerr << "REDIRECTING TO: " << output_filename.string() << "\n";
 
-    vector<string> arguments;
-    if (not minimap_preset.empty()) {
-        // Set up arguments in a readable, modular format
-        arguments = {"minimap2",
+    // Set up arguments in a readable, modular format
+    vector<string> arguments = {"minimap2",
                                     "-a",
                                     "-t", to_string(max_threads),
-                                    "-x", minimap_preset,
-                                    "-k", to_string(k),
                                     ref_sequence_path.string(),
                                     read_sequence_path.string(),
-                                    ">", output_path.string()};
-    }
-    else if (k==0){
-        arguments = {"minimap2",
-                                    "-a",
-                                    "-t", to_string(max_threads),
-                                    "-x", minimap_preset,
-                                    ref_sequence_path.string(),
-                                    read_sequence_path.string(),
-                                    ">", output_path.string()};
-    }
-    else{
-        arguments = {"minimap2",
-                                    "-a",
-                                    "-t", to_string(max_threads),
-                                    "-k", to_string(k),
-                                    ref_sequence_path.string(),
-                                    read_sequence_path.string(),
-                                    ">", output_path.string()};
-    }
+                                    ">", output_path.string()
+    };
 
+    // Add any optional arguments specified by user
+    if (not minimap_preset.empty()) {
+        arguments.insert(arguments.begin() + 1, "-x");
+        arguments.insert(arguments.begin() + 2, minimap_preset);
+    }
+    if (k > 0){
+        arguments.insert(arguments.begin() + 1, "-k");
+        arguments.insert(arguments.begin() + 2, to_string(k));
+    }
     if (explicit_mismatch){
         arguments.insert(arguments.begin() + 1, "--eqx");
     }

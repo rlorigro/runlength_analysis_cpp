@@ -71,8 +71,8 @@ void test_standard_pileup(path project_directory){
     int i = 0;
     for (auto& index: read_indexes){
         string name = std::get<0>(index);
-        int64_t start = std::get<1>(index);
-        int64_t stop = std::get<2>(index);
+//        int64_t start = std::get<1>(index);
+//        int64_t stop = std::get<2>(index);
 
         sequence_reader.get_sequence(sequence, name);
 

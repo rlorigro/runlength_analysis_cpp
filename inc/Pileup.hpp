@@ -73,8 +73,6 @@ public:
     unordered_map <uint64_t, unordered_set <uint64_t> > middle_kmers;   // The kmers and their coverages in the middle
                                                                         // of the window
 
-    KmerStats kmer_stats;                               // What is the mean and variance of the quality of each kmer
-
     vector <unordered_set <size_t> > kmer_indexes;      // This is all the kmers in the current window, possibly
                                                         // including inserts, and the indexes of their supporting reads
 
@@ -86,8 +84,11 @@ public:
     uint8_t k;
 
     PileupKmerIterator(Pileup& pileup, size_t window_size, uint8_t k);
+    PileupKmerIterator(Pileup& pileup, size_t window_size, uint8_t k, KmerStats& kmer_stats);
     string to_string();
     void step(Pileup& pileup);
+    void update_coverage_stats(Pileup& pileup, KmerStats& kmer_stats);
+    void update_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats);
 };
 
 

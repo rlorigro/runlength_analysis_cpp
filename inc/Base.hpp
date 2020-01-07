@@ -34,6 +34,8 @@ bool is_valid_base(char base);
 
 bool is_valid_base_index(float index);
 
+bool is_valid_base_index(uint64_t index);
+
 bool is_valid_base_index(uint8_t index);
 
 bool is_gap(uint8_t index);

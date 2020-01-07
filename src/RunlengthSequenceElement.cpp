@@ -28,7 +28,7 @@ void RunlengthSequenceElement::get_read_data(vector<float>& read_data, Cigar& ci
         float base = base_to_float(this->sequence[coordinate.read_true_index]);
 
         // Complement base if necessary
-        if (alignment.reversal) {
+        if (alignment.reversal and is_valid_base_index(base)) {
             base = 3 - base;
         }
 

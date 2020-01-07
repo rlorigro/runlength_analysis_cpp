@@ -268,7 +268,6 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
     vector<double> x(this->maxOutputRunlength+1);         // The distribution emitted by the basecaller for each pair of discrete weibull parameters
     size_t priorIndex = -1;         // Used to determine which prior probability vector to access (AT=0 or GC=1)
     uint8_t base_index;             // Base of the observation
-    uint8_t forward_base_index;     // Base of the observation
     double scale;                   // The weibull parameter
     double shape;                   // The weibull parameter
     uint16_t y;                     // Element of Y = {y_0, y_1, ..., y_j} true repeat between 0 and j=max_runlength
@@ -298,13 +297,6 @@ uint16_t SimpleBayesianRunnieConsensusCaller::predictRunlength(
 
         for (auto& observation: pileup_column) {
             base_index = uint8_t(observation[BASE]);
-
-//            if (observation[REVERSAL] > 0){
-//                forward_base_index = 3 - base_index;
-//            }
-//            else{
-//                forward_base_index = base_index;
-//            }
 
             if (ignoreNonConsensusBaseRepeats and (base_index != consensus_base_index)){
 //                cout << observation[REVERSAL] << " " << int(base_index) << " " << int(consensus_base_index) << '\n';

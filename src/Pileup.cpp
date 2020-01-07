@@ -57,8 +57,10 @@ void PileupReadKmerIterator::push_right_kmer(uint8_t base){
 
     uint64_t kmer_index;
 
-    // Update kmer
-    this->current_kmer.emplace_back(base);
+    // Update kmer, ignoring anything not canonical
+    if (is_valid_base_index(base)){
+        this->current_kmer.emplace_back(base);
+    }
 
     if (current_kmer.size() > this->k) {
         this->current_kmer.pop_front();
@@ -134,8 +136,23 @@ PileupKmerIterator::PileupKmerIterator(Pileup& pileup, size_t window_size, uint8
         throw runtime_error("ERROR: window size must be odd or it has no middle index");
     }
 
-    // Track the coverage/quality/overlap probability of kmers
-    this->kmer_stats = KmerStats(k);
+    // Initialize read iterators
+    this->read_iterators = vector <PileupReadKmerIterator>();
+
+    // Initialize all the read iterators for this pileup
+    for (size_t i=0; i<pileup.max_observed_depth; i++){
+        this->read_iterators.emplace_back(window_size, i, k);
+    }
+
+    this->window_size = window_size;
+    this->k = k;
+}
+
+
+PileupKmerIterator::PileupKmerIterator(Pileup& pileup, size_t window_size, uint8_t k, KmerStats& kmer_stats){
+    if (window_size % 2 != 1){
+        throw runtime_error("ERROR: window size must be odd or it has no middle index");
+    }
 
     // Initialize read iterators
     this->read_iterators = vector <PileupReadKmerIterator>();
@@ -151,8 +168,6 @@ PileupKmerIterator::PileupKmerIterator(Pileup& pileup, size_t window_size, uint8
 
 
 void PileupKmerIterator::step(Pileup& pileup){
-    double quality;
-    uint16_t coverage;
     this->middle_kmers = {};
 
     // Step each of the read iterators
@@ -168,6 +183,14 @@ void PileupKmerIterator::step(Pileup& pileup){
             }
         }
     }
+
+    this->width_index++;
+}
+
+
+void PileupKmerIterator::update_coverage_stats(Pileup& pileup, KmerStats& kmer_stats){
+    double quality;
+    uint16_t coverage;
 
     // Calculate the percentage of reads that contain each kmer and add it to the stats
     for (auto& [middle_kmer_index, kmer_coverage_set]: this->middle_kmers){
@@ -185,8 +208,16 @@ void PileupKmerIterator::step(Pileup& pileup){
         quality = min(1.0,quality);
 
         // Record this instance of quality
-        this->kmer_stats.update_quality(middle_kmer_index, quality);
+        kmer_stats.update_quality(middle_kmer_index, quality);
     }
+}
 
-    this->width_index++;
+
+void PileupKmerIterator::update_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats){
+    for (auto& [ref_kmer_index,_]: ref_pileup_iterator.middle_kmers){
+        for (auto& [read_kmer_index, supporting_reads]: this->middle_kmers){
+//            cout << ref_kmer_index << " " << read_kmer_index << " " << supporting_reads.size() << '\n';
+            kmer_confusion_stats.confusion[ref_kmer_index][read_kmer_index] += supporting_reads.size();
+        }
+    }
 }

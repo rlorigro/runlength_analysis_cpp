@@ -137,29 +137,41 @@ string index_to_base(uint8_t index){
     return index_to_base_map[index];
 }
 
+
 string float_to_base(float index){
     return index_to_base_map[size_t(index)];
 }
+
 
 char float_to_base_char(float index){
     return index_to_base_char_map[size_t(index)];
 }
 
+
 bool is_valid_base_index(float index){
     return (index >= 0) and (index <=3);
 }
+
+
+bool is_valid_base_index(uint64_t index){
+    return (index >= 0) and (index <=3);
+}
+
 
 bool is_valid_base_index(uint8_t index){
     return (index >= 0) and (index <=3);
 }
 
+
 bool is_gap(uint8_t index){
     return (index > 3);
 }
 
+
 bool is_gap(float index){
     return (index > 3);
 }
+
 
 bool is_empty(float index){
     return (index == Pileup::EMPTY);

@@ -102,7 +102,7 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
 
     while (bam_reader.next_alignment(aligned_segment)) {
         pileup.n_alignments++;
-        cerr << "\33[2K\rParsed: "<< aligned_segment.to_string() << "\n";
+//        cerr << "\33[2K\rParsed: "<< aligned_segment.to_string() << "\n";
 
         sequence_reader.get_sequence(read_sequence, aligned_segment.read_name);
         pileup_depth_index = find_depth_index(aligned_segment.ref_start_index - region.start);
@@ -185,6 +185,8 @@ template <class T> void PileupGenerator::generate_reference_pileup(Pileup& pileu
             }
         }
     }
+
+    ref_pileup.max_observed_depth = 1;
 }
 
 

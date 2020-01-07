@@ -10,7 +10,7 @@ using std::cerr;
 using std::ifstream;
 
 
-void generate_test_pileup(Pileup& pileup){
+void generate_test_pileup(Pileup& ref_pileup, Pileup& read_pileup){
     path script_path = __FILE__;
     path project_directory = script_path.parent_path().parent_path().parent_path();
 
@@ -66,16 +66,18 @@ void generate_test_pileup(Pileup& pileup){
     FastaReader ref_reader = FastaReader(absolute_fasta_ref_path);
     FastaReader sequence_reader = FastaReader(absolute_fasta_reads_path);
 
-    pileup_generator.fetch_region(region, sequence_reader, pileup);
+    pileup_generator.fetch_region(region, sequence_reader, read_pileup);
+    pileup_generator.generate_reference_pileup(read_pileup, ref_pileup, region, ref_reader);
 }
 
 
 int main(){
-    Pileup pileup;
+    Pileup ref_pileup;
+    Pileup read_pileup;
 
-    generate_test_pileup(pileup);
+    generate_test_pileup(ref_pileup, read_pileup);
 
-    PileupGenerator::print(pileup);
+    PileupGenerator::print(read_pileup);
 
     size_t depth_index = 1;
     size_t window_size = 7;
@@ -90,7 +92,7 @@ int main(){
         unordered_map <uint64_t, unordered_set <uint64_t> > middle_kmers;
 
         // Walk along the pileup in a windowed manner
-        iterator.step(pileup, middle_kmers);
+        iterator.step(read_pileup, middle_kmers);
 
         for (const auto& item: iterator.current_kmer) {
             cout << index_to_base(item);
@@ -109,15 +111,47 @@ int main(){
 
 
     // Test the overarching class which contains as many read iterators as the max observed coverage in the pileup
-    PileupKmerIterator pileup_iterator(pileup, window_size, k);
+    PileupKmerIterator pileup_iterator(read_pileup, window_size, k);
 
-    cout << "max_depth: " << pileup.max_observed_depth << '\n';
+    cout << "max_depth: " << read_pileup.max_observed_depth << '\n';
+    KmerStats kmer_stats(k);
 
-    for (size_t i=0; i<pileup.pileup.size() - 1; i++) {
-        pileup_iterator.step(pileup);
+    for (size_t i=0; i<read_pileup.pileup.size() - 1; i++) {
+        pileup_iterator.step(read_pileup);
+        pileup_iterator.update_coverage_stats(read_pileup, kmer_stats);
     }
 
-    cout << pileup_iterator.kmer_stats.to_string();
+    cout << kmer_stats.to_string();
+
+
+    // Test ref iterator
+    KmerConfusionStats kmer_confusion_stats;
+
+    PileupGenerator::print(ref_pileup);
+
+    PileupKmerIterator ref_pileup_iterator(ref_pileup, window_size, k);
+    PileupKmerIterator read_pileup_iterator(read_pileup, window_size, k);
+
+    for (size_t i = 0; i < read_pileup.pileup.size() - 1; i++) {
+        ref_pileup_iterator.step(ref_pileup);
+
+        for (auto& [kmer_index, _]: ref_pileup_iterator.middle_kmers){
+            cout << kmer_index_to_string(kmer_index, k);
+        }
+
+        cout << '\n';
+
+        for (auto& [kmer_index, _]: read_pileup_iterator.middle_kmers){
+            cout << kmer_index_to_string(kmer_index, k) << ' ';
+        }
+
+        cout << '\n';
+
+        read_pileup_iterator.step(read_pileup);
+        read_pileup_iterator.update_confusion_stats(ref_pileup_iterator, kmer_confusion_stats);
+    }
+
+    cout << kmer_confusion_stats.to_string() << '\n';
 
     return 0;
 }
