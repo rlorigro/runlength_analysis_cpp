@@ -88,7 +88,8 @@ public:
     string to_string();
     void step(Pileup& pileup);
     void update_coverage_stats(Pileup& pileup, KmerStats& kmer_stats);
-    void update_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats);
+    void update_ref_kmer_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats);
+    void update_read_kmer_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats);
 };
 
 

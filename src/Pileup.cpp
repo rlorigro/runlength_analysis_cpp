@@ -213,11 +213,18 @@ void PileupKmerIterator::update_coverage_stats(Pileup& pileup, KmerStats& kmer_s
 }
 
 
-void PileupKmerIterator::update_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats){
+void PileupKmerIterator::update_ref_kmer_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats){
     for (auto& [ref_kmer_index,_]: ref_pileup_iterator.middle_kmers){
         for (auto& [read_kmer_index, supporting_reads]: this->middle_kmers){
-//            cout << ref_kmer_index << " " << read_kmer_index << " " << supporting_reads.size() << '\n';
             kmer_confusion_stats.confusion[ref_kmer_index][read_kmer_index] += supporting_reads.size();
+        }
+    }
+}
+
+void PileupKmerIterator::update_read_kmer_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats){
+    for (auto& [ref_kmer_index,_]: ref_pileup_iterator.middle_kmers){
+        for (auto& [read_kmer_index, supporting_reads]: this->middle_kmers){
+            kmer_confusion_stats.confusion[read_kmer_index][ref_kmer_index] += supporting_reads.size();
         }
     }
 }

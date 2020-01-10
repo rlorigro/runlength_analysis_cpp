@@ -148,7 +148,7 @@ int main(){
         cout << '\n';
 
         read_pileup_iterator.step(read_pileup);
-        read_pileup_iterator.update_confusion_stats(ref_pileup_iterator, kmer_confusion_stats);
+        read_pileup_iterator.update_ref_kmer_confusion_stats(ref_pileup_iterator, kmer_confusion_stats);
     }
 
     cout << kmer_confusion_stats.to_string() << '\n';

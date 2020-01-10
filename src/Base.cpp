@@ -126,7 +126,7 @@ float base_to_float(char base){
         index = 4;
     }
     else{
-        throw runtime_error("ERROR: base_to_index encountered invalid base: " + string(1,base));
+        throw runtime_error("ERROR: base_to_float encountered invalid base: " + string(1,base));
     }
 
     return index;

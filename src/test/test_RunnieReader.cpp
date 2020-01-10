@@ -10,13 +10,14 @@ using std::tie;
 int main() {
     path script_path = __FILE__;
     path project_directory = script_path.parent_path().parent_path().parent_path();
-    path relative_data_path = "/data/test/runnie/";
+    path relative_data_path = "/data/test/runnie/v2.1/";
     path absolute_data_path = project_directory / relative_data_path;
 
     cout << "TESTING " << absolute_data_path << "\n";
     cout << "RUNNIE READER TEST: \n";
 
     RunnieReader reader = RunnieReader(absolute_data_path);
+    reader.index();
 
     vector<RunnieSequenceElement> sequences;
     reader.fetch_all_sequences(sequences);
@@ -51,10 +52,7 @@ int main() {
         cout << matrix_to_string(matrix) << "\n";
     }
 
-    vector<string> names = {"284eaf32-5758-4df8-90b7-fddb3b4928e7",
-                            "f1a9eee6-c30a-47b3-9882-d0f8fe7cf78f",
-                            "6597b991-4bc1-4da3-913d-35482237e725",
-                            "9cc73efa-837f-49c3-93fb-c8273be57181"};
+    vector<string> names = {"0e51e72e-4704-4629-a164-a2f2c4c77c07"};
 
     RunnieSequenceElement sequence;
     for (auto& name: names){
