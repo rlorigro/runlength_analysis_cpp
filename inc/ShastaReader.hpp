@@ -32,6 +32,7 @@ public:
     unordered_map<string,path> file_paths;
     bool store_length_consensus;
     bool store_coverage_data;
+    bool store_vertex_labels;
 
     /// Methods ///
     ShastaReader(path directory_path, bool store_length_consensus=false, bool store_coverage_data=true);

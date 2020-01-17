@@ -148,6 +148,10 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
             weight_string = "";
             reversal_string = "";
             space_found = false;
+
+            if (i < line.size() - 1 and isspace(line[i+1])){
+                break;
+            }
         }
         // Parse element members
         else {
@@ -176,7 +180,12 @@ void ShastaReader::parse_coverage_string(CoverageSegment& segment, string& line)
     }
     else{
         segment.n_coverage.emplace_back(uint16_t(round(n_coverage)));
-//        cout << n_coverage << '\n';
+    }
+
+    // Store whether the coverage data came from a vertex or not (edge)
+    if (this->store_vertex_labels){
+        bool is_vertex = (line[line.size()-1] == 'v');
+        segment.is_vertex.emplace_back(is_vertex);
     }
 }
 

@@ -235,7 +235,6 @@ void PileupGenerator::update_insert_column(
 
         pileup.inserts.at(insert_anchor_index)[insert_index][pileup_depth_index] = read_data;
     }
-
 }
 
 void PileupGenerator::parse_insert(Pileup& pileup, int64_t pileup_width_index, int64_t pileup_depth_index, uint64_t cigar_length, AlignedSegment& aligned_segment, vector<float>& read_data){

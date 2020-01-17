@@ -223,4 +223,12 @@ template <typename T> path write_all_consensus_sequences_to_fasta(T& coverage_re
 }
 
 
+void label_coverage_data_from_shasta(
+        path input_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_threads,
+        path bed_path);
+
+
 #endif //RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP

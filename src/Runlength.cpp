@@ -32,6 +32,8 @@ using std::move;
 using std::exception;
 using std::atomic;
 using std::atomic_fetch_add;
+using std::max;
+using std::min;
 using std::experimental::filesystem::path;
 using std::experimental::filesystem::absolute;
 
@@ -280,6 +282,187 @@ void update_runlength_matrix(AlignedSegment& aligned_segment,
     ///
 
 }
+
+
+ofstream& operator<<(ofstream& output_file, vector<CoverageElement>& coverage_data){
+    for (auto &coverage_element: coverage_data) {
+        output_file << coverage_element.base +
+        to_string(coverage_element.length) +
+        CoverageElement::reversal_string_plus_minus[coverage_element.reversal] + ' ' +
+        to_string(uint32_t(coverage_element.weight)) + ',';
+    }
+
+    return output_file;
+}
+
+
+char bool_to_vertex_label(bool is_vertex){
+    if (is_vertex){
+        return 'v';
+    }
+    else{
+        return 'e';
+    }
+}
+
+
+char bool_to_reversal_char(bool reversal){
+    if (reversal){
+        return '-';
+    }
+    else{
+        return '+';
+    }
+}
+
+
+void write_labeled_coverage_data(
+        ofstream& output_file,
+        string true_base,
+        uint16_t true_length,
+        char consensus_base,
+        uint16_t consensus_length,
+        vector<CoverageElement>& coverage_data,
+        bool is_vertex,
+        bool reversal){
+
+    if (reversal and consensus_base != '_'){
+        consensus_base = complement_base(consensus_base);
+    }
+
+    output_file << bool_to_reversal_char(reversal) << ',' << true_base << ',' << true_length << ',' << consensus_base << ',' << consensus_length << ',';
+    output_file << coverage_data << " ";
+    output_file << bool_to_vertex_label(is_vertex);
+    output_file << '\n';
+}
+
+
+template<typename T> void label_aligned_coverage(path bam_path,
+                                                 path parent_directory,
+                                                 unordered_map <string,path>& read_paths,
+                                                 unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                                 vector <Region>& regions,
+                                                 path output_directory,
+                                                 atomic <uint64_t>& job_index){
+    ///
+    /// Create a duplicate series of CSVs which contain the true base and length as aligned to reference
+    ///
+
+    // Initialize Reader and relevant containers
+    T reader = T(parent_directory);
+    reader.store_length_consensus = true;
+    reader.store_vertex_labels = true;
+    CoverageSegment segment;
+    reader.set_index(read_paths);
+
+    // Initialize BAM reader and relevant containers
+    BamReader bam_reader = BamReader(bam_path);
+    AlignedSegment aligned_segment;
+    Coordinate coordinate;
+    Region region;
+    Cigar cigar;
+
+//    uint64_t thread_job_index;
+    string ref_name;
+
+    bool filter_secondary = true;
+    uint16_t map_quality_cutoff = 5;
+
+    // Volatiles
+    bool in_left_bound;
+    bool in_right_bound;
+    string true_base;
+    char consensus_base = '_';
+    uint16_t consensus_length = -1;
+    uint16_t true_length = -1;
+    bool is_vertex = false;
+    vector<CoverageElement> coverage_data;
+
+    uint8_t match_code = Cigar::cigar_code_key.at("=");
+    uint8_t mismatch_code = Cigar::cigar_code_key.at("X");
+    uint8_t insert_code = Cigar::cigar_code_key.at("I");
+    uint8_t delete_code = Cigar::cigar_code_key.at("D");
+
+    // Only allow matches
+    unordered_set<uint8_t> valid_cigar_codes = {match_code,
+                                                mismatch_code,
+                                                insert_code,
+                                                delete_code};
+
+    while (job_index < regions.size()) {
+        uint64_t thread_job_index = job_index.fetch_add(1);
+        region = regions.at(thread_job_index);
+
+        // BAM coords are 1 based
+        bam_reader.initialize_region(region.name, region.start+1, region.stop+1);
+
+        int i = 0;
+
+        while (bam_reader.next_alignment(aligned_segment, map_quality_cutoff, filter_secondary)) {
+            reader.fetch_read(segment, aligned_segment.read_name);
+
+            int64_t read_start = max(int64_t(aligned_segment.ref_start_index), int64_t(region.start));
+            int64_t read_stop = min(int64_t(aligned_segment.infer_reference_stop_position_from_alignment()), int64_t(region.stop));
+            string read_region = region.name + "_" + to_string(read_start) + "-" + to_string(read_stop);
+
+            path output_path = output_directory / (aligned_segment.read_name + "_" + read_region + ".csv");
+            output_path = absolute(output_path);
+            ofstream output_file(output_path);
+
+            // Iterate cigars that match the criteria
+            while (aligned_segment.next_coordinate(coordinate, cigar, valid_cigar_codes)) {
+                in_left_bound = (int64_t(region.start) <= coordinate.ref_index - 1);
+                in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
+
+                // Subset alignment to portions of the read that are within the window/region
+                if (in_left_bound and in_right_bound) {
+                    coverage_data = segment.coverage_data[coordinate.read_true_index];
+
+                    /// MATCH OR MISMATCH
+                    if (cigar.code == match_code or cigar.code == mismatch_code) {
+                        true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
+                        true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+                        consensus_base = segment.sequence[coordinate.read_true_index];
+                        consensus_length = segment.lengths[coordinate.read_true_index];
+                        is_vertex = segment.is_vertex[coordinate.read_true_index];
+                    }
+                    /// INSERT
+                    else if (cigar.code == insert_code) {
+                        true_base = '_';
+                        true_length = 0;
+                        consensus_base = segment.sequence[coordinate.read_true_index];
+                        consensus_length = segment.lengths[coordinate.read_true_index];
+                        is_vertex = segment.is_vertex[coordinate.read_true_index];
+                    }
+                    /// DELETE
+                    else if (cigar.code == delete_code) {
+                        true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
+                        true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+                        consensus_base = '_';
+                        consensus_length = 0;
+                        coverage_data = {};
+                        is_vertex = false;
+                    }
+
+                    write_labeled_coverage_data(
+                            output_file,
+                            true_base,
+                            true_length,
+                            consensus_base,
+                            consensus_length,
+                            coverage_data,
+                            is_vertex,
+                            aligned_segment.reversal);
+                }
+            }
+
+            cerr << "\33[2K\rParsed: " << output_path << flush;
+
+            i++;
+        }
+    }
+}
+
 
 
 void parse_aligned_runnie(path bam_path,
@@ -573,6 +756,47 @@ void parse_aligned_fasta(path bam_path,
 
         cerr << "\33[2K\rParsed: " << region.to_string() << flush;
     }
+}
+
+
+template <typename T> void get_coverage_labels(path bam_path,
+                                       path input_directory,
+                                       path output_directory,
+                                       unordered_map <string,path>& read_paths,
+                                       unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                       vector <Region>& regions,
+                                       uint16_t max_threads){
+    ///
+    ///
+    ///
+
+    vector<thread> threads;
+    atomic<uint64_t> job_index = 0;
+
+    // Launch threads
+    for (uint64_t i=0; i<max_threads; i++){
+        try {
+            // Call thread safe function to read and write to file
+            threads.emplace_back(thread(label_aligned_coverage<T>,
+                                        ref(bam_path),
+                                        ref(input_directory),
+                                        ref(read_paths),
+                                        ref(ref_runlength_sequences),
+                                        ref(regions),
+                                        ref(output_directory),
+                                        ref(job_index)));
+        } catch (const exception &e) {
+            cerr << e.what() << "\n";
+            exit(1);
+        }
+    }
+
+    // Wait for threads to finish
+    for (auto& t: threads){
+        t.join();
+    }
+    cerr << "\n" << flush;
+
 }
 
 
@@ -1022,6 +1246,111 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
 }
 
 
+template <typename T> void label_coverage_data(
+        path input_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_threads,
+        path bed_path){
+
+    cerr << "Using " + to_string(max_threads) + " threads\n";
+
+    // How big (bp) should the regions be for iterating the BAM? Regardless of size,
+    // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
+    // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
+    // associated with iterating reads that extend beyond the region (at the edges)
+    uint64_t chunk_size = 1*1000*1000;
+
+    T reader = T(input_directory);
+    FastaReader ref_fasta_reader = FastaReader(reference_fasta_path);
+
+    // Runlength encode the reference (store in memory)
+    unordered_map<string,RunlengthSequenceElement> ref_runlength_sequences;
+    path reference_fasta_path_rle;
+    bool store_in_memory = true;
+    reference_fasta_path_rle = runlength_encode_fasta_file(reference_fasta_path,
+            ref_runlength_sequences,
+            output_directory,
+            store_in_memory,
+            max_threads);
+
+    reader.index();
+    unordered_map<string,path> read_paths = reader.get_index();
+
+    // Extract read names from index
+    vector<string> read_names;
+    for (auto& element: read_paths){
+        read_names.push_back(element.first);
+    }
+
+    // Extract the sequences from MarginPolish TSVs (ignore coverage data for now)
+    path reads_fasta_path_rle;
+    reads_fasta_path_rle = write_all_consensus_sequences_to_fasta(reader,
+            read_names,
+            read_paths,
+            input_directory,
+            output_directory,
+            max_threads);
+
+    // Index all the files in the MP directory
+    // Setup Alignment parameters
+    bool sort = true;
+    bool index = true;
+    bool delete_intermediates = false;  //TODO: switch to true
+    uint16_t k = 19;
+    string minimap_preset = "asm20";    //TODO: make command line argument?
+    bool explicit_mismatch = true;
+
+    // Align coverage segments to the reference
+    path bam_path;
+    bam_path = align(reference_fasta_path_rle,
+            reads_fasta_path_rle,
+            output_directory,
+            sort,
+            index,
+            delete_intermediates,
+            k,
+            minimap_preset,
+            explicit_mismatch,
+            max_threads);
+
+    //TODO: cut off 50bp overlaps on MarginPolish TSVs?
+
+
+    // If a BED file was provided, only iterate the regions of the BAM that may be found in the reference provided.
+    // Otherwise, iterate the entire BAM.
+    vector<Region> regions;
+    if (bed_path.empty()){
+        // Chunk alignment regions
+        chunk_sequences_into_regions(regions, ref_runlength_sequences, chunk_size);
+    }
+    else{
+        // Load the BED regions, and then find the union of the regions in BED and reference FASTA
+        set<string> names;
+        for (auto& item: ref_runlength_sequences){
+            names.insert(item.first);
+        }
+
+        BedReader bed_reader(bed_path);
+        bed_reader.read_regions(regions);
+        bed_reader.subset_by_regions_name(regions, names);
+    }
+
+    cerr << "Iterating alignments...\n" << std::flush;
+
+    // Launch threads for parsing alignments and generating matrices
+    get_coverage_labels<T>(bam_path,
+            input_directory,
+            output_directory,
+            read_paths,
+            ref_runlength_sequences,
+            regions,
+            max_threads);
+
+    cerr << '\n';
+}
+
+
 void measure_runlength_distribution_from_marginpolish(path input_directory,
                                                        path reference_fasta_path,
                                                        path output_directory,
@@ -1029,7 +1358,8 @@ void measure_runlength_distribution_from_marginpolish(path input_directory,
                                                        uint16_t max_threads,
                                                        path bed_path) {
 
-    measure_runlength_distribution_from_coverage_data<MarginPolishReader>(input_directory,
+    measure_runlength_distribution_from_coverage_data<MarginPolishReader>(
+            input_directory,
             reference_fasta_path,
             output_directory,
             max_runlength,
@@ -1038,17 +1368,35 @@ void measure_runlength_distribution_from_marginpolish(path input_directory,
 }
 
 
-void measure_runlength_distribution_from_shasta(path input_directory,
-                                                       path reference_fasta_path,
-                                                       path output_directory,
-                                                       uint16_t max_runlength,
-                                                       uint16_t max_threads,
-                                                       path bed_path) {
+void measure_runlength_distribution_from_shasta(
+        path input_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_runlength,
+        uint16_t max_threads,
+        path bed_path) {
 
-    measure_runlength_distribution_from_coverage_data<ShastaReader>(input_directory,
+    measure_runlength_distribution_from_coverage_data<ShastaReader>(
+            input_directory,
             reference_fasta_path,
             output_directory,
             max_runlength,
+            max_threads,
+            bed_path);
+}
+
+
+void label_coverage_data_from_shasta(
+        path input_directory,
+        path reference_fasta_path,
+        path output_directory,
+        uint16_t max_threads,
+        path bed_path) {
+
+    label_coverage_data<ShastaReader>(
+            input_directory,
+            reference_fasta_path,
+            output_directory,
             max_threads,
             bed_path);
 }

@@ -49,7 +49,7 @@ def plot_kmer_qualities_vs_n(path):
 
 
 def main(path):
-    # plot_kmer_qualities(path)
+    plot_kmer_qualities(path)
     plot_kmer_qualities_vs_n(path)
 
 

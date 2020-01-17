@@ -167,7 +167,7 @@ void measure_kmer_stats_from_fasta(path reference_fasta_path,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 1000*1000;
+    uint64_t chunk_size = 250*1000;
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);

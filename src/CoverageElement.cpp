@@ -13,6 +13,7 @@ CoverageElement::CoverageElement(char base, uint16_t length, bool reversal, floa
 
 
 const string CoverageElement::reversal_string = "FR";
+const string CoverageElement::reversal_string_plus_minus = "+-";
 
 
 string CoverageElement::to_string(){

@@ -60,6 +60,7 @@ FastaIndex::FastaIndex() = default;
 FastaReader::FastaReader() = default;
 
 FastaReader::FastaReader(path file_path){
+    file_path = absolute(file_path);
     this->file_path = file_path;
     this->index_path = file_path.string() + ".fai";
     this->fasta_file = ifstream(file_path);
@@ -68,8 +69,8 @@ FastaReader::FastaReader(path file_path){
     this->line_index = 0;
 
     // Check if file is readable or exists
-    if (!this->fasta_file.good()){
-        throw runtime_error("ERROR: file read error: " + string(file_path));
+    if (not this->fasta_file.good()){
+        throw runtime_error("ERROR: file read error: " + this->file_path.string());
     }
 }
 

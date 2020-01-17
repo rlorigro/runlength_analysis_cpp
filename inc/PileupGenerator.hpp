@@ -142,6 +142,8 @@ template <class T> void PileupGenerator::fetch_region(Region& region,
             }
         }
     }
+
+    this->backfill_insert_columns(pileup);
 }
 
 

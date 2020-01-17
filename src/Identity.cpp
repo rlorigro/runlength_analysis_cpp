@@ -1,7 +1,6 @@
 #include "Identity.hpp"
 #include "AlignedSegment.hpp"
 #include "FastaReader.hpp"
-#include "BamReader.hpp"
 #include "Align.hpp"
 #include <vector>
 #include <thread>
@@ -277,7 +276,7 @@ CigarStats get_fasta_cigar_stats(path bam_path,
 }
 
 
-void measure_identity_from_fasta(path reads_fasta_path,
+CigarStats measure_identity_from_fasta(path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
         string minimap_preset,
@@ -334,10 +333,12 @@ void measure_identity_from_fasta(path reads_fasta_path,
 
     cout << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';
     cout << stats.to_string();
+
+    return stats;
 }
 
 
-void measure_identity_from_bam(path bam_path,
+CigarStats measure_identity_from_bam(path bam_path,
         path reference_fasta_path,
         uint16_t max_threads,
         uint64_t chunk_size){
@@ -367,4 +368,6 @@ void measure_identity_from_bam(path bam_path,
 
     cout << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';
     cout << stats.to_string();
+
+    return stats;
 }

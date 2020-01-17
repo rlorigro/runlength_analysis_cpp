@@ -197,7 +197,6 @@ int main(int argc, char* argv[]){
     string minimap_preset;
     uint16_t max_threads;
     size_t window_size;
-    uint16_t minimap_k;
     uint16_t k;
     bool reference_based;
 

@@ -23,6 +23,7 @@ public:
     string sequence;
     vector<uint16_t> lengths;
     vector<uint16_t> n_coverage;
+    vector<bool> is_vertex;
 
     /// Methods ///
     void print();

@@ -19,6 +19,7 @@ public:
 
     CoverageElement(char base, uint16_t length, bool reversal, float weight);
     static const string reversal_string;
+    static const string reversal_string_plus_minus;
 
     /// Methods ///
     string to_string();
