@@ -22,7 +22,7 @@ int main() {
     vector<RunnieSequenceElement> sequences;
     reader.fetch_all_sequences(sequences);
 
-    runlength_matrix matrix(boost::extents[2][2][6][5]);
+    rle_length_matrix matrix(boost::extents[2][2][6][5]);
 
     for (auto& sequence: sequences) {
         cout << sequence.sequence << "\n";

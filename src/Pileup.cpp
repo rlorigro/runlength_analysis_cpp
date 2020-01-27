@@ -95,11 +95,7 @@ void PileupReadKmerIterator::update_middle_kmers(unordered_map<uint64_t, unorder
 
 }
 
-///
-/// want to provide the start and stop index, iterate the NEXT ref column and any insert columns, adding kmers to the
-/// deque
-///
-/// \param pileup
+
 void PileupReadKmerIterator::step(Pileup& pileup, unordered_map<uint64_t, unordered_set <uint64_t> >& middle_kmers){
     uint8_t base;
 
@@ -220,6 +216,7 @@ void PileupKmerIterator::update_ref_kmer_confusion_stats(PileupKmerIterator& ref
         }
     }
 }
+
 
 void PileupKmerIterator::update_read_kmer_confusion_stats(PileupKmerIterator& ref_pileup_iterator, KmerConfusionStats& kmer_confusion_stats){
     for (auto& [ref_kmer_index,_]: ref_pileup_iterator.middle_kmers){

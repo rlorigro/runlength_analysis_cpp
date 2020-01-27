@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     path input_dir;
     path output_dir;
     uint16_t max_threads;
+    uint32_t insert_cutoff;
 
     options_description options("Arguments");
 
@@ -39,7 +40,12 @@ int main(int argc, char* argv[]){
         ("max_threads",
         value<uint16_t>(&max_threads)->
         default_value(1),
-        "Maximum number of threads to launch");
+        "Maximum number of threads to launch")
+
+        ("insert_cutoff",
+        value<uint32_t>(&insert_cutoff)->
+        default_value(1000000),
+        "Maximum size of insert. Any insert cigar block larger than this will be excluded entirely from output");
 
     // Store options in a map and apply values to each corresponding variable
     variables_map vm;
@@ -56,7 +62,8 @@ int main(int argc, char* argv[]){
             ref_fasta_path,
             output_dir,
             max_threads,
-            bed_path);
+            bed_path,
+            insert_cutoff);
 
     return 0;
 }

@@ -335,13 +335,21 @@ void test(path fasta_ref_path, path fasta_reads_path, path output_directory, uin
     ofstream results_file(results_path);
     CigarStats stats;
 
+    vector<Region> regions = {Region("chr1", 20000000, 24999999),
+                              Region("chr1", 25000000, 29999999),
+                              Region("chr1", 30000000, 34999999),
+                              Region("chr1", 35000000, 40000000)
+    };
+
     for (size_t i=0; i<output_file_paths.size(); i++) {
         stats = measure_identity_from_fasta(
                 output_file_paths[i],
                 fasta_ref_path,
                 output_directory,
                 "asm20",
-                max_threads);
+                max_threads,
+                0,
+                regions);
 
         results_file << "Coverage " << (i+1)*5 << '\n';
         results_file << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';

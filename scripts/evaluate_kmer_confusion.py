@@ -53,8 +53,8 @@ def print_kmer_quality_range(path):
 
 
 def main(path):
-    # find_kmer_qualities(path)
-    print_kmer_quality_range(path)
+    find_kmer_qualities(path)
+    # print_kmer_quality_range(path)
 
 
 if __name__ == "__main__":

@@ -281,7 +281,8 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
         path output_directory,
         string minimap_preset,
         uint16_t max_threads,
-        uint64_t chunk_size){
+        uint64_t chunk_size,
+        vector<Region> regions){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
 
@@ -298,7 +299,7 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
     bool sort = true;
     bool index = true;
     bool delete_intermediates = false;  //TODO: switch to true
-    uint16_t k = 19;
+    uint16_t k = 0;
     bool explicit_mismatch = true;
 
     // Align reads to the reference
@@ -314,9 +315,10 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
             explicit_mismatch,
             max_threads);
 
-    // Chunk alignment regions
-    vector<Region> regions;
-    chunk_sequences_into_regions(regions, ref_sequences, chunk_size);
+    // Chunk alignment regions if none were provided
+    if (regions.empty()) {
+        chunk_sequences_into_regions(regions, ref_sequences, chunk_size);
+    }
 
     cerr << "Iterating alignments...\n" << std::flush;
 

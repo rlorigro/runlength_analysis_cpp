@@ -50,11 +50,11 @@ void chunk_sequences_into_regions(vector<Region>& regions, unordered_map<string,
 }
 
 
-void write_matrix_to_file(path output_directory, runlength_matrix& matrix){
-    path directional_matrix_path = absolute(output_directory) / "frequency_matrix_directional.csv";
+void write_length_matrix_to_file(path output_directory, rle_length_matrix& matrix){
+    path directional_matrix_path = absolute(output_directory) / "length_frequency_matrix_directional.csv";
     ofstream directional_matrix_file = ofstream(directional_matrix_path);
 
-    path nondirectional_matrix_path = absolute(output_directory) / "frequency_matrix_nondirectional.csv";
+    path nondirectional_matrix_path = absolute(output_directory) / "length_frequency_matrix_nondirectional.csv";
     ofstream nondirectional_matrix_file = ofstream(nondirectional_matrix_path);
 
     if (not directional_matrix_file.is_open()){
@@ -68,7 +68,32 @@ void write_matrix_to_file(path output_directory, runlength_matrix& matrix){
     cerr << "WRITING: matrix file " + directional_matrix_path.string() << '\n';
     cerr << "WRITING: matrix file " + nondirectional_matrix_path.string() << '\n';
 
-    runlength_matrix nondirectional_matrix = sum_reverse_complements(matrix);
+    rle_length_matrix nondirectional_matrix = sum_reverse_complements(matrix);
+
+    directional_matrix_file << (matrix_to_string(matrix));
+    nondirectional_matrix_file << (matrix_to_string(nondirectional_matrix));
+}
+
+
+void write_base_matrix_to_file(path output_directory, rle_base_matrix& matrix){
+    path directional_matrix_path = absolute(output_directory) / "base_frequency_matrix_directional.csv";
+    ofstream directional_matrix_file = ofstream(directional_matrix_path);
+
+    path nondirectional_matrix_path = absolute(output_directory) / "base_frequency_matrix_nondirectional.csv";
+    ofstream nondirectional_matrix_file = ofstream(nondirectional_matrix_path);
+
+    if (not directional_matrix_file.is_open()){
+        throw runtime_error("ERROR: file could not be written: " + directional_matrix_path.string());
+    }
+
+    if (not nondirectional_matrix_file.is_open()){
+        throw runtime_error("ERROR: file could not be written: " + nondirectional_matrix_path.string());
+    }
+
+    cerr << "WRITING: matrix file " + directional_matrix_path.string() << '\n';
+    cerr << "WRITING: matrix file " + nondirectional_matrix_path.string() << '\n';
+
+    rle_base_matrix nondirectional_matrix = sum_reverse_complements(matrix);
 
     directional_matrix_file << (matrix_to_string(matrix));
     nondirectional_matrix_file << (matrix_to_string(nondirectional_matrix));
@@ -343,6 +368,7 @@ template<typename T> void label_aligned_coverage(path bam_path,
                                                  unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                                  vector <Region>& regions,
                                                  path output_directory,
+                                                 uint16_t insert_cutoff,
                                                  atomic <uint64_t>& job_index){
     ///
     /// Create a duplicate series of CSVs which contain the true base and length as aligned to reference
@@ -428,6 +454,10 @@ template<typename T> void label_aligned_coverage(path bam_path,
                     }
                     /// INSERT
                     else if (cigar.code == insert_code) {
+                        if (cigar.length > insert_cutoff) {
+                            continue;
+                        }
+
                         true_base = '_';
                         true_length = 0;
                         consensus_base = segment.sequence[coordinate.read_true_index];
@@ -466,12 +496,12 @@ template<typename T> void label_aligned_coverage(path bam_path,
 
 
 void parse_aligned_runnie(path bam_path,
-        path runnie_directory,
-        unordered_map <string,RunnieIndex>& read_indexes,
-        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-        vector <Region>& regions,
-        runlength_matrix& runlength_matrix,
-        atomic <uint64_t>& job_index){
+                          path runnie_directory,
+                          unordered_map <string,RunnieIndex>& read_indexes,
+                          unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                          vector <Region>& regions,
+                          rle_length_matrix& runlength_matrix,
+                          atomic <uint64_t>& job_index){
     ///
     ///
     ///
@@ -565,7 +595,7 @@ template<typename T> void parse_aligned_coverage(path bam_path,
                                                  unordered_map <string,path>& read_paths,
                                                  unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                                  vector <Region>& regions,
-                                                 runlength_matrix& runlength_matrix,
+                                                 rle_length_matrix& runlength_matrix,
                                                  atomic <uint64_t>& job_index){
     ///
     ///
@@ -670,7 +700,7 @@ void parse_aligned_fasta(path bam_path,
         unordered_map <string,FastaIndex>& read_indexes,
         unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
         vector <Region>& regions,
-        runlength_matrix& runlength_matrix,
+        RLEConfusion& runlength_matrix,
         atomic <uint64_t>& job_index){
     ///
     ///
@@ -689,7 +719,7 @@ void parse_aligned_fasta(path bam_path,
     Region region;
     Cigar cigar;
 
-    auto matrix_shape = runlength_matrix.shape();
+    auto matrix_shape = runlength_matrix.length_matrix.shape();
     size_t max_true_length = matrix_shape[2];
     size_t max_observed_length = matrix_shape[3];
 
@@ -705,11 +735,12 @@ void parse_aligned_fasta(path bam_path,
     string observed_base;
     uint16_t true_length = -1;
     uint16_t observed_length = -1;
+    uint8_t true_base_index;
     uint8_t observed_base_index;
     vector<CoverageElement> coverage_data;
 
     // Only allow matches
-    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("=")};
+    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("="),Cigar::cigar_code_key.at("X")};
 
     while (job_index < regions.size()) {
         uint64_t thread_job_index = job_index.fetch_add(1);
@@ -732,8 +763,8 @@ void parse_aligned_fasta(path bam_path,
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
                     true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
-                    observed_base = runlength_sequence.sequence[coordinate.read_true_index];
                     true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+                    observed_base = runlength_sequence.sequence[coordinate.read_true_index];
 
                     // Skip anything other than ACTG
                     if (not is_valid_base(true_base)){
@@ -741,13 +772,18 @@ void parse_aligned_fasta(path bam_path,
                     }
 
                     observed_length = runlength_sequence.lengths[coordinate.read_true_index];
-                    observed_base_index = base_to_index(true_base);
+                    observed_base_index = base_to_index(observed_base);
+                    true_base_index = base_to_index(true_base);
 
                     if (observed_length >= max_observed_length or true_length >= max_true_length){
                         continue;
                     }
 
-                    runlength_matrix[aligned_segment.reversal][observed_base_index][true_length][observed_length] += 1;
+                    if (cigar.code == Cigar::cigar_code_key.at("=")) {
+                        runlength_matrix.length_matrix[aligned_segment.reversal][true_base_index][true_length][observed_length] += 1;
+                    }
+
+                    runlength_matrix.base_matrix[aligned_segment.reversal][true_base_index][observed_base_index] += 1;
                 }
             }
 
@@ -765,6 +801,7 @@ template <typename T> void get_coverage_labels(path bam_path,
                                        unordered_map <string,path>& read_paths,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                        vector <Region>& regions,
+                                       uint16_t insert_cutoff,
                                        uint16_t max_threads){
     ///
     ///
@@ -784,6 +821,7 @@ template <typename T> void get_coverage_labels(path bam_path,
                                         ref(ref_runlength_sequences),
                                         ref(regions),
                                         ref(output_directory),
+                                        ref(insert_cutoff),
                                         ref(job_index)));
         } catch (const exception &e) {
             cerr << e.what() << "\n";
@@ -800,19 +838,19 @@ template <typename T> void get_coverage_labels(path bam_path,
 }
 
 
-runlength_matrix get_runnie_runlength_matrix(path bam_path,
-        path runnie_directory,
-        unordered_map <string,RunnieIndex>& read_indexes,
-        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-        vector <Region>& regions,
-        uint16_t max_runlength,
-        uint16_t max_threads){
+rle_length_matrix get_runnie_runlength_matrix(path bam_path,
+                                              path runnie_directory,
+                                              unordered_map <string,RunnieIndex>& read_indexes,
+                                              unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+                                              vector <Region>& regions,
+                                              uint16_t max_runlength,
+                                              uint16_t max_threads){
     ///
     ///
     ///
 
-    runlength_matrix template_matrix(boost::extents[2][4][max_runlength+1][max_runlength+1]);   // 0 length included
-    vector<runlength_matrix> matrices_per_thread(max_threads, template_matrix);
+    rle_length_matrix template_matrix(boost::extents[2][4][max_runlength + 1][max_runlength + 1]);   // 0 length included
+    vector<rle_length_matrix> matrices_per_thread(max_threads, template_matrix);
 
     vector<thread> threads;
     atomic<uint64_t> job_index = 0;
@@ -849,25 +887,26 @@ runlength_matrix get_runnie_runlength_matrix(path bam_path,
 //        cout << "MATRIX " << i << ":\n" << matrix_to_string(m, 4) << "\n";
 //    }
 
-    runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
+    rle_length_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
     return matrix_sum;
 }
 
 
-template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
-                                       path input_directory,
-                                       unordered_map <string,path>& read_paths,
-                                       unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
-                                       vector <Region>& regions,
-                                       uint16_t max_runlength,
-                                       uint16_t max_threads){
+template <typename T> rle_length_matrix get_runlength_matrix(
+        path bam_path,
+        path input_directory,
+        unordered_map <string,path>& read_paths,
+        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
+        vector <Region>& regions,
+        uint16_t max_runlength,
+        uint16_t max_threads){
     ///
     ///
     ///
 
-    runlength_matrix template_matrix(boost::extents[2][4][max_runlength+1][max_runlength+1]);   // 0 length included
-    vector<runlength_matrix> matrices_per_thread(max_threads, template_matrix);
+    rle_length_matrix template_matrix(boost::extents[2][4][max_runlength + 1][max_runlength + 1]);   // 0 length included
+    vector<rle_length_matrix> matrices_per_thread(max_threads, template_matrix);
 
     vector<thread> threads;
     atomic<uint64_t> job_index = 0;
@@ -898,19 +937,13 @@ template <typename T> runlength_matrix get_runlength_matrix(path bam_path,
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
-//    int i = 0;
-//    for (auto& matrix: matrices_per_thread){
-//        i++;
-//        cout << i << '\n' << matrix_to_string(matrix, 10) << '\n';
-//    }
-
-    runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
+    rle_length_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
     return matrix_sum;
 }
 
 
-runlength_matrix get_fasta_runlength_matrix(path bam_path,
+RLEConfusion get_fasta_runlength_matrix(path bam_path,
                                        path reads_fasta_path,
                                        unordered_map <string,FastaIndex>& read_indexes,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
@@ -921,8 +954,8 @@ runlength_matrix get_fasta_runlength_matrix(path bam_path,
     ///
     ///
 
-    runlength_matrix template_matrix(boost::extents[2][4][max_runlength+1][max_runlength+1]);   // 0 length included
-    vector<runlength_matrix> matrices_per_thread(max_threads, template_matrix);
+    RLEConfusion template_object(max_runlength);   // 0 length included
+    vector<RLEConfusion> matrices_per_thread(max_threads, template_object);
 
     vector<thread> threads;
     atomic<uint64_t> job_index = 0;
@@ -953,7 +986,14 @@ runlength_matrix get_fasta_runlength_matrix(path bam_path,
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
-    runlength_matrix matrix_sum = sum_matrices(matrices_per_thread);
+    int i = 0;
+    for (auto& m: matrices_per_thread){
+        i++;
+        cout << "MATRIX " << i << ":\n" << matrix_to_string(m.base_matrix) << "\n";
+    }
+
+
+    RLEConfusion matrix_sum = sum_matrices(matrices_per_thread);
 
     return matrix_sum;
 }
@@ -1052,18 +1092,18 @@ template <typename T> void measure_runlength_distribution_from_coverage_data(pat
     cerr << "Iterating alignments...\n" << std::flush;
 
     // Launch threads for parsing alignments and generating matrices
-    runlength_matrix matrix = get_runlength_matrix<T>(bam_path,
-            input_directory,
-            read_paths,
-            ref_runlength_sequences,
-            regions,
-            max_runlength,
-            max_threads);
+    rle_length_matrix matrix = get_runlength_matrix<T>(bam_path,
+                                                       input_directory,
+                                                       read_paths,
+                                                       ref_runlength_sequences,
+                                                       regions,
+                                                       max_runlength,
+                                                       max_threads);
 
     cerr << '\n';
 
     // Write output
-    write_matrix_to_file(output_directory, matrix);
+    write_length_matrix_to_file(output_directory, matrix);
 }
 
 
@@ -1143,18 +1183,18 @@ void measure_runlength_distribution_from_runnie(path runnie_directory,
     cerr << "Iterating alignments...\n" << std::flush;
 
     // Launch threads for parsing alignments and generating matrices
-    runlength_matrix matrix = get_runnie_runlength_matrix(bam_path,
-            runnie_directory,
-            read_indexes,
-            ref_runlength_sequences,
-            regions,
-            max_runlength,
-            max_threads);
+    rle_length_matrix matrix = get_runnie_runlength_matrix(bam_path,
+                                                           runnie_directory,
+                                                           read_indexes,
+                                                           ref_runlength_sequences,
+                                                           regions,
+                                                           max_runlength,
+                                                           max_threads);
 
     cerr << '\n';
 
     // Write output
-    write_matrix_to_file(output_directory, matrix);
+    write_length_matrix_to_file(output_directory, matrix);
 }
 
 
@@ -1231,7 +1271,7 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     unordered_map<string,FastaIndex> read_indexes = reads_fasta_reader.get_index();
 
     // Launch threads for parsing alignments and generating matrices
-    runlength_matrix matrix = get_fasta_runlength_matrix(bam_path,
+    RLEConfusion confusion = get_fasta_runlength_matrix(bam_path,
             reads_fasta_path,
             read_indexes,
             ref_runlength_sequences,
@@ -1242,7 +1282,8 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     cerr << '\n';
 
     // Write output
-    write_matrix_to_file(output_directory, matrix);
+    write_length_matrix_to_file(output_directory, confusion.length_matrix);
+    write_base_matrix_to_file(output_directory, confusion.base_matrix);
 }
 
 
@@ -1251,6 +1292,7 @@ template <typename T> void label_coverage_data(
         path reference_fasta_path,
         path output_directory,
         uint16_t max_threads,
+        uint16_t insert_cutoff,
         path bed_path){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
@@ -1345,6 +1387,7 @@ template <typename T> void label_coverage_data(
             read_paths,
             ref_runlength_sequences,
             regions,
+            insert_cutoff,
             max_threads);
 
     cerr << '\n';
@@ -1391,12 +1434,14 @@ void label_coverage_data_from_shasta(
         path reference_fasta_path,
         path output_directory,
         uint16_t max_threads,
-        path bed_path) {
+        path bed_path,
+        uint16_t insert_cutoff) {
 
     label_coverage_data<ShastaReader>(
             input_directory,
             reference_fasta_path,
             output_directory,
             max_threads,
+            insert_cutoff,
             bed_path);
 }

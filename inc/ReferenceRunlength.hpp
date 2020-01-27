@@ -15,7 +15,7 @@ using std::experimental::filesystem::path;
 void measure_runlength_priors_from_reference(path fasta_path, uint16_t max_runlength);
 
 
-template<class T> void count_runlengths(reference_runlength_matrix& runlength_frequencies, T& sequence){
+template<class T> void count_runlengths(reference_rle_length_matrix& runlength_frequencies, T& sequence){
     if (runlength_frequencies.empty()){
         throw runtime_error("ERROR: uninitialized vector passed to 'evaluate_discrete_weibull', vector must be initialized");
     }

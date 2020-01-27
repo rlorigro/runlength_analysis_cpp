@@ -228,7 +228,8 @@ void label_coverage_data_from_shasta(
         path reference_fasta_path,
         path output_directory,
         uint16_t max_threads,
-        path bed_path);
+        path bed_path,
+        uint16_t insert_cutoff=32768);
 
 
 #endif //RUNLENGTH_ANALYSIS_CPP_RUNLENGTH_HPP
