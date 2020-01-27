@@ -4,6 +4,7 @@
 #include "FastaWriter.hpp"
 #include "Runlength.hpp"
 #include "boost/program_options.hpp"
+#include "Runlength.hpp"
 
 using std::cout;
 using std::flush;
@@ -13,46 +14,29 @@ using boost::program_options::variables_map;
 using boost::program_options::value;
 
 
-void fasta_to_RLE_fasta(path input_file_path, path output_dir) {
+void fasta_to_RLE_fasta(path input_file_path, path output_dir, uint max_threads) {
     // Generate parent directories if necessary
     create_directories(output_dir);
 
-    string output_filename;
-    output_filename = string(input_file_path.filename());
-    output_filename = output_filename.substr(0, output_filename.find_last_of(".")) + "_RLE.fasta";
+    // Runlength encode the READ SEQUENCES, rewrite to another FASTA, and DON'T store in memory
+    unordered_map<string, RunlengthSequenceElement> _;
+    path reads_fasta_path_rle;
+    bool store_in_memory = false;
+    reads_fasta_path_rle = runlength_encode_fasta_file(
+            input_file_path,
+            _,
+            output_dir,
+            store_in_memory,
+            max_threads);
 
-    path output_file_path = output_dir / output_filename;
-
-    FastaReader fasta_reader(input_file_path);
-    FastaWriter fasta_writer(output_file_path);
-
-    string line;
-    SequenceElement element;
-    RunlengthSequenceElement runlength_element;
-
-    while (!fasta_reader.end_of_file) {
-        // Initialize empty containers
-        element = {};
-        runlength_element = {};
-
-        // Parse next sequence element
-        fasta_reader.next_element(element);
-
-        // Print status update to stdout
-        cout << "\33[2K\r" << element.name << flush;
-
-        // Convert to Run-length Encoded sequence element
-        runlength_encode(runlength_element, element);
-
-        // Write RLE sequence to file (no lengths written)
-        fasta_writer.write(runlength_element);
-    }
+    cout << '\n';
 }
 
 
 int main(int argc, char* argv[]){
     path input_file_path;
     path output_dir;
+    uint16_t max_threads;
 
     options_description options("Required options");
 
@@ -64,7 +48,12 @@ int main(int argc, char* argv[]){
         ("output_dir",
         value<path>(&output_dir)->
         default_value("output/"),
-        "Destination directory. File will be named based on input file name");
+        "Destination directory. File will be named based on input file name")
+
+        ("max_threads",
+        value<uint16_t>(&max_threads)->
+        default_value(1),
+        "Maximum number of threads to launch");
 
     // Store options in a map and apply values to each corresponding variable
     variables_map vm;
@@ -79,7 +68,7 @@ int main(int argc, char* argv[]){
 
     cout << "READING FILE: " << string(input_file_path) << "\n";
 
-    fasta_to_RLE_fasta(input_file_path, output_dir);
+    fasta_to_RLE_fasta(input_file_path, output_dir, max_threads);
 
     return 0;
 }
