@@ -72,7 +72,7 @@ def load_directional_base_length_matrix_from_csv(path, max_runlength_row, max_ru
                     base_index = BASE_TO_INDEX[base]
                     reversal_index = int(reversal == "R")
 
-                    print(base, reversal, base_index, reversal_index)
+                    # print(base, reversal, base_index, reversal_index)
 
                     is_data = True
                     row_index = 0
@@ -83,8 +83,8 @@ def load_directional_base_length_matrix_from_csv(path, max_runlength_row, max_ru
 
                     # Data
                     row = list(map(float, line.strip().split(",")))
-                    print(base, reversal, base_index, reversal_index)
-                    print(matrices.shape)
+                    # print(base, reversal, base_index, reversal_index)
+                    # print(matrices.shape)
                     matrices[reversal_index, base_index, row_index, :] = row
 
                     row_index += 1
@@ -151,6 +151,8 @@ def save_directional_frequency_matrices_as_marginpolish_config(output_dir, frequ
 def main(matrix_path, output_dir, pseudocount):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    print("Using pseudocount: " + str(pseudocount))
 
     matrix = load_directional_base_length_matrix_from_csv(path=matrix_path, max_runlength_row=50, max_runlength_col=50)
 
