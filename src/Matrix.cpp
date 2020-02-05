@@ -33,7 +33,7 @@ string reference_matrix_to_string(reference_rle_length_matrix& matrix, size_t cu
 }
 
 
-string matrix_to_string(rle_base_matrix matrix){
+string matrix_to_string(rle_base_matrix& matrix){
     string matrix_string;
     string reversal_string;
 
@@ -74,7 +74,7 @@ string matrix_to_string(rle_base_matrix matrix){
 }
 
 
-string matrix_to_string(rle_length_matrix matrix, size_t cutoff){
+string matrix_to_string(rle_length_matrix& matrix, size_t cutoff){
     string matrix_string;
     string reversal_string;
 
@@ -233,7 +233,7 @@ void increment_matrix(rle_length_matrix& matrix_a, float increment){
 }
 
 
-rle_length_matrix sum_matrices(vector<rle_length_matrix> matrices){
+rle_length_matrix sum_matrices(vector<rle_length_matrix>& matrices){
     auto shape = matrices[0].shape();
 
     size_t n_directions = shape[0];
@@ -251,7 +251,7 @@ rle_length_matrix sum_matrices(vector<rle_length_matrix> matrices){
 }
 
 
-rle_base_matrix sum_matrices(vector<rle_base_matrix> matrices){
+rle_base_matrix sum_matrices(vector<rle_base_matrix>& matrices){
     auto shape = matrices[0].shape();
 
     size_t n_directions = shape[0];
@@ -268,7 +268,7 @@ rle_base_matrix sum_matrices(vector<rle_base_matrix> matrices){
 }
 
 
-RLEConfusion sum_matrices(vector<RLEConfusion> matrices){
+RLEConfusion sum_matrices(vector<RLEConfusion>& matrices){
     auto length_shape = matrices[0].length_matrix.shape();
     size_t n_directions = length_shape[0];
 
@@ -324,7 +324,7 @@ rle_base_matrix sum_reverse_complements(rle_base_matrix& matrix){
                     sum[0][b1][b2] += matrix[r][b1][b2];
                 }
                 else if (r==1){
-                    sum[0][3-b1][3-b2] += matrix[r][3-b1][3-b2];
+                    sum[0][b1][b2] += matrix[r][3-b1][b2];
                 }
                 else{
                     throw runtime_error("ERROR: cannot sum reverse complements, directional dimension size != 2: " + to_string(n_directions));

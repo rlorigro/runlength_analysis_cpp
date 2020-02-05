@@ -1,6 +1,6 @@
 #include "PileupGenerator.hpp"
 #include "FastaReader.hpp"
-#include "FastaWriter.hpp"
+#include "PileupKmer.hpp"
 #include "Runlength.hpp"
 #include "Align.hpp"
 #include "Kmer.hpp"
@@ -34,17 +34,6 @@ void generate_test_pileup(Pileup& ref_pileup, Pileup& read_pileup){
 
     // Align reads to the reference
     path bam_path;
-//    bam_path = align(
-//            absolute_fasta_ref_path,
-//            absolute_fasta_reads_path,
-//            output_directory,
-//            sort,
-//            index,
-//            delete_intermediates,
-//            k,
-//            minimap_preset,
-//            explicit_mismatch,
-//            max_threads);
 
     bam_path = align(absolute_fasta_ref_path,
            absolute_fasta_reads_path,

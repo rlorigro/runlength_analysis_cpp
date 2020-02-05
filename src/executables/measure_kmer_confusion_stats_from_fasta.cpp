@@ -2,8 +2,8 @@
 #include "SequenceElement.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
+#include "PileupKmer.hpp"
 #include "Align.hpp"
-#include "Kmer.hpp"
 #include "Base.hpp"
 #include "boost/program_options.hpp"
 #include <iostream>
@@ -138,7 +138,7 @@ void get_kmer_stats(path bam_path,
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
     // Prepare output file
-    path output_path = output_directory / "kmer_stats.csv";
+    path output_path = output_directory / "kmer_identity.csv";
     ofstream output_file(output_path);
     if (not output_file.is_open()){
         throw runtime_error("ERROR: could not write to file: " + output_path.string());

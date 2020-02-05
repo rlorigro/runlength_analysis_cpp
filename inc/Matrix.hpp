@@ -47,11 +47,11 @@ void increment_matrix(rle_length_matrix& matrix_a, float increment);
 
 void increment_matrix(rle_base_matrix& matrix_a, rle_base_matrix& matrix_b);
 
-rle_length_matrix sum_matrices(vector<rle_length_matrix> matrices);
+rle_length_matrix sum_matrices(vector<rle_length_matrix>& matrices);
 
-rle_base_matrix sum_matrices(vector<rle_base_matrix> matrices);
+rle_base_matrix sum_matrices(vector<rle_base_matrix>& matrices);
 
-RLEConfusion sum_matrices(vector<RLEConfusion> matrices);
+RLEConfusion sum_matrices(vector<RLEConfusion>& matrices);
 
 rle_length_matrix sum_reverse_complements(rle_length_matrix& matrix);
 
@@ -66,9 +66,9 @@ void update_runlength_matrix_with_weibull_probabilities(rle_length_matrix& matri
 
 string reference_matrix_to_string(reference_rle_length_matrix& matrix, size_t cutoff=0);
 
-string matrix_to_string(rle_length_matrix matrix, size_t cutoff=0);
+string matrix_to_string(rle_length_matrix& matrix, size_t cutoff=0);
 
-string matrix_to_string(rle_base_matrix matrix);
+string matrix_to_string(rle_base_matrix& matrix);
 
 
 #endif //RUNLENGTH_ANALYSIS_MATRIX_HPP

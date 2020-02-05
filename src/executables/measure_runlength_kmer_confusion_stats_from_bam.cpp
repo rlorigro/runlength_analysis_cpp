@@ -1,4 +1,5 @@
 #include "PileupGenerator.hpp"
+#include "PileupKmer.hpp"
 #include "SequenceElement.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"

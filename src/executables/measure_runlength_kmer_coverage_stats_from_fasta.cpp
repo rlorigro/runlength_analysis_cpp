@@ -1,4 +1,5 @@
 #include "PileupGenerator.hpp"
+#include "PileupKmer.hpp"
 #include "SequenceElement.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
@@ -68,6 +69,8 @@ void iterate_pileup_kmers(path bam_path,
         FastaReader sequence_reader = FastaReader(absolute_fasta_reads_path);
 
         pileup_generator.fetch_region(region, sequence_reader, pileup);
+
+        PileupGenerator::print(pileup);
 
         cerr << "\33[2K\rParsed: " << region.to_string() << flush;
 
@@ -165,7 +168,7 @@ void measure_kmer_stats_from_fasta(path reference_fasta_path,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 1*1000*1000;
+    uint64_t chunk_size = 200*1000;
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);

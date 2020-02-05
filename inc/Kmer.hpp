@@ -2,17 +2,20 @@
 #ifndef RUNLENGTH_ANALYSIS_KMER_HPP
 #define RUNLENGTH_ANALYSIS_KMER_HPP
 
-//#include <Pileup.hpp>
-#include <vector>
 #include <deque>
+#include <vector>
 #include <string>
-#include "IterativeSummaryStats.hpp"
+#include <fstream>
 #include <unordered_map>
 
+#include "IterativeSummaryStats.hpp"
+
 using std::vector;
+using std::array;
 using std::deque;
 using std::string;
 using std::unordered_map;
+using std::ofstream;
 
 
 class KmerStats{
@@ -48,6 +51,8 @@ void operator+=(KmerStats& a, KmerStats& b);
 void operator+=(KmerConfusionStats& a, KmerConfusionStats& b);
 
 uint64_t kmer_to_index(deque<uint8_t>& kmer);
+
+uint64_t kmer_to_index(deque<char>& kmer);
 
 void index_to_kmer(deque<uint8_t>& kmer, uint64_t index, uint8_t k);
 

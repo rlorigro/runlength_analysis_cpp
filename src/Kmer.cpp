@@ -36,7 +36,7 @@ string KmerConfusionStats::to_string(){
     for (auto& [ref_kmer_index, submap]: this->confusion){
         double sum = 0;
 
-        for (auto& [read_kmer_index, frequency]: submap) {
+        for (auto& [_, frequency]: submap) {
             sum += frequency;
         }
 
@@ -107,6 +107,30 @@ uint64_t kmer_to_index(deque<uint8_t>& kmer){
     }
 
     return index;
+}
+
+
+uint64_t kmer_to_index(deque<char>& kmer){
+    // First check if kmer is valid
+    if (kmer.size() > 20){
+        throw runtime_error("ERROR: cannot use kmer size greater than 20: " + to_string(kmer.size()));
+    }
+
+    // Initialize
+    uint64_t base_index = 0;
+    uint64_t kmer_index = 0;
+    uint8_t k = 0;
+
+    // For as many bases as are in the kmer, create a binary representation where each pair of bits comes from 1 base.
+    // Later, this binary representation is interpreted as an integer;
+    for (char base: kmer){
+        base_index = base_to_index(base);
+        base_index <<= k*2;
+        kmer_index |= base_index;
+        k++;
+    }
+
+    return kmer_index;
 }
 
 

@@ -369,7 +369,7 @@ CigarStats measure_identity_from_bam(path bam_path,
     cerr << '\n';
 
     cout << "identity (M/(M+X+I+D)):\t" << stats.calculate_identity() << '\n';
-    cout << stats.to_string();
+    cout << stats.to_string(true);
 
     return stats;
 }

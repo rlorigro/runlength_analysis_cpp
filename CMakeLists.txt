@@ -159,6 +159,7 @@ set(SOURCES
         src/BinaryIO.cpp
         src/BinaryRunnieWriter.cpp
         src/BinaryRunnieReader.cpp
+        src/CigarKmer.cpp
         src/CompressedRunnieWriter.cpp
         src/CompressedRunnieReader.cpp
         src/ConfusionStats.cpp
@@ -176,6 +177,7 @@ set(SOURCES
         src/Miscellaneous.cpp
         src/MultiDistributionStats.cpp
         src/Pileup.cpp
+        src/PileupKmer.cpp
         src/PileupGenerator.cpp
         src/QuadCompressor.cpp
         src/QuadLoss.cpp
@@ -498,12 +500,22 @@ add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
+set(FILENAME_PREFIX measure_read_kmer_identity_from_fasta)
+add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
 set(FILENAME_PREFIX label_coverage_data_from_shasta)
 add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
 
 set(FILENAME_PREFIX predict_minimap_runlength_consensus_by_coverage)
+add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
+set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
+target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)
+
+set(FILENAME_PREFIX predict_consensus_from_shasta_coverage)
 add_executable(${FILENAME_PREFIX} src/executables/${FILENAME_PREFIX}.cpp)
 set_property(TARGET ${FILENAME_PREFIX} PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 target_link_libraries(${FILENAME_PREFIX} runlength_analysis htslib Threads::Threads ${Boost_LIBRARIES} stdc++fs)

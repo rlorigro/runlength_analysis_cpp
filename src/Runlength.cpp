@@ -992,7 +992,6 @@ RLEConfusion get_fasta_runlength_matrix(path bam_path,
         cout << "MATRIX " << i << ":\n" << matrix_to_string(m.base_matrix) << "\n";
     }
 
-
     RLEConfusion matrix_sum = sum_matrices(matrices_per_thread);
 
     return matrix_sum;
