@@ -24,9 +24,41 @@ def read_kmer_identities(path):
             n_match = int(n_match)
             n_mismatch = int(n_mismatch)
 
+            if n_insert + n_delete + n_match + n_mismatch == 0:
+                continue
+
             identities[kmer] = n_match/(n_insert + n_delete + n_match + n_mismatch)
 
     return identities
+
+
+def read_kmer_matches(path):
+    matches = dict()
+
+    with open(path, "r") as file:
+        for l,line in enumerate(file):
+            if l == 0:
+                continue
+
+            data = line.strip().split(",")
+            kmer, n_align_match, n_insert, n_delete, n_refskip, n_softclip, n_hardclip, n_pad, n_match, n_mismatch, _ = data
+
+            n_align_match = int(n_align_match)
+            n_insert = int(n_insert)
+            n_delete = int(n_delete)
+            n_refskip = int(n_refskip)
+            n_softclip = int(n_softclip)
+            n_hardclip = int(n_hardclip)
+            n_pad = int(n_pad)
+            n_match = int(n_match)
+            n_mismatch = int(n_mismatch)
+
+            if n_insert + n_delete + n_match + n_mismatch == 0:
+                continue
+
+            matches[kmer] = n_match
+
+    return matches
 
 
 def read_kmer_signal():
@@ -54,21 +86,33 @@ def read_kmer_signal():
 
 def main(path):
     identities = read_kmer_identities(path)
-    means, stdevs = read_kmer_signal()
+    matches = read_kmer_matches(path)
+
+    # means, stdevs = read_kmer_signal()
+    #
+    # axis = pyplot.axes()
+    # x = list()
+    # y = list()
+    # for kmer in identities.keys():
+    #     mean = means[kmer]
+    #     identity = identities[kmer]
+    #
+    #     x.append(mean)
+    #     y.append(identity)
+    # axis.scatter(x=x,y=y, s=0.5, alpha=0.5)
+    # axis.set_xlabel("Signal mean (pA)")
+    # axis.set_ylabel("Kmer identity")
+    # pyplot.show()
+    # pyplot.close()
 
     axis = pyplot.axes()
-    x = list()
-    y = list()
-    for kmer in identities.keys():
-        mean = means[kmer]
-        identity = identities[kmer]
+    x = list(range(len(matches)))
+    y = list(sorted(matches.values()))
 
-        x.append(mean)
-        y.append(identity)
+    axis.scatter(x=x,y=y, s=0.3)
+    axis.set_xlabel("Kmer")
+    axis.set_ylabel("Identity")
 
-    axis.scatter(x=x,y=y, s=0.5, alpha=0.5)
-    axis.set_xlabel("Signal mean (pA)")
-    axis.set_ylabel("Kmer identity")
     pyplot.show()
     pyplot.close()
 
