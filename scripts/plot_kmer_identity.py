@@ -111,7 +111,7 @@ def main(path):
 
     axis.scatter(x=x,y=y, s=0.3)
     axis.set_xlabel("Kmer")
-    axis.set_ylabel("Identity")
+    axis.set_ylabel("Total Matches")
 
     pyplot.show()
     pyplot.close()
@@ -120,12 +120,24 @@ def main(path):
     x = list(range(len(identities)))
     y = list(sorted(identities.values()))
 
-    axis.scatter(x=x,y=y, s=0.3)
+    axis.scatter(x=x, y=y, s=0.3)
     axis.set_xlabel("Kmer")
     axis.set_ylabel("Identity")
 
     pyplot.show()
     pyplot.close()
+
+    axis = pyplot.axes()
+    x = list(matches.values())
+    y = list(identities.values())
+
+    axis.scatter(x=x, y=y, s=0.3)
+    axis.set_xlabel("Total Matches")
+    axis.set_ylabel("Identity")
+
+    pyplot.show()
+    pyplot.close()
+
 
 
 if __name__ == "__main__":
