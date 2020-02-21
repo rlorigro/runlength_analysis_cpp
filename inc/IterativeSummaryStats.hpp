@@ -29,6 +29,7 @@ public:
     double get_variance();
     T size();
     bool empty();
+    void clear();
 };
 
 
@@ -51,6 +52,14 @@ template <class T> bool IterativeSummaryStats<T>::empty(){
 
 
 template <class T> IterativeSummaryStats<T>::IterativeSummaryStats(){
+    this->k = 0;
+    this->n = 0;
+    this->sum = 0;
+    this->sum_of_squares = 0;
+}
+
+
+template <class T> void IterativeSummaryStats<T>::clear(){
     this->k = 0;
     this->n = 0;
     this->sum = 0;

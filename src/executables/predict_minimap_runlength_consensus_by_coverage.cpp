@@ -348,6 +348,7 @@ void test(path fasta_ref_path, path fasta_reads_path, path output_directory, uin
                 output_directory,
                 "asm20",
                 max_threads,
+                false,
                 0,
                 regions);
 

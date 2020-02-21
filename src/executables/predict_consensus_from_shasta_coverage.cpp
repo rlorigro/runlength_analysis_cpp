@@ -41,8 +41,6 @@ int main(int argc, char* argv[]){
     path ref_fasta_path;
     path input_dir;
     path output_dir;
-    uint16_t max_threads;
-    uint16_t max_coverage;
 
     options_description options("Arguments");
 

@@ -9,6 +9,7 @@ using std::string;
 using boost::program_options::options_description;
 using boost::program_options::variables_map;
 using boost::program_options::value;
+using boost::program_options::bool_switch;
 using std::experimental::filesystem::path;
 
 
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]){
     path output_dir;
     string minimap_preset;
     uint16_t max_threads;
+    bool per_alignment;
 
     options_description options("Arguments");
 
@@ -42,7 +44,12 @@ int main(int argc, char* argv[]){
         ("max_threads",
         value<uint16_t>(&max_threads)->
         default_value(1),
-        "Maximum number of threads to launch");
+        "Maximum number of threads to launch")
+
+        ("per_alignment,a",
+        bool_switch(&per_alignment)->
+        default_value(false),
+        "This flag will indicate to dump all cigar stats to a file where each row pertains to 1 alignment");;
 
     // Store options in a map and apply values to each corresponding variable
     variables_map vm;
@@ -59,7 +66,8 @@ int main(int argc, char* argv[]){
                                 ref_fasta_path,
                                 output_dir,
                                 minimap_preset,
-                                max_threads);
+                                max_threads,
+                                per_alignment);
 
     return 0;
 }
