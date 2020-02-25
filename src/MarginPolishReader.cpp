@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <exception>
 #include <experimental/filesystem>
 
 using std::move;
@@ -13,6 +14,7 @@ using std::to_string;
 using std::getline;
 using std::replace;
 using std::runtime_error;
+using std::exception;
 using std::experimental::filesystem::directory_iterator;
 using std::experimental::filesystem::path;
 
@@ -158,7 +160,17 @@ void MarginPolishReader::read_file(CoverageSegment& mp_segment, path& file_path)
     while (getline(file, line)){
         if (l > 2){
             // Skip the first 2 header lines
-            this->parse_coverage_string(mp_segment, line);
+            try {
+                this->parse_coverage_string(mp_segment, line);
+            }
+            catch (exception& e){
+                cerr << "Exception: " << e.what() << '\n';
+                cerr << "ERROR parsing line in file:\n\t"
+                     << file_path.string() << "\n\t"
+                     << "at line index: " << to_string(l) << "\n\t"
+                     << line << '\n';
+                throw(e);
+            }
         }
         l++;
     }
