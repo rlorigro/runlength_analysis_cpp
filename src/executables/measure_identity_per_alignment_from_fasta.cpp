@@ -59,7 +59,8 @@ int main(int argc, char* argv[]){
                                 ref_fasta_path,
                                 output_dir,
                                 minimap_preset,
-                                max_threads);
+                                max_threads,
+                                true);
 
     return 0;
 }
