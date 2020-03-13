@@ -17,16 +17,40 @@ BedReader::BedReader(path bed_path){
 }
 
 
+void BedReader::read_regions(regional_interval_map& regions){
+    Region region;
+    bool placeholder = true;
+
+    while (this->next_line(region)){
+        // If this contig/region hasn't been added to the map yet, add it
+        if (regions.count(region.name) == 0){
+            interval_map<uint64_t,bool,total_enricher> empty_interval_map;
+            regions.emplace(region.name, empty_interval_map);
+        }
+
+        // Construct a Boost interval for this numeric range/coords in the BED
+        auto a = interval<uint64_t>::right_open(region.start, region.stop);
+
+        // Within this contig, add the numeric interval
+        regions.at(region.name).insert(make_pair(a, placeholder));
+
+        region = {};
+    }
+}
+
+
 void BedReader::read_regions(vector<Region>& regions){
+    // Start the vector with an empty region
     regions.emplace_back();
+
     while (this->next_line(regions.back())){
+        // Queue an empty region for the next iteration
         regions.emplace_back();
     }
 
     // Deal with the empty line at the end of the file
     regions.resize(regions.size()-1);
 }
-
 
 bool BedReader::next_line(Region& region){
     string line;
