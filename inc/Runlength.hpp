@@ -73,7 +73,9 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
-        uint16_t max_threads);
+        uint16_t max_threads,
+        string minimap_preset,
+        uint16_t minimap_k);
 
 
 void measure_runlength_distribution_from_runnie(path runnie_directory,

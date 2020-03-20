@@ -881,12 +881,6 @@ rle_length_matrix get_runnie_runlength_matrix(path bam_path,
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
 
-//    int i = 0;
-//    for (auto& m: matrices_per_thread){
-//        i++;
-//        cout << "MATRIX " << i << ":\n" << matrix_to_string(m, 4) << "\n";
-//    }
-
     rle_length_matrix matrix_sum = sum_matrices(matrices_per_thread);
 
     return matrix_sum;
@@ -985,12 +979,6 @@ RLEConfusion get_fasta_runlength_matrix(path bam_path,
     cerr << "\n" << flush;
 
     cerr << "Summing matrices from " << max_threads << " threads...\n";
-
-    int i = 0;
-    for (auto& m: matrices_per_thread){
-        i++;
-        cout << "MATRIX " << i << ":\n" << matrix_to_string(m.base_matrix) << "\n";
-    }
 
     RLEConfusion matrix_sum = sum_matrices(matrices_per_thread);
 
@@ -1201,7 +1189,9 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
-        uint16_t max_threads){
+        uint16_t max_threads,
+        string minimap_preset,
+        uint16_t minimap_k){
 
     cerr << "Using " + to_string(max_threads) + " threads\n";
 
@@ -1242,9 +1232,7 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     // Setup Alignment parameters
     bool sort = true;
     bool index = true;
-    bool delete_intermediates = false;  //TODO: switch to true
-    uint16_t k = 19;
-    string minimap_preset = "asm20";    //TODO: make command line argument?
+    bool delete_intermediates = true;
     bool explicit_mismatch = true;
 
     // Align reads to the reference
@@ -1255,7 +1243,7 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
             sort,
             index,
             delete_intermediates,
-            k,
+            minimap_k,
             minimap_preset,
             explicit_mismatch,
             max_threads);

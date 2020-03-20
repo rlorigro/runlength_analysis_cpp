@@ -280,13 +280,13 @@ RLEConfusion sum_matrices(vector<RLEConfusion>& matrices){
     size_t n_true_bases = base_shape[1];
     size_t n_observed_bases = base_shape[2];
 
-    cout <<
-    "n_directions: " << to_string(n_directions) << '\n' <<
-    "n_bases: " << to_string(n_bases) << '\n' <<
-    "n_true_lengths: " << to_string(n_true_lengths) << '\n' <<
-    "n_observed_lengths: " << to_string(n_observed_lengths) << '\n' <<
-    "n_true_bases: " << to_string(n_true_bases) << '\n' <<
-    "n_observed_bases: " << to_string(n_observed_bases) << '\n';
+//    cout <<
+//    "n_directions: " << to_string(n_directions) << '\n' <<
+//    "n_bases: " << to_string(n_bases) << '\n' <<
+//    "n_true_lengths: " << to_string(n_true_lengths) << '\n' <<
+//    "n_observed_lengths: " << to_string(n_observed_lengths) << '\n' <<
+//    "n_true_bases: " << to_string(n_true_bases) << '\n' <<
+//    "n_observed_bases: " << to_string(n_observed_bases) << '\n';
 
     rle_length_matrix length_sum(boost::extents[n_directions][n_bases][n_true_lengths][n_observed_lengths]);
     rle_base_matrix base_sum(boost::extents[n_directions][n_true_bases][n_observed_bases]);
