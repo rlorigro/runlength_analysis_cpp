@@ -506,6 +506,7 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
 CigarStats measure_identity_from_bam(path bam_path,
         path reference_fasta_path,
         uint16_t max_threads,
+        path output_directory,
         bool per_alignment,
         uint64_t chunk_size){
 
@@ -527,7 +528,9 @@ CigarStats measure_identity_from_bam(path bam_path,
     CigarStats stats;
 
     if (per_alignment) {
-        path output_directory = bam_path.parent_path();
+        if (output_directory.empty()){
+            path output_directory = bam_path.parent_path();
+        }
         path filename_suffix = bam_path.stem();
         path output_path = output_directory / ("cigar_stats_per_alignment_" + filename_suffix.string() + ".csv");
         output_path = absolute(output_path);

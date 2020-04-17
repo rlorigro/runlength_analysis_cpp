@@ -14,6 +14,7 @@ using std::experimental::filesystem::path;
 int main(int argc, char* argv[]){
     path ref_fasta_path;
     path bam_path;
+    path output_dir;
     uint16_t max_threads;
     bool per_alignment;
 
@@ -33,6 +34,11 @@ int main(int argc, char* argv[]){
         default_value(1),
         "Maximum number of threads to launch")
 
+        ("output_dir",
+        value<path>(&output_dir)->
+        default_value("output/"),
+        "Destination directory. File will be named based on input file name")
+
         ("per_alignment,a",
         bool_switch(&per_alignment)->
         default_value(false),
@@ -50,9 +56,10 @@ int main(int argc, char* argv[]){
     }
 
     measure_identity_from_bam(bam_path,
-        ref_fasta_path,
-        max_threads,
-        per_alignment);
+            ref_fasta_path,
+            max_threads,
+            output_dir,
+            per_alignment);
 
     return 0;
 }

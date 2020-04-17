@@ -24,11 +24,11 @@ int main(int argc, char* argv[]){
     options.add_options()
         ("ref",
         value<path>(&ref_fasta_path),
-        "File path of reference FASTA file containing REFERENCE sequences to be Run-length encoded")
+        "File path of reference FASTA file containing REFERENCE sequences to be aligned to")
 
         ("sequences",
         value<path>(&reads_fasta_path),
-        "File path of FASTA file containing QUERY sequences to be Run-length encoded")
+        "File path of FASTA file containing QUERY sequences to be tested")
 
         ("minimap_preset",
         value<string>(&minimap_preset),

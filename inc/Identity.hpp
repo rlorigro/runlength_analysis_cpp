@@ -21,10 +21,11 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
         vector<Region> regions={});
 
 CigarStats measure_identity_from_bam(path bam_path,
-        path reference_fasta_path,
-        uint16_t max_threads,
-        bool per_alignment=false,
-        uint64_t chunk_size=1*1000*1000);
+                                     path reference_fasta_path,
+                                     uint16_t max_threads,
+                                     path output_directory="",
+                                     bool per_alignment=false,
+                                     uint64_t chunk_size=1*1000*1000);
 
 
 #endif //RUNLENGTH_ANALYSIS_IDENTITY_HPP
