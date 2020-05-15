@@ -20,6 +20,7 @@ using std::to_string;
 using std::cout;
 using std::cerr;
 using std::ifstream;
+using std::ofstream;
 using std::runtime_error;
 using std::experimental::filesystem::path;
 using std::experimental::filesystem::exists;
@@ -45,6 +46,11 @@ bool is_tab(char c){
 }
 
 
+bool is_comma(char c){
+    return (c == ',');
+}
+
+
 FastaIndex::FastaIndex(uint64_t byte_index, uint64_t length){
     this->byte_index = byte_index;
     this->length = length;
@@ -62,7 +68,8 @@ FastaReader::FastaReader() = default;
 FastaReader::FastaReader(path file_path){
     file_path = absolute(file_path);
     this->file_path = file_path;
-    this->index_path = file_path.string() + ".fai";
+    this->index_path = file_path;
+    this->index_path.replace_extension(".fai");
     this->fasta_file = ifstream(file_path);
     this->header_symbol = '>';
     this->end_of_file = false;
@@ -152,10 +159,37 @@ void FastaReader::build_fasta_index(){
     if (!exists(this->index_path)){
         cout << "No index found, generating .fai for " << this->file_path << "\n";
 
-        // Build faidx using htslib
-        int fai_exit_code = fai_build(this->file_path.c_str());
-        if(fai_exit_code != 0) {
-            throw runtime_error("Error running faidx_build on " + this->file_path.string() + "\n");
+        ofstream index_file(this->index_path);
+        ifstream file(this->file_path);
+
+        if (not index_file.is_open()){
+            throw runtime_error("ERROR: could not open file " + this->index_path.string());
+        }
+        if (not file.good()){
+            throw runtime_error("ERROR: could not open file " + this->file_path.string());
+        }
+
+        string line;
+        uint64_t n_bytes = 0;
+        uint64_t length = 0;
+
+        while(getline(file,line)){
+            if (line[0] == '>'){
+                // Iterate the header until a space character is reached, save the name to the index
+                for(size_t i=1; i<line.size(); i++){
+                    if (line[i] == '\n' or line[i] == ' '){
+                        break;
+                    }
+                    index_file << line[i];
+                }
+                index_file << ',' << length << ',' << n_bytes + line.size() + 1 << '\n';
+                length = 0;
+            }
+            else{
+                length += line.size() + 1;
+            }
+
+            n_bytes += line.size() + 1;
         }
     }
 }
@@ -176,7 +210,7 @@ void FastaReader::read_fasta_index(){
 
     // Iterate .fai to collect byte start positions of sequences for each fasta element
     while(getline(index_file, line)){
-        split(elements, line, is_tab);
+        split(elements, line, is_comma);
 
         // Each index element is a pair of sequence name (column 0), byte position (column 2), and sequence length (column 1)
         byte_index = stoull(elements[2]);
