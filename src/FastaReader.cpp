@@ -170,19 +170,24 @@ void FastaReader::build_fasta_index(){
         }
 
         string line;
+        string name;
         uint64_t n_bytes = 0;
         uint64_t length = 0;
+//        uint64_t l;
 
         while(getline(file,line)){
             if (line[0] == '>'){
+                if (n_bytes > 0) {
+                    index_file << name << ',' << length - 1 << ',' << n_bytes - length << '\n';
+                    name.resize(0);
+                }
                 // Iterate the header until a space character is reached, save the name to the index
                 for(size_t i=1; i<line.size(); i++){
                     if (line[i] == '\n' or line[i] == ' '){
                         break;
                     }
-                    index_file << line[i];
+                    name += line[i];
                 }
-                index_file << ',' << length << ',' << n_bytes + line.size() + 1 << '\n';
                 length = 0;
             }
             else{
@@ -190,7 +195,10 @@ void FastaReader::build_fasta_index(){
             }
 
             n_bytes += line.size() + 1;
+//            l++;
         }
+
+        index_file << name << ',' << length - 1 << ',' << n_bytes - length << '\n';
     }
 }
 
