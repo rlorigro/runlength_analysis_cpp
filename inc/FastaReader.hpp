@@ -39,9 +39,11 @@ public:
     path file_path;
     path index_path;
     char header_symbol;
+    string eof_placeholder_name;
     uint64_t line_index;
     bool end_of_file;
-    unordered_map <string, FastaIndex > read_indexes;
+    vector <FastaIndex> sequential_read_offsets;
+    unordered_map <string, size_t > read_indexes_by_name;
 
     /// Methods ///
     FastaReader(path file_path);
@@ -54,10 +56,10 @@ public:
     void index();
 
     // Return a copy of the read indexes
-    unordered_map<string,FastaIndex> get_index();
+    void get_indexes_mapped_by_name(unordered_map <string, FastaIndex>& indexes);
 
-    // Set the read_indexes attribute manually
-    void set_index(unordered_map<string,FastaIndex>& read_indexes);
+    // Set this reader's index-related attributes to match the donor FastaReader
+    void adopt_index(FastaReader& donor);
 
     // Fetch a sequence from file, and generate index first if necessary
     void get_sequence(SequenceElement& element, string& sequence_name);

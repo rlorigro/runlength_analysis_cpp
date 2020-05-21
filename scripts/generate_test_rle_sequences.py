@@ -56,7 +56,7 @@ def write_sequences_to_file(sequences):
 
 
 def main():
-    n_samples = 20
+    n_samples = 800
     max_length = 50
     n_bases = max_length*max_length*n_samples
 
@@ -73,6 +73,7 @@ def main():
 
     write_sequences_to_file(sequences)
     write_reference_sequence_to_file(reference_sequence)
+
 
 if __name__ == "__main__":
     bases = ["A","C","G","T"]

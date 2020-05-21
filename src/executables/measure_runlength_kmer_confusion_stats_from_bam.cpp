@@ -176,7 +176,9 @@ void measure_kmer_stats_from_fasta(path bam_path,
 
     // Chunk alignment regions
     vector<Region> regions;
-    chunk_sequences_into_regions(regions, ref_reader.read_indexes, chunk_size);
+    unordered_map <string, FastaIndex> read_indexes;
+    ref_reader.get_indexes_mapped_by_name(read_indexes);
+    chunk_sequences_into_regions(regions, read_indexes, chunk_size);
 
     get_kmer_stats(bam_path,
         reference_fasta_path,

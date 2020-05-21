@@ -86,7 +86,8 @@ void load_fasta_file(path input_file_path,
     FastaReader fasta_reader(input_file_path);
 
     // Get index
-    auto read_indexes = fasta_reader.get_index();
+    unordered_map <string, FastaIndex> read_indexes;
+    fasta_reader.get_indexes_mapped_by_name(read_indexes);
 
     // Convert the map object into an indexable object
     vector <pair <string, FastaIndex> > read_index_vector;
@@ -469,7 +470,6 @@ CigarStats measure_identity_from_fasta(path reads_fasta_path,
     cerr << "Iterating alignments...\n" << std::flush;
 
     reads_fasta_reader.index();
-    unordered_map<string,FastaIndex> read_indexes = reads_fasta_reader.get_index();
 
     CigarStats stats;
 

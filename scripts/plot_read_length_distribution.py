@@ -28,7 +28,7 @@ def find_coverage_intervals(lengths, genome_size=3200000000):
 def plot_histogram(axes, lengths, i):
     colors = [(0.945, 0.267, 0.176), (0.122, 0.498, 0.584), (0.945, 0.71, 0.176)]
 
-    step = 10000        # bin size
+    step = 1000        # bin size
     max_length = 300000      # end of histogram
 
     bins = numpy.arange(0, max_length + step, step=step)
@@ -63,10 +63,13 @@ def main(paths):
                 if l == 1:
                     lengths = list(map(int,line.strip().split(",")))
                     lengths = [l for l in lengths if l > 100]
+                    find_coverage_intervals(lengths)
 
             plot_histogram(axes=axes, lengths=lengths, i=p)
 
-    axes.legend(["r9", "r9 UL"])
+
+
+    axes.legend(["PAD65442", "PAD64459", "PAD64591"])
     pyplot.show()
     pyplot.close()
 

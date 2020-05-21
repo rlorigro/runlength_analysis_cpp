@@ -201,7 +201,8 @@ path runlength_encode_fasta_file(path input_file_path,
     FastaWriter fasta_writer(output_file_path);
 
     // Get index
-    auto read_indexes = fasta_reader.get_index();
+    unordered_map <string, FastaIndex> read_indexes;
+    fasta_reader.get_indexes_mapped_by_name(read_indexes);
 
     // Convert the map object into an indexable object
     vector <pair <string, FastaIndex> > read_index_vector;
@@ -697,7 +698,7 @@ template<typename T> void parse_aligned_coverage(path bam_path,
 
 void parse_aligned_fasta(path bam_path,
         path reads_fasta_path,
-        unordered_map <string,FastaIndex>& read_indexes,
+        FastaReader& index_donor,
         unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
         vector <Region>& regions,
         RLEConfusion& runlength_matrix,
@@ -710,7 +711,7 @@ void parse_aligned_fasta(path bam_path,
     FastaReader fasta_reader = FastaReader(reads_fasta_path);
     SequenceElement sequence;
     RunlengthSequenceElement runlength_sequence;
-    fasta_reader.set_index(read_indexes);
+    fasta_reader.adopt_index(index_donor);
 
     // Initialize BAM reader and relevant containers
     BamReader bam_reader = BamReader(bam_path);
@@ -939,7 +940,7 @@ template <typename T> rle_length_matrix get_runlength_matrix(
 
 RLEConfusion get_fasta_runlength_matrix(path bam_path,
                                        path reads_fasta_path,
-                                       unordered_map <string,FastaIndex>& read_indexes,
+                                       FastaReader& index_donor,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                        vector <Region>& regions,
                                        uint16_t max_runlength,
@@ -961,7 +962,7 @@ RLEConfusion get_fasta_runlength_matrix(path bam_path,
             threads.emplace_back(thread(parse_aligned_fasta,
                                         ref(bam_path),
                                         ref(reads_fasta_path),
-                                        ref(read_indexes),
+                                        ref(index_donor),
                                         ref(ref_runlength_sequences),
                                         ref(regions),
                                         ref(matrices_per_thread[i]),
@@ -1255,12 +1256,11 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     cerr << "Iterating alignments...\n" << std::flush;
 
     reads_fasta_reader.index();
-    unordered_map<string,FastaIndex> read_indexes = reads_fasta_reader.get_index();
 
     // Launch threads for parsing alignments and generating matrices
     RLEConfusion confusion = get_fasta_runlength_matrix(bam_path,
             reads_fasta_path,
-            read_indexes,
+            reads_fasta_reader,
             ref_runlength_sequences,
             regions,
             max_runlength,

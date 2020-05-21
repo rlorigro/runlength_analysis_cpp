@@ -56,6 +56,7 @@ FastaIndex::FastaIndex(uint64_t byte_index, uint64_t length){
     this->length = length;
 }
 
+
 uint64_t FastaIndex::size(){
     return this->length;
 }
@@ -72,6 +73,7 @@ FastaReader::FastaReader(path file_path){
     this->index_path.replace_extension(".fai");
     this->fasta_file = ifstream(file_path);
     this->header_symbol = '>';
+    this->eof_placeholder_name = ">EOF<";
     this->end_of_file = false;
     this->line_index = 0;
 
@@ -86,24 +88,28 @@ SequenceElement FastaReader::generate_sequence_container(){
     return SequenceElement();
 }
 
-unordered_map<string,FastaIndex> FastaReader::get_index(){
-    if (this->read_indexes.empty()){
+void FastaReader::get_indexes_mapped_by_name(unordered_map <string, FastaIndex>& indexes){
+    if (this->sequential_read_offsets.empty()){
         this->index();
     }
 
-    return this->read_indexes;
+    // Construct a direct mapping of the read names to their fasta indexes
+    for (auto& element: this->read_indexes_by_name){
+        indexes.try_emplace(element.first, this->sequential_read_offsets[element.second]);
+    }
 }
 
 
-void FastaReader::set_index(unordered_map<string,FastaIndex>& index){
-    this->read_indexes = index;
+void FastaReader::adopt_index(FastaReader& donor){
+    this->sequential_read_offsets = donor.sequential_read_offsets;
+    this->read_indexes_by_name = donor.read_indexes_by_name;
 }
 
 
 void FastaReader::get_sequence(SequenceElement& element, string& sequence_name){
     element = {};
 
-    if (this->read_indexes.empty()){
+    if (this->sequential_read_offsets.empty()){
         this->index();
     }
 
@@ -118,7 +124,7 @@ void FastaReader::get_sequence(SequenceElement& element, string& sequence_name){
 
     try {
         // Set ifstream cursor to the start of this read's sequence
-        this->fasta_file.seekg(this->read_indexes.at(sequence_name).byte_index);
+        this->fasta_file.seekg(this->sequential_read_offsets.at(this->read_indexes_by_name.at(sequence_name)).byte_index);
     }
     catch(std::out_of_range& e){
         throw out_of_range("ERROR: sequence '" + sequence_name + "' not found in fasta index for file: " + this->file_path.string());
@@ -157,7 +163,7 @@ void FastaReader::index(){
 
 void FastaReader::build_fasta_index(){
     if (!exists(this->index_path)){
-        cout << "No index found, generating .fai for " << this->file_path << "\n";
+        cout << "No index found, generating .fai for " << this->file_path << "... ";
 
         ofstream index_file(this->index_path);
         ifstream file(this->file_path);
@@ -172,15 +178,11 @@ void FastaReader::build_fasta_index(){
         string line;
         string name;
         uint64_t n_bytes = 0;
-        uint64_t length = 0;
-//        uint64_t l;
+        uint64_t sequence_start_offset = 0;
+        uint64_t n_lines_in_sequence = 0;
 
         while(getline(file,line)){
-            if (line[0] == '>'){
-                if (n_bytes > 0) {
-                    index_file << name << ',' << length - 1 << ',' << n_bytes - length << '\n';
-                    name.resize(0);
-                }
+            if (line[0] == this->header_symbol){
                 // Iterate the header until a space character is reached, save the name to the index
                 for(size_t i=1; i<line.size(); i++){
                     if (line[i] == '\n' or line[i] == ' '){
@@ -188,18 +190,29 @@ void FastaReader::build_fasta_index(){
                     }
                     name += line[i];
                 }
-                length = 0;
+
+                // If at least on sequence has been totally read, calculate the length by subtracting offsets, and
+                // removing newline bytes from the total
+                if (sequence_start_offset > 0){
+                    index_file << n_bytes - sequence_start_offset - n_lines_in_sequence + 1<< '\n';
+                }
+
+                index_file << name << ',' << n_bytes + line.size() + 1 << ',';
+                sequence_start_offset = n_bytes + line.size() + 1;
+
+                n_lines_in_sequence = 0;
+                name.resize(0);
             }
             else{
-                length += line.size() + 1;
             }
 
             n_bytes += line.size() + 1;
-//            l++;
+            n_lines_in_sequence++;
         }
-
-        index_file << name << ',' << length - 1 << ',' << n_bytes - length << '\n';
+        // Write the last length value and newline
+        index_file << n_bytes - sequence_start_offset - n_lines_in_sequence + 1<< '\n';
     }
+    cout << "done\n";
 }
 
 
@@ -221,14 +234,15 @@ void FastaReader::read_fasta_index(){
         split(elements, line, is_comma);
 
         // Each index element is a pair of sequence name (column 0), byte position (column 2), and sequence length (column 1)
-        byte_index = stoull(elements[2]);
-        length = stoull(elements[1]);
+        length = stoull(elements[2]);
+        byte_index = stoull(elements[1]);
         read_name = elements[0];
 
-        bool no_conflict = this->read_indexes.insert({read_name, FastaIndex(byte_index, length)}).second;
+        bool no_conflict = this->read_indexes_by_name.insert({read_name, this->sequential_read_offsets.size()}).second;
         if (not no_conflict){
             throw runtime_error("ERROR: duplicate reads detected in FASTA: " + read_name);
         }
+        this->sequential_read_offsets.emplace_back(byte_index, length);
     }
 }
 
