@@ -211,8 +211,8 @@ void FastaReader::build_fasta_index(){
         }
         // Write the last length value and newline
         index_file << n_bytes - sequence_start_offset - n_lines_in_sequence + 1<< '\n';
+        cout << "done\n";
     }
-    cout << "done\n";
 }
 
 

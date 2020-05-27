@@ -10,7 +10,7 @@ using std::to_string;
 using std::vector;
 using std::runtime_error;
 
-uint8_t base_to_index(string& base);
+uint8_t base_to_index(string base);
 
 float base_to_float(char base);
 

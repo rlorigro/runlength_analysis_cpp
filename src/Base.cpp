@@ -1,8 +1,10 @@
 #include "Base.hpp"
 #include "Pileup.hpp"
-
+#include <cctype>
 
 char complement_base(char base){
+    base = toupper(base);
+
     if (base == 'A'){
         return 'T';
     }
@@ -22,6 +24,7 @@ char complement_base(char base){
 
 
 bool is_valid_base(string base){
+    base[0] = toupper(base[0]);
     bool valid = false;
 
     if (base == "A"){
@@ -42,6 +45,7 @@ bool is_valid_base(string base){
 
 
 bool is_valid_base(char base){
+    base = toupper(base);
     bool valid = false;
 
     if (base == 'A'){
@@ -61,7 +65,8 @@ bool is_valid_base(char base){
 }
 
 
-uint8_t base_to_index(string& base){
+uint8_t base_to_index(string base){
+    base[0] = toupper(base[0]);
     uint8_t index;
 
     if (base == "A"){
@@ -85,6 +90,7 @@ uint8_t base_to_index(string& base){
 
 
 uint8_t base_to_index(char base){
+    base = toupper(base);
     uint8_t index;
 
     if (base == 'A'){
@@ -108,6 +114,7 @@ uint8_t base_to_index(char base){
 
 
 float base_to_float(char base){
+    base = toupper(base);
     float index;
 
     if (base == 'A'){
