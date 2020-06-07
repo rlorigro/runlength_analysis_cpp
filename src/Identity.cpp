@@ -134,6 +134,10 @@ void parse_cigars_per_alignment(path bam_path,
     ///
     ///
 
+    if (not output_file.is_open()){
+        throw runtime_error("ERROR: Could not write to output file");
+    }
+
     // Initialize FastaReader and relevant containers
     SequenceElement sequence;
 
@@ -531,6 +535,8 @@ CigarStats measure_identity_from_bam(path bam_path,
         if (output_directory.empty()){
             path output_directory = bam_path.parent_path();
         }
+
+        create_directories(output_directory);
         path filename_suffix = bam_path.stem();
         path output_path = output_directory / ("cigar_stats_per_alignment_" + filename_suffix.string() + ".csv");
         output_path = absolute(output_path);
