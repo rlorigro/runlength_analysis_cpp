@@ -732,8 +732,8 @@ void parse_aligned_fasta(path bam_path,
     // Volatiles
     bool in_left_bound;
     bool in_right_bound;
-    string true_base;
-    string observed_base;
+    char true_base;
+    char observed_base;
     uint16_t true_length = -1;
     uint16_t observed_length = -1;
     uint8_t true_base_index;
@@ -769,6 +769,11 @@ void parse_aligned_fasta(path bam_path,
 
                     // Skip anything other than ACTG
                     if (not is_valid_base(true_base)){
+                        continue;
+                    }
+
+                    // Skip anything other than ACTG
+                    if (not is_valid_base(observed_base)){
                         continue;
                     }
 
