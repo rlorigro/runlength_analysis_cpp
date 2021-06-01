@@ -17,7 +17,13 @@ unordered_map <string, vector <pair <string, int64_t> > >  truth_set =
          {"synthetic_read_delete_G_at_20", {{"=",19}, {"D",1}, {"=",1317}}},
          {"synthetic_read_delete_G_at_20_reverse", {{"=",19}, {"D",1}, {"=",1317}}},
          {"synthetic_read_insert_C_at_30", {{"=",29}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_insert_CG_at_30", {{"=",29}, {"I",2}, {"=",1308}}},
          {"synthetic_read_insert_C_at_30_reverse", {{"=",29}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_insert_CG_at_30_reverse", {{"=",29}, {"I",2}, {"=",1308}}},
+         {"synthetic_read_insert_C_at_30_and_15_trimmed", {{"=",14}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_insert_CG_at_30_and_15_trimmed", {{"=",14}, {"I",2}, {"=",1308}}},
+         {"synthetic_read_insert_C_at_30_and_15_trimmed_reverse", {{"=",14}, {"I",1}, {"=",1308}}},
+         {"synthetic_read_insert_CG_at_30_and_15_trimmed_reverse", {{"=",14}, {"I",2}, {"=",1308}}},
          {"synthetic_read_sub_T_at_40", {{"=",40}, {"X",1}, {"=",1296}}},
          {"synthetic_read_sub_T_at_40_reverse", {{"=",40}, {"X",1}, {"=",1296}}},
          {"synthetic_read_N40", {{"S",41}, {"=",1296}}},
@@ -39,7 +45,13 @@ unordered_map <string, vector <pair <string, int64_t> > >  truth_set_sum =
          {"synthetic_read_delete_G_at_20", {{"=",19+1317}, {"D",1}}},
          {"synthetic_read_delete_G_at_20_reverse", {{"=",19+1317}, {"D",1}}},
          {"synthetic_read_insert_C_at_30", {{"=",29+1308}, {"I",1}}},
+         {"synthetic_read_insert_CG_at_30", {{"=",29+1308}, {"I",2}}},
          {"synthetic_read_insert_C_at_30_reverse", {{"=",29+1308}, {"I",1}}},
+         {"synthetic_read_insert_CG_at_30_reverse", {{"=",29+1308}, {"I",2}}},
+         {"synthetic_read_insert_C_at_30_and_15_trimmed", {{"=",14+1308}, {"I",1}}},
+         {"synthetic_read_insert_CG_at_30_and_15_trimmed", {{"=",14+1308}, {"I",2}}},
+         {"synthetic_read_insert_C_at_30_and_15_trimmed_reverse", {{"=",14+1308}, {"I",1}}},
+         {"synthetic_read_insert_CG_at_30_and_15_trimmed_reverse", {{"=",14+1308}, {"I",2}}},
          {"synthetic_read_sub_T_at_40", {{"=",40+1296}, {"X",1}}},
          {"synthetic_read_sub_T_at_40_reverse", {{"=",40+1296}, {"X",1}}},
          {"synthetic_read_N40", {{"S",41}, {"=",1296}}},
@@ -83,6 +95,10 @@ bool test_cigars(unordered_map <string, vector <pair <string, int64_t> > >& trut
 //    cout << "\n";
 
     for (size_t cigar_index = 0; cigar_index < cigar_sequence_RLE.sequence.size(); cigar_index++) {
+        if (cigar_sequence.name == "synthetic_read_300N_at_500"){
+            continue;
+        }
+
         string cigar_name = string(1, cigar_sequence_RLE.sequence[cigar_index]);
         uint16_t cigar_length = cigar_sequence_RLE.lengths[cigar_index];
         bool cigar_found = cigar_tuple_is_in_truth_set(truth, cigar_sequence.name, cigar_name, cigar_length);
@@ -242,7 +258,6 @@ int main() {
     path absolute_quality_bam_path = project_directory / relative_quality_bam_path;
 
     // Initialize BAM reader and relevant containers
-    bam_reader = BamReader(absolute_quality_bam_path);
     ref_name = "synthetic_ref_0";
     bam_reader.initialize_region(ref_name, 0, 1337);
 

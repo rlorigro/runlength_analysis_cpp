@@ -93,6 +93,8 @@ public:
     BamReader(path bam_path);
     BamReader();
     ~BamReader();
+    void free_hts_structs();
+    void initialize_hts_structs();
     void initialize_region(string& ref_name, uint64_t start, uint64_t stop);
     void load_alignment(AlignedSegment& aligned_segment, bam1_t* alignment, bam_hdr_t* bam_header);
     bool next_alignment(AlignedSegment& aligned_segment,

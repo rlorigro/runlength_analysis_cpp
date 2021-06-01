@@ -5,11 +5,13 @@
 #include "htslib/sam.h"
 #include "htslib/bgzf.h"
 #include <string>
+#include <vector>
 #include <array>
 #include <unordered_set>
 #include <unordered_map>
 
 using std::string;
+using std::vector;
 using std::array;
 using std::unordered_set;
 using std::unordered_map;
@@ -53,9 +55,9 @@ public:
     int64_t ref_start_index;     // Left most position of alignment
     string ref_name;             // Reference contig name (usually chromosome)
     int64_t read_length;         // Length of the read.
-    uint8_t* read_sequence;      // DNA sequence
+    vector<uint8_t> read_sequence;      // DNA sequence
     string read_name;
-    uint32_t* cigars;
+    vector<uint32_t> cigars;
     uint32_t n_cigar;
     bool reversal;
     bool is_secondary;

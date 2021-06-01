@@ -113,17 +113,21 @@ void chunk_sequence(vector<Region>& regions, string read_name, uint64_t chunk_si
 
 BamReader::BamReader() = default;
 
-
-BamReader::~BamReader() {
-//    hts_close(this->bam_file);
-//    bam_hdr_destroy(this->bam_header);
-//    bam_destroy1(this->alignment);
-//    free(this->bam_index);
+void BamReader::free_hts_structs(){
+    hts_close(this->bam_file);
+    bam_hdr_destroy(this->bam_header);
+    bam_destroy1(this->alignment);
+    hts_idx_destroy(this->bam_index);
+    hts_itr_destroy(this->bam_iterator);
 }
 
 
-BamReader::BamReader(path bam_path){
-    this->bam_path = bam_path.string();
+BamReader::~BamReader() {
+    free_hts_structs();
+}
+
+
+void BamReader::initialize_hts_structs(){
     this->bam_file = nullptr;
     this->bam_index = nullptr;
     this->bam_iterator = nullptr;
@@ -151,10 +155,22 @@ BamReader::BamReader(path bam_path){
     if ((this->bam_header = sam_hdr_read(this->bam_file)) == 0){
         throw runtime_error("ERROR: Cannot open header for bam file: " + string(this->bam_path) + "\n");
     }
+
+}
+
+
+BamReader::BamReader(path bam_path){
+    this->bam_path = bam_path.string();
+    initialize_hts_structs();
 }
 
 
 void BamReader::initialize_region(string& reference_name, uint64_t start, uint64_t stop){
+    if (this->bam_iterator != nullptr){
+        free_hts_structs();
+        initialize_hts_structs();
+    }
+
     this->ref_name = reference_name;
 
     // Find the ID for this contig/chromosome/region
@@ -184,11 +200,15 @@ void BamReader::load_alignment(AlignedSegment& aligned_segment, bam1_t* alignmen
 
     aligned_segment.ref_start_index = alignment->core.pos + 1;
     aligned_segment.ref_name = bam_header->target_name[alignment->core.tid];
+
+    auto seq_ptr = bam_get_seq(alignment);
     aligned_segment.read_length = alignment->core.l_qseq;
-    aligned_segment.read_sequence = bam_get_seq(alignment);
+    aligned_segment.read_sequence.assign(seq_ptr, seq_ptr+aligned_segment.read_length);
     aligned_segment.read_name = bam_get_qname(alignment);
-    aligned_segment.cigars = bam_get_cigar(alignment);
+
+    auto cigar_ptr = bam_get_cigar(alignment);
     aligned_segment.n_cigar = alignment->core.n_cigar;
+    aligned_segment.cigars.assign(cigar_ptr,cigar_ptr+aligned_segment.n_cigar);
     aligned_segment.reversal = bam_is_rev(alignment);
     aligned_segment.is_secondary = ((alignment->core.flag & BamReader::secondary_mask) == 0);
     aligned_segment.is_supplementary = ((alignment->core.flag & BamReader::supplementary_mask) == 0);

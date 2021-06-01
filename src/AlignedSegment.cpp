@@ -215,9 +215,7 @@ int64_t AlignedSegment::infer_reference_stop_position_from_alignment(){
     /// Iterate the cigar of an alignment and find the reference stop position
     ///
     int64_t ref_stop_position = this->ref_start_index;
-    for (int64_t i=0; i<this->n_cigar; i++) {
-        Cigar cigar = Cigar(this->cigars[i]);
-
+    for (Cigar cigar: this->cigars) {
         if (cigar.is_not_clip()) {
             ref_stop_position += get_ref_index_increment(cigar);
         }
@@ -254,12 +252,12 @@ void AlignedSegment::initialize_cigar_iterator(){
 
 
 bool AlignedSegment::next_cigar_in_bounds(){
-    return (llabs(this->cigar_iterator_start - cigar_index) < this->n_cigar);
+    return (llabs(this->cigar_iterator_start - cigar_index) < this->n_cigar - 1);
 }
 
 
 bool AlignedSegment::current_cigar_in_bounds(){
-    return (llabs(this->cigar_iterator_start - (cigar_index))-1 < this->n_cigar);
+    return (llabs(this->cigar_iterator_start - cigar_index)-1 < this->n_cigar);
 }
 
 
@@ -280,7 +278,7 @@ bool AlignedSegment::next_cigar(){
 
     bool valid = false;
 
-    if (this->next_cigar_in_bounds()){
+    if (this->cigar_index >= 0 and this->cigar_index < this->cigars.size()){
         this->current_cigar = Cigar(this->cigars[cigar_index]);
 
         // Increment may be negative if read is reverse
