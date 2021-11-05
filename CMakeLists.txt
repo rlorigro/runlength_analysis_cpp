@@ -217,41 +217,41 @@ set_target_properties(runlength_analysis PROPERTIES DEFINE_SYMBOL "")
 ## -------- LINKING EXTERNAL LIBRARY -------- #
 ## ------------------------------------------ #
 ###############################################
-#
-## Need to explicitly enable ExternalProject functionality
-#include(ExternalProject)
-#
-## Download or update library as an external project
-#ExternalProject_Add(project_htslib
-#        URL https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
-#        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/
-#        CONFIGURE_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/external/src/project_htslib/configure # --prefix=${CMAKE_CURRENT_SOURCE_DIR}/external/src/project_htslib-build/
-#        BUILD_IN_SOURCE True
-#        BUILD_COMMAND make all
-#        INSTALL_COMMAND ""
-#)
-#
-## Define INSTALL_DIR as the install directory for external library
-#ExternalProject_Get_Property(project_htslib INSTALL_DIR)
-#
-## Create new library for external project (so it can be linked with main library)
-#add_library(htslib STATIC IMPORTED)
-#set_property(TARGET htslib
-#        PROPERTY IMPORTED_LOCATION ${INSTALL_DIR}/src/project_htslib/libhts.so)
-#
-## Define library as dependent on the downloaded project
-#add_dependencies(htslib project_htslib)
-#
-## Define main library as dependent on the downloaded project (transitively)
-#add_dependencies(runlength_analysis htslib)
-#
-## Ensure that main library has access to primary dependencies' and secondary dependencies' headers
-#include_directories(
-#        ${INSTALL_DIR}/src/project_htslib/
-#        ${INSTALL_DIR}/src/project_htslib/os
-#        ${INSTALL_DIR}/src/project_htslib/cram
-#        ${INSTALL_DIR}/src/project_htslib/htslib)
-#
+
+# Need to explicitly enable ExternalProject functionality
+include(ExternalProject)
+
+# Download or update library as an external project
+ExternalProject_Add(project_htslib
+        URL https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
+        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/
+        CONFIGURE_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/external/src/project_htslib/configure # --prefix=${CMAKE_CURRENT_SOURCE_DIR}/external/src/project_htslib-build/
+        BUILD_IN_SOURCE True
+        BUILD_COMMAND make all
+        INSTALL_COMMAND ""
+)
+
+# Define INSTALL_DIR as the install directory for external library
+ExternalProject_Get_Property(project_htslib INSTALL_DIR)
+
+# Create new library for external project (so it can be linked with main library)
+add_library(htslib STATIC IMPORTED)
+set_property(TARGET htslib
+        PROPERTY IMPORTED_LOCATION ${INSTALL_DIR}/src/project_htslib/libhts.so)
+
+# Define library as dependent on the downloaded project
+add_dependencies(htslib project_htslib)
+
+# Define main library as dependent on the downloaded project (transitively)
+add_dependencies(runlength_analysis htslib)
+
+# Ensure that main library has access to primary dependencies' and secondary dependencies' headers
+include_directories(
+        ${INSTALL_DIR}/src/project_htslib/
+        ${INSTALL_DIR}/src/project_htslib/os
+        ${INSTALL_DIR}/src/project_htslib/cram
+        ${INSTALL_DIR}/src/project_htslib/htslib)
+
 ## Add runtime path for main library so it can access external library
 #set_property(TARGET runlength_analysis PROPERTY INSTALL_RPATH "$ORIGIN" "${INSTALL_DIR}/src/project_htslib/")
 ##
