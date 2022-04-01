@@ -1239,9 +1239,9 @@ void measure_runlength_distribution_from_fasta(
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-//    uint64_t chunk_size = 1*1000*1000;
-    uint64_t chunk_size = 1*1000;
-    cerr << "WARNING USING 1000bp chunks!\n";
+    uint64_t chunk_size = 1*1000*1000;
+//    uint64_t chunk_size = 1*1000;
+//    cerr << "WARNING USING 1000bp chunks!\n";
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);
