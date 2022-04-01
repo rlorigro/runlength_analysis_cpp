@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     path output_dir;
     uint16_t max_threads;
     uint16_t max_runlength;
+    size_t minimum_match_length;
     string minimap_preset;
     uint16_t minimap_k;
 
@@ -43,6 +44,11 @@ int main(int argc, char* argv[]){
              default_value(50),
              "Maximum length of a run to use in the model")
 
+            ("minimum_match_length",
+             value<size_t>(&minimum_match_length)->
+             default_value(3),
+             "Size of window surrounding and including each base, for which there must be a complete match to update the matrix")
+
             ("minimap_preset",
              value<string>(&minimap_preset)->
              default_value("asm20"),
@@ -69,6 +75,7 @@ int main(int argc, char* argv[]){
                                               output_dir,
                                               max_runlength,
                                               max_threads,
+                                              minimum_match_length,
                                               minimap_preset,
                                               minimap_k);
 

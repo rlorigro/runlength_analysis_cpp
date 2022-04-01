@@ -53,7 +53,8 @@ path runlength_encode_fasta_file(path input_file_path,
                                  bool store_in_memory,
                                  uint16_t max_threads);
 
-void measure_runlength_distribution_from_marginpolish(path input_directory,
+void measure_runlength_distribution_from_marginpolish(
+        path input_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
@@ -61,7 +62,8 @@ void measure_runlength_distribution_from_marginpolish(path input_directory,
         path bed_path=path());
 
 
-void measure_runlength_distribution_from_shasta(path input_directory,
+void measure_runlength_distribution_from_shasta(
+        path input_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
@@ -69,16 +71,19 @@ void measure_runlength_distribution_from_shasta(path input_directory,
         path bed_path=path());
 
 
-void measure_runlength_distribution_from_fasta(path reads_fasta_path,
+void measure_runlength_distribution_from_fasta(
+        path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
         uint16_t max_threads,
+        size_t minimum_match_length,
         string minimap_preset,
         uint16_t minimap_k);
 
 
-void measure_runlength_distribution_from_runnie(path runnie_directory,
+void measure_runlength_distribution_from_runnie(
+        path runnie_directory,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,

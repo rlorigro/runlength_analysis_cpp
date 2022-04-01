@@ -1,6 +1,6 @@
 #include "MarginPolishReader.hpp"
-#include "ShastaReader.hpp"
 #include "AlignedSegment.hpp"
+#include "ShastaReader.hpp"
 #include "RunnieReader.hpp"
 #include "FastaReader.hpp"
 #include "FastaWriter.hpp"
@@ -702,10 +702,15 @@ void parse_aligned_fasta(path bam_path,
         unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
         vector <Region>& regions,
         RLEConfusion& runlength_matrix,
+        size_t k,
         atomic <uint64_t>& job_index){
     ///
     ///
     ///
+
+    if (not k%2 == 1){
+        throw std::runtime_error("ERROR: k cannot be even");
+    }
 
     // Initialize FastaReader and relevant containers
     FastaReader fasta_reader = FastaReader(reads_fasta_path);
@@ -727,13 +732,14 @@ void parse_aligned_fasta(path bam_path,
     string ref_name;
 
     bool filter_secondary = true;
-    uint16_t map_quality_cutoff = 5;
+    uint16_t map_quality_cutoff = 10;
 
-    // Volatiles
     bool in_left_bound;
     bool in_right_bound;
     char true_base;
     char observed_base;
+
+    size_t flank_size = k/2;
     uint16_t true_length = -1;
     uint16_t observed_length = -1;
     uint8_t true_base_index;
@@ -741,11 +747,13 @@ void parse_aligned_fasta(path bam_path,
     vector<CoverageElement> coverage_data;
 
     // Only allow matches
-    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("="),Cigar::cigar_code_key.at("X")};
+    unordered_set<uint8_t> valid_cigar_codes = {Cigar::cigar_code_key.at("="), Cigar::cigar_code_key.at("X")};
 
     while (job_index < regions.size()) {
         uint64_t thread_job_index = job_index.fetch_add(1);
         region = regions.at(thread_job_index);
+
+        cerr << "\33[2K\rParsing: " << region.to_string() << flush;
 
         // BAM coords are 1 based
         bam_reader.initialize_region(region.name, region.start+1, region.stop+1);
@@ -761,11 +769,35 @@ void parse_aligned_fasta(path bam_path,
                 in_left_bound = (int64_t(region.start) <= coordinate.ref_index - 1);
                 in_right_bound = (coordinate.ref_index - 1 < int64_t(region.stop));
 
+                string& ref_seq = ref_runlength_sequences.at(aligned_segment.ref_name).sequence;
+
                 // Subset alignment to portions of the read that are within the window/region
                 if (in_left_bound and in_right_bound) {
-                    true_base = ref_runlength_sequences.at(aligned_segment.ref_name).sequence[coordinate.ref_index];
                     true_length = ref_runlength_sequences.at(aligned_segment.ref_name).lengths[coordinate.ref_index];
+
+                    true_base = ref_seq[coordinate.ref_index];
                     observed_base = runlength_sequence.sequence[coordinate.read_true_index];
+
+                    // At this stage the subcigar index is offset by +1
+                    size_t c_i = aligned_segment.subcigar_index;
+
+                    bool full_match = true;
+
+                    // If it's not a '=' operation, it's not a match
+                    if (cigar.code != Cigar::cigar_code_key.at("=")){
+                        full_match = false;
+                    }
+                    else {
+                        // Only count positions where a full k-mer matches
+                        // If the cigar operation is shorter than the k-mer, it can't be a full match
+                        if (cigar.length < k) {
+                            full_match = false;
+                        }
+                        // If the kmer bounds aren't fully inside the '=' operation, it's not a full match.
+                        else if ((c_i - 1 < flank_size) or (cigar.length - c_i < flank_size)) {
+                            full_match = false;
+                        }
+                    }
 
                     // Skip anything other than ACTG
                     if (not is_valid_base(true_base)){
@@ -785,7 +817,7 @@ void parse_aligned_fasta(path bam_path,
                         continue;
                     }
 
-                    if (cigar.code == Cigar::cigar_code_key.at("=")) {
+                    if (full_match) {
                         runlength_matrix.length_matrix[aligned_segment.reversal][true_base_index][true_length][observed_length] += 1;
                     }
 
@@ -795,8 +827,6 @@ void parse_aligned_fasta(path bam_path,
 
             i++;
         }
-
-        cerr << "\33[2K\rParsed: " << region.to_string() << flush;
     }
 }
 
@@ -948,6 +978,7 @@ RLEConfusion get_fasta_runlength_matrix(path bam_path,
                                        FastaReader& index_donor,
                                        unordered_map <string,RunlengthSequenceElement>& ref_runlength_sequences,
                                        vector <Region>& regions,
+                                       size_t k,
                                        uint16_t max_runlength,
                                        uint16_t max_threads){
     ///
@@ -971,6 +1002,7 @@ RLEConfusion get_fasta_runlength_matrix(path bam_path,
                                         ref(ref_runlength_sequences),
                                         ref(regions),
                                         ref(matrices_per_thread[i]),
+                                        k,
                                         ref(job_index)));
         } catch (const exception &e) {
             cerr << e.what() << "\n";
@@ -1191,11 +1223,13 @@ void measure_runlength_distribution_from_runnie(path runnie_directory,
 }
 
 
-void measure_runlength_distribution_from_fasta(path reads_fasta_path,
+void measure_runlength_distribution_from_fasta(
+        path reads_fasta_path,
         path reference_fasta_path,
         path output_directory,
         uint16_t max_runlength,
         uint16_t max_threads,
+        size_t minimum_match_length,
         string minimap_preset,
         uint16_t minimap_k){
 
@@ -1205,9 +1239,9 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
     // only one alignment worth of RAM is consumed per chunk. This value should be chosen as an appropriate
     // fraction of the genome size to prevent threads from being starved. Larger chunks also reduce overhead
     // associated with iterating reads that extend beyond the region (at the edges)
-    uint64_t chunk_size = 1*1000*1000;
-//    uint64_t chunk_size = 100*1000;
-//    cerr << "WARNING USING 1000bp chunks!\n";
+//    uint64_t chunk_size = 1*1000*1000;
+    uint64_t chunk_size = 1*1000;
+    cerr << "WARNING USING 1000bp chunks!\n";
 
     // Initialize readers
     FastaReader reads_fasta_reader = FastaReader(reads_fasta_path);
@@ -1270,6 +1304,7 @@ void measure_runlength_distribution_from_fasta(path reads_fasta_path,
             reads_fasta_reader,
             ref_runlength_sequences,
             regions,
+            minimum_match_length,
             max_runlength,
             max_threads);
 
