@@ -1,5 +1,5 @@
-#ifndef RUNLENGTH_ANALYSIS_READ_H
-#define RUNLENGTH_ANALYSIS_READ_H
+#ifndef RUNLENGTH_ANALYSIS_ALIGNEDSEGMENT_HPP
+#define RUNLENGTH_ANALYSIS_ALIGNEDSEGMENT_HPP
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
