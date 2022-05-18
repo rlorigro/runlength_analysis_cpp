@@ -46,6 +46,7 @@ path minimap_align(path ref_sequence_path,
     // Set up arguments in a readable, modular format
     vector<string> arguments = {"minimap2",
                                     "-a",
+                                    "-I", "8g",
                                     "-K", "10g",                    // New parameter for large batch size, better cpu %
                                     "-t", to_string(max_threads),
                                     ref_sequence_path.string(),
