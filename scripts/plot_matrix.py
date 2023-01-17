@@ -2,7 +2,7 @@ from matplotlib import pyplot
 from matplotlib import cm
 import matplotlib.colors as colors
 import numpy
-
+import argparse
 A,C,G,T = 0,1,2,3
 
 # Index key for storing base data in matrix form
@@ -148,17 +148,38 @@ def main():
 
     # ------------------------------------------------------------------------------------------------------
 
-    paths = [
-        "/home/ryan/code/runlength_analysis_cpp/build/output/rle_test/length_frequency_matrix_nondirectional.csv",
-        "/home/ryan/code/runlength_analysis_cpp/build/output/rle_test/length_frequency_matrix_nondirectional.csv",
-        ]
+    # paths = [
+    #     "/home/ryan/code/runlength_analysis_cpp/build/output/rle_test/length_frequency_matrix_nondirectional.csv",
+    #     "/home/ryan/code/runlength_analysis_cpp/build/output/rle_test/length_frequency_matrix_nondirectional.csv",
+    #     ]
 
-    labels = [
-        "test",
-        "test",
-    ]
+    # labels = [
+    #     "test",
+    #     "test",
+    # ]
+    
+    # quick cli for workflow use from https://stackoverflow.com/questions/32761999/how-to-pass-an-entire-list-as-command-line-argument-in-python
+    CLI=argparse.ArgumentParser()
+    CLI.add_argument(
+        "--paths",  # name on the CLI - drop the `--` for positional/required parameters
+        nargs="*",  # 0 or more values expected => creates a list
+        type=str,
+        default=[],  # default if nothing is provided
+    )
+    CLI.add_argument(
+        "--labels",
+        nargs="*",
+        type=str,  # any type/callable can be used here
+        default=[],
+    )
 
-
+    # parse the command line
+    args = CLI.parse_args()
+    # access CLI options
+    print("paths: %r" % args.paths)
+    print("labels: %r" % args.paths)
+    paths = args.paths
+    labels = args.labels
     figure,axes = pyplot.subplots(ncols=len(paths), nrows=1)
     colormap = pyplot.get_cmap("viridis")
     # colormap = truncate_colormap(colormap, max=0.5)
